@@ -1,0 +1,11 @@
+{
+  "name": "aventure-specifique",
+  "private": true,
+  "description": "L'aventure spécifique : jeu de plateforme (canvas), assemblé en un seul fichier HTML",
+  "scripts": {
+    "build": "node outils/build.js",
+    "test": "node outils/build.js && node outils/tests/tests19.js && node outils/tests/tests_s2.js && node outils/tests/tests14.js",
+    "route": "node outils/build.js && node outils/verif/route2.js outils/cache/chapters2.js"
+  },
+  "devDependencies": { "playwright": "^1.47.0" }
+}

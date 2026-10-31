@@ -1,0 +1,20 @@
+[
+  "js/00_bases.js",
+  "niveaux/saison1.js",
+  "niveaux/saison2.js",
+  "niveaux/bonus.js",
+  "js/01_couleurs_sauvegarde_son.js",
+  "js/02_etat_chargement.js",
+  "js/03_effets_camera_degats.js",
+  "js/04_dialogues.js",
+  "js/05_mise_a_jour.js",
+  "js/06_boss_saison2.js",
+  "js/07_dessin_heros.js",
+  "js/08_dessin_monde.js",
+  "js/09_dessin_boss.js",
+  "js/10_personnages.js",
+  "js/11_coin_xeliax.js",
+  "js/12_fin_saison2.js",
+  "js/13_interface_menus.js",
+  "js/14_cartes_controles_boucle.js"
+]
