@@ -1,0 +1,41 @@
+<title>L'aventure spécifique</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
+<style>/*@CSS*/</style>
+
+<canvas id="game" tabindex="0" aria-label="L'aventure spécifique, un jeu de plateforme : clavier ou boutons tactiles"></canvas>
+<div id="chapters" aria-label="Choix du chapitre"><div class="stage"></div></div>
+<div id="admin" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+  <div class="box">
+    <h3 id="adminTitle">Connexion admin</h3>
+    <p>Mot de passe pour tout débloquer (mode débogage).</p>
+    <input type="password" aria-label="Mot de passe" autocomplete="off">
+    <div class="err" aria-live="polite"></div>
+    <div class="row"><button type="button" class="no">Annuler</button><button type="button" class="ok">Se connecter</button></div>
+  </div>
+</div>
+<p class="legend">
+  <span><kbd>A</kbd><kbd>D</kbd> bouger</span>
+  <span><kbd>W</kbd><kbd>Espace</kbd> sauter</span>
+  <span><kbd>J</kbd> tirer</span>
+  <span><kbd>K</kbd> dash</span>
+  <span><kbd>E</kbd> parler</span>
+  <span><kbd>P</kbd> pause</span>
+  <span><kbd>M</kbd> son</span>
+</p>
+<div id="pad">
+  <div class="cluster">
+    <button id="left" aria-label="Aller à gauche">◀</button>
+    <button id="right" aria-label="Aller à droite">▶</button>
+  </div>
+  <button id="pause" class="small" aria-label="Pause">II</button>
+  <div class="cluster">
+    <button id="dash" class="alt dashb" aria-label="Dash">»</button>
+    <button id="shoot" class="alt" aria-label="Tirer ou parler">●</button>
+    <button id="jump" class="big" aria-label="Sauter">▲</button>
+  </div>
+</div>
+
+<script>/*@JS*/</script>
