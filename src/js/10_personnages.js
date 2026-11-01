@@ -54,7 +54,8 @@ Object.assign(NPCS, {
     name:'Gaston', base:'gaston', step:null, title:'les ventouses', voice:260, accent:'#ffd36b',
     lines:[
       'Salut XELIAX ! La pie est passée en rase-mottes, elle a filé au fond des gorges.',
-      'Ton double saut, je te le confisque ! Ici, on apprend à grimper. Je te le rendrai plus loin, promis.',
+      'Elle t\'a volé ton double saut ? Je l\'ai vu tomber tout au fond de la faille. J\'irai le chercher pour toi, promis.',
+      'En attendant, ici, on apprend à grimper !',
       'Prends ces ventouses : colle-toi aux murs, glisse, et saute d\'un mur à l\'autre pour grimper.',
       'Par contre, sur les parois lisses et brillantes, rien ne tient. Même pas moi !',
     ],
@@ -63,7 +64,7 @@ Object.assign(NPCS, {
     name:'Gaston', base:'gaston', step:null, title:'le double saut', voice:260, accent:'#ffd36b',
     lines:[
       'Te revoilà ! Tu grimpes aux murs comme un vrai gecko maintenant.',
-      'Comme promis, je te rends ton double saut. Il est juste là, devant toi !',
+      'Regarde ce que j\'ai trouvé au fond de la faille : ton double saut ! Il est juste là, devant toi.',
       'Plus haut, la faille s\'élargit : saut de mur, puis double saut.',
     ],
   },

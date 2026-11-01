@@ -210,7 +210,8 @@ function loadRoom(ci, ri){
   room.w = room.width || W;
   room.h = room.height || H;
   // season 2: in the first rooms of the gorges Gaston keeps the double jump (he gives it back in La Faille)
-  if(room.noDJ){ if(hasDJ) djTake = 100; hasDJ = false; }
+  let djScene = false;
+  if(room.noDJ){ if(hasDJ){ if(room.djSteal) djScene = true; else djTake = 100; } if(!djScene) hasDJ = false; }
 
   platforms = room.platforms.map((p, i) => ({
     ...p, h: p.h || (p.fall ? 16 : 14), dx:0, dy:0, cT:0, gone:false, rT:0, appear:1, ox:p.x, oy:p.y, fT:0, fvy:0, loose:!!p.free,
@@ -260,6 +261,7 @@ function loadRoom(ci, ri){
   bannerT = ri === 0 ? 240 : 150;
   if(room.shootUp && !room.boss) showToast('Tes tirs partent vers le haut !', 170);
   if(boss) startCine('intro');   // every boss makes an entrance before the fight starts
+  if(djScene){ bannerT = 0; startCine('dj'); }    // the magpie snatches the double jump and drops it into the gorge
 }
 
 function makeBoss(def){

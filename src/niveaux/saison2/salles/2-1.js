@@ -2,6 +2,7 @@
   name:'Les Ventouses',
   width:2000, height:480,
   noDJ:true,
+  djSteal:true,
   start:{x:40, y:400},
   platforms:[
     {x:0, y:440, w:570, h:40, solid:true},

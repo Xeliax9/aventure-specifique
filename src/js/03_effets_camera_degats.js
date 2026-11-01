@@ -477,11 +477,12 @@ const seenCine = new Set();
 function startCine(kind){
   const id = `${chIndex}-${rIndex}-${kind}`;
   const b = boss;
-  cine = {kind, t:0, dur:kind === 'intro' ? 300 : 240, skippable:seenCine.has(id), skip:false, walkTo:null,
+  cine = {kind, t:0, dur:kind === 'intro' ? 300 : kind === 'dj' ? 290 : 240, skippable:seenCine.has(id), skip:false, walkTo:null,
           bandY:kind === 'intro' && b && (b.mode === 'slime' || b.mode === 'yeti') ? 150 : 238};
   seenCine.add(id);
   bullets = []; shots = [];
   fightPop = 0;
+  if(kind === 'dj'){ steal = {x:0, y:0, w:48, h:40, state:'hover', phase:1, face:-1, hitT:0, inv:0, lost:true, got:false, on:false, t:0}; djOrb = {x:0, y:0, on:true, fall:false, vy:0}; return; }
   if(!b) return;
   player.facing = b.x + b.w / 2 > player.x + player.w / 2 ? 1 : -1;
   if(kind === 'intro'){
@@ -502,6 +503,7 @@ function updateCine(){
   c.t++;
   if(c.skippable && !c.skip && c.t > 20 && input.jumpPressed){ c.skip = true; c.dur = Math.min(c.dur, c.t + 18); }
   input.jumpPressed = false;
+  if(c.kind === 'dj') updateDJScene(c);
   if(b && b.alive && c.kind === 'intro'){
     if(b.mode === 'slime'){
       if(!b.onGround){
@@ -596,9 +598,61 @@ function finishCine(){
     }
   }
   for(const s of spikes) if(s.pending) s.pending = false;
+  if(k === 'dj'){ steal = null; djOrb = null; hasDJ = false; bannerT = 240; showToast('Sans double saut… Gaston saura peut-être quoi faire !', 170); return; }
   fightPop = 60;
   SFX.power();
   if(k === 'intro' && room.shootUp) showToast('Tes tirs partent vers le haut !', 170);
+}
+
+// season 2, start of the gorges: the double jump floats above XELIAX like a glowing bubble; the magpie dives,
+// snatches it, flies over the gorge and lets it fall to the very bottom (Gaston finds it there, in La Faille)
+let djOrb = null;
+function updateDJScene(c){
+  const t = c.t, S = steal, O = djOrb;
+  if(!S || !O) return;
+  const hx = player.x + player.w / 2, hy = player.y - 26 + Math.sin(t * 0.08) * 3;
+  S.px = S.x; S.py = S.y;
+  if(!S.got){ O.x = hx; O.y = hy; }
+  if(t === 25){ popup(hx, hy - 22, 'Ton double saut', '#7df9ff'); sparkle(hx, hy, 10, '#7df9ff'); }
+  if(t === 70){ S.on = true; S.x0 = camX + W + 70; S.y0 = camY - 60; SFX.warn(); setFace(anim, 'o', 60); }
+  if(S.on && !S.got){
+    const q = clamp((t - 70) / 40, 0, 1), e = q * q, cx = hx + 150, cy = hy - 120;
+    S.x = (1 - e) * (1 - e) * S.x0 + 2 * (1 - e) * e * cx + e * e * hx - S.w / 2;
+    S.y = (1 - e) * (1 - e) * S.y0 + 2 * (1 - e) * e * cy + e * e * hy - S.h / 2;
+    S.state = q > 0.55 ? 'dive' : 'hover'; S.vx = -3; S.vy = 3; S.face = -1;
+    if(t === 110){
+      S.got = true; S.x1 = S.x; S.y1 = S.y;
+      SFX.crack(); addShake(6); setFace(anim, 'hurt', 120);
+      player.vy = -4; player.onGround = false; player.standingOn = null; player.sx = 0.75; player.sy = 1.3;
+      burst(hx, hy, 14, '#7df9ff', 2.4, 30, 0.04, 3, 'star');
+      showToast('La pie ! Elle t\'a volé ton double saut !', 110);
+    }
+  } else if(S.got && !O.fall){
+    // off to the right, over the gorge, with the bubble in her beak
+    const k = t - 110;
+    S.x = S.x1 + k * 4.2; S.y = S.y1 - k * 0.6 - Math.sin(k * 0.2) * 6; S.face = 1; S.state = 'hover';
+    O.x = S.x + S.w / 2 + 18; O.y = S.y + S.h / 2 + 6;
+    if(k % 14 === 0) tone(1200 - k * 5, 0.06, 'square', 0.025, 900 - k * 4);
+    if(k === 55){ O.fall = true; O.vy = -2; popup(O.x, O.y - 16, 'Oups !', '#ffe58a'); tone(700, 0.3, 'sine', 0.04, 160); }
+  } else if(O.fall){
+    // she lets go: the bubble tumbles down into the gorge, she flies off
+    const k = t - 165;
+    S.x += 4.5; S.y -= 1.5;
+    O.vy = Math.min(O.vy + 0.25, 7); O.y += O.vy; O.x += 2.2;
+    if(frame % 2 === 0) particles.push({x:O.x, y:O.y, vx:0, vy:-0.4, life:24, max:24, color:'#7df9ff', grav:0, size:2.6, type:'dot'});
+    if(k === 40){ showToast('Elle l\'a fait tomber… tout au fond des gorges !', 150); setFace(anim, 'hurt', 100); }
+    if(S.x > camX + W + 80) S.on = false;
+  }
+}
+function drawDJOrb(){
+  const O = djOrb;
+  if(!O || !O.on) return;
+  const r = 10 + Math.sin(frame * 0.15) * 1.2;
+  softGlow(O.x, O.y, 26, 26, '125,249,255', 0.45);
+  ctx.beginPath(); ctx.arc(O.x, O.y, r, 0, TAU); ctx.fillStyle = 'rgba(125,249,255,0.35)'; ctx.fill();
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.strokeStyle = '#0e6f86'; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for(const dy of [-2, 4]){ ctx.beginPath(); ctx.moveTo(O.x - 5, O.y + dy); ctx.lineTo(O.x, O.y + dy - 5); ctx.lineTo(O.x + 5, O.y + dy); ctx.stroke(); }
 }
 
 // how far the letterbox bars are in (0 to 1)
