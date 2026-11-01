@@ -69,6 +69,7 @@ function step(){
     updatePlayer();           // controls are ignored during the finale
     stepCharAnim(anim, {vx:player.vx, vy:player.vy, onGround:player.onGround, facing:player.facing, cheer:!steal || finaleT < 200});
     anim.sx = player.sx; anim.sy = player.sy;
+    if(!room.ending2) updateFireworks(finaleT);
     if(steal) updateSteal(finaleT);
     else if(frame % 22 === 0) confetti(player.x + player.w / 2, player.y - 6, finaleT < finaleEnd() ? 12 : 4);
     if(go){ SFX.menu(); if(room.ending2) startEnding(); else chapterClear(); }
@@ -121,7 +122,7 @@ function updateSteal(t){
       player.vy = -3.5; player.onGround = false; player.standingOn = null; player.sx = 0.75; player.sy = 1.3;
       burst(hx, hy, 12, '#1a1430', 2.2, 30, 0.04, 3, 'puff');
       for(let i = 0; i < 8; i++) particles.push({x:hx, y:hy, vx:(Math.random() - 0.5) * 3, vy:-1 - Math.random() * 2, life:60, max:60, color:'#f4f2ff', grav:0.04, size:3, type:'dot'});
-      showToast('La pie ! Elle a volé la ficelle aux olives !', 200);
+      showToast('La pie ! Elle a volé la ficelle aux olives !', 85);
     }
   } else if(S.got){
     // and off she goes, up and away to the left, cackling
@@ -129,18 +130,98 @@ function updateSteal(t){
     S.x = S.x1 - k * 4.6 - q * q * 60; S.y = S.y1 - k * 0.9 - Math.sin(k * 0.2) * 8;
     S.face = -1; S.state = 'hover';
     if(k % 14 === 0 && k < 60) tone(1200 - k * 6, 0.06, 'square', 0.025, 900 - k * 4);
+    if(k === 1){ hitStop = REDUCED ? 0 : 20; tone(880, 0.12, 'square', 0.04, 220); tone(110, 0.6, 'sawtooth', 0.05, 55); addShake(10); }
     if(k === 30){ setFace(anim, 'hurt', 120); player.vy = -6.5; player.onGround = false; player.standingOn = null; }
     if(k === 50){ player.vy = -6.5; player.onGround = false; player.standingOn = null; }
-    if(k === 95) showToast('À suivre… Saison 2 : la pie voleuse !', 220);
     if(k > 100) S.on = false;
   }
 }
+// fireworks over the end of season 1: rockets rise from below the screen and burst into stars
+let fireworks = [];
+const FW_COLORS = ['#ff5c9a', '#ffd54a', '#7df9ff', '#c8ff6a', '#b98cff', '#ff8a3c'];
+function updateFireworks(t){
+  if(t === 1) fireworks = [];
+  const until = steal ? 200 : 100000;
+  if(t < until && t % (t < 60 ? 12 : 20) === 1){
+    fireworks.push({x:camX + 50 + Math.random() * (W - 100), y:camY + H + 10, vy:-6.6 - Math.random() * 1.8,
+                    col:FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], fuse:38 + Math.random() * 22});
+    tone(320 + Math.random() * 200, 0.18, 'triangle', 0.015, 900);
+  }
+  for(const f of fireworks){
+    f.y += f.vy; f.vy += 0.09; f.fuse--;
+    if(frame % 2 === 0) particles.push({x:f.x + (Math.random() - 0.5) * 2, y:f.y + 4, vx:0, vy:0.6, life:16, max:16, color:'#ffe9a8', grav:0.02, size:2, type:'dot'});
+    if(f.fuse <= 0 || f.vy >= -0.6){
+      f.dead = true;
+      burst(f.x, f.y, 34, f.col, 4.2, 55, 0.04, 3, 'star');
+      burst(f.x, f.y, 14, '#ffffff', 2, 30, 0.02, 2, 'dot');
+      ring(f.x, f.y, f.col, 6, 70, 22);
+      tone(150 + Math.random() * 60, 0.25, 'sawtooth', 0.025, 60); addShake(1.2);
+    }
+  }
+  fireworks = fireworks.filter(f => !f.dead);
+}
+// screen overlay: the big VICTOIRE !, the snatch (flash + QUOI ?!), and the « À suivre » title card
+function drawFinaleOverlay(cx, cy){
+  if(finaleT <= 0 || !room || room.ending2) return;
+  const t = finaleT;
+  if(t > 8 && t < 200){
+    const a = clamp((t - 8) / 10, 0, 1) * clamp((200 - t) / 16, 0, 1), s = 1 + 0.7 * Math.max(0, 1 - (t - 8) / 12);
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(W / 2, 150); ctx.scale(s, s); ctx.rotate(Math.sin(t * 0.05) * 0.03);
+    outlined('VICTOIRE !', 0, 0, 46, '#ffe066', '#4a1a6a', 7);
+    txt(steal ? 'Le Seigneur Pourpre est vaincu !' : 'Une ficelle de plus !', 0, 30, 14, '#ffffff', 700);
+    ctx.restore();
+  }
+  if(!steal) return;
+  if(t >= 245 && t < 265){ ctx.fillStyle = 'rgba(255,255,255,' + ((265 - t) / 20 * 0.85) + ')'; ctx.fillRect(0, 0, W, H); }
+  if(t >= 247 && t < 335){
+    const a = clamp((t - 247) / 5, 0, 1) * clamp((335 - t) / 12, 0, 1), pop = 1 + 0.5 * Math.max(0, 1 - (t - 247) / 8);
+    const px = player.x + player.w / 2 - cx + 30, py = player.y - cy - 34;
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(clamp(px, 70, W - 70), clamp(py, 40, H - 40)); ctx.scale(pop, pop); ctx.rotate(-0.12);
+    ctx.beginPath();
+    for(let i = 0; i < 18; i++){ const r = i % 2 ? 30 : 44, an = i * Math.PI / 9; ctx.lineTo(Math.cos(an) * r * 1.5, Math.sin(an) * r * 0.85); }
+    ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = '#1a1430'; ctx.lineWidth = 3; ctx.stroke();
+    outlined('QUOI ?!', 0, 8, 26, '#ff3d5a', '#1a1430', 5);
+    ctx.restore();
+  }
+  if(t >= 330){
+    // the title card: letterbox, darkness, a big moon with the magpie flying across it
+    const k = clamp((t - 330) / 30, 0, 1), e = k * k * (3 - 2 * k);
+    ctx.save();
+    ctx.fillStyle = 'rgba(8,4,20,' + (0.62 * e) + ')'; ctx.fillRect(0, 0, W, H);
+    const mx = W * 0.72, my = H * 0.38, mr = 64;
+    ctx.globalAlpha = e;
+    const g = ctx.createRadialGradient(mx, my, mr * 0.2, mx, my, mr * 1.8);
+    g.addColorStop(0, 'rgba(255,240,200,0.5)'); g.addColorStop(1, 'rgba(255,240,200,0)');
+    ctx.fillStyle = g; ctx.fillRect(mx - mr * 2, my - mr * 2, mr * 4, mr * 4);
+    ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.fillStyle = '#fff3d0'; ctx.fill();
+    // the magpie's silhouette crossing the moon, the ficelle dangling from her beak
+    const q = clamp((t - 340) / 120, 0, 1), bx = mx + 120 - q * 240, by = my + 10 - Math.sin(q * Math.PI) * 30, fl = Math.sin(t * 0.4) * 0.8;
+    ctx.save(); ctx.translate(bx, by); ctx.scale(-1, 1); ctx.fillStyle = '#0c0818';
+    ctx.beginPath(); ctx.ellipse(0, 0, 18, 11, 0, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(15, -7, 8, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-40, -5); ctx.lineTo(-40, 5); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(14, -7); ctx.lineTo(28, -5); ctx.lineTo(14, -3); ctx.fill();
+    ctx.save(); ctx.rotate(-fl); ctx.beginPath(); ctx.ellipse(-6, -10, 18, 6, -0.5, 0, TAU); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = '#0c0818'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(26, -5); ctx.quadraticCurveTo(30, 6, 22, 14); ctx.stroke();
+    ctx.restore();
+    // bars
+    const bh = 26 * e;
+    ctx.globalAlpha = 1; ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, W, bh); ctx.fillRect(0, H - bh, W, bh);
+    const ta = clamp((t - 360) / 25, 0, 1);
+    ctx.globalAlpha = ta;
+    txt('À suivre…', W * 0.3, H * 0.4, 16, '#e9e2ff', 600);
+    heading('Saison 2', W * 0.3, H * 0.4 + 36 + (1 - ta) * 8, 34, '#ffffff');
+    txt('La Pie Voleuse', W * 0.3, H * 0.4 + 62, 17, '#ffd27a', 700);
+    ctx.restore();
+  }
+}
+
 function drawSteal(){
   if(!steal || !steal.on) return;
   drawMagpie(steal);
 }
 function finaleEnd(){ return room && room.ending2 ? 80 : steal ? STEAL_END : 150; }
-const STEAL_END = 380;
+const STEAL_END = 470;
 function drawFinalePrompt(){
   if(state !== 'play' || finaleT < finaleEnd() || fadeDir !== 0) return;
   const a = Math.min(1, (finaleT - finaleEnd() + 1) / 14) * (REDUCED ? 1 : 0.88 + 0.12 * Math.sin(frame * 0.12));
