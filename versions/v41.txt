@@ -1,0 +1,17 @@
+VERSION 41 — Le Yéti et des corrections
+
+Le Yéti
+- Il a des boucliers de glace sur les côtés : il faut les casser au tir (3 tirs, ou 1 super tir)
+  avant que le dash lui fasse des dégâts.
+- Phase 2 : 5 points de vie, et il saute sur la plateforme où tu te trouves.
+
+Corrections
+- La pie, phase 3 : quand elle plongeait vers le sol, elle rebondissait sur le foin comme en
+  phase 1 au lieu de rester coincée. C'est corrigé.
+- Orbes de gravité : en spammant le saut, la gravité pouvait s'inverser en boucle et XELIAX
+  passait à travers les plateformes ou restait coincé dans un bloc. Une orbe ne se redéclenche
+  plus tout de suite, et XELIAX est toujours remis hors des blocs.
+- Le dossier « versions » : un fichier par version, comme celui-ci.
+
+Reste à faire
+- 3-2 et 3-3 : empêcher qu'on évite le gameplay principal.

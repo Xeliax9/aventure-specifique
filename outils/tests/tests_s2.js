@@ -63,11 +63,11 @@ const { chromium } = require('playwright');
     player.invuln = 0; player.x = boss.x + boss.w / 2 - player.w / 2; player.y = boss.y - player.h - 20; player.vy = 2; player.onGround = false; run(10);
     ok(boss.hp === hp0, 'stomping the yeti does nothing (ice helmet)');
     let yhits = 0;
-    for(let round = 0; round < 10 && boss.alive && !boss.dying; round++){
+    for(let round = 0; round < 20 && boss.alive && !boss.dying; round++){
       if(until(() => boss.state === 'dizzy' && boss.inv <= 0 && !cine, 2500) < 0) break;
       const d = boss.x + boss.w / 2 < W / 2 ? -1 : 1;     // stand on the open side and dash into it
       player.invuln = 0; player.y = FLOOR - player.h; player.vy = 0; player.onGround = true; player.x = d < 0 ? boss.x + boss.w + 30 : boss.x - 30 - player.w;
-      player.dashReady = true; player.dashCD = 0; player.facing = -d;
+      player.dashReady = true; player.dashCD = 0; player.facing = -d; boss.shL = boss.shR = 0;
       input.left = d < 0; input.right = d > 0; input.dashPressed = true;
       const hp = boss.hp, ph = boss.phase;
       run(14); input.left = input.right = false;
@@ -75,7 +75,7 @@ const { chromium } = require('playwright');
       if(cine) finishCine();
     }
     run(130);
-    ok(!boss.alive && yhits === 6, `yeti beaten with 6 dashes (${yhits})`);
+    ok(!boss.alive && yhits === 8, `yeti beaten with 8 dashes (${yhits})`);
     // icicles in phase 2 appeared?
     // ---- the magpie: floor and ceiling, then the ficelle, then the ending
     newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99;

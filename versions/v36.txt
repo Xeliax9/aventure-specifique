@@ -1,0 +1,11 @@
+VERSION 36 — La Tour de Glace et le boss final de la saison 1
+
+Glacier
+- Nouvelle salle 3-4 La Tour de Glace (d'après ton dessin) :
+  saut de mur puis dash vers le même mur, plateforme cassable, bloc suspendu avec des piques
+  sur un côté, canon, chauve-souris, piques en bas du mur de droite.
+- Le Yéti passe en 3-5.
+
+Boss final de la saison 1 (L'Ascension)
+- Le sol brûle : il faut rester sur les plateformes.
+- Toutes les 10 secondes, il s'arrête pour une attaque spéciale : pluie de feu, anneaux ou spirale.

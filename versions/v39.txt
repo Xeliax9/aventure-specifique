@@ -1,0 +1,6 @@
+VERSION 39 — Pourquoi XELIAX perd son double saut
+
+- Au début des Gorges (2-1), une cinématique : le double saut flotte au-dessus de XELIAX,
+  la pie fonce, l'arrache et le laisse tomber au fond de la faille.
+- Gaston le retrouve et le rend en 2-3.
+- Le titre du chapitre s'affiche après la cinématique.

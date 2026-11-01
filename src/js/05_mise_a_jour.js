@@ -886,6 +886,15 @@ function updatePlayer(){
       }
     }
   }
+  for(const w of solids){
+    if(w.gone || !overlap(player, w)) continue;
+    const up = player.y + player.h - w.y, down = w.y + w.h - player.y, left = player.x + player.w - w.x, right = w.x + w.w - player.x;
+    const m = Math.min(up, down, left, right);
+    if(m === up){ player.y = w.y - player.h; if(player.vy > 0) player.vy = 0; if(G > 0){ player.onGround = true; player.standingOn = w; player.usedDJ = false; } }
+    else if(m === down){ player.y = w.y + w.h; if(player.vy < 0) player.vy = 0; if(G < 0){ player.onGround = true; player.standingOn = w; player.usedDJ = false; } }
+    else if(m === left){ player.x = w.x - player.w; player.vx = Math.min(0, player.vx); }
+    else { player.x = w.x + w.w; player.vx = Math.max(0, player.vx); }
+  }
   if(player.onGround){ player.dashReady = true; player.wallT = 0; }
   if(player.onGround && !wasGround){
     const k = Math.min(impact / 12, 1);
@@ -922,9 +931,10 @@ function updatePlayer(){
   // gravity orbs and gravity lines: touch one and the world turns upside down
   for(const o of flips){
     if(o.t > 0) o.t = Math.max(0, o.t - 0.04);
+    if(o.cd > 0) o.cd--;
     const hit = overlap(player, o);
-    if(hit && o.armed){
-      o.armed = false; o.t = 1;
+    if(hit && o.armed && !(o.cd > 0)){
+      o.armed = false; o.t = 1; if(!o.w) o.cd = 24;
       const want = o.set || -gdir;
       if(want !== gdir) setGravity(want);
     } else if(!hit) o.armed = true;
@@ -1102,8 +1112,17 @@ function updatePlayer(){
       } else bossDamage();
     }
     if(!s.dead && boss && boss.alive && !boss.dying && S2_BOSS.has(boss.mode) && overlap(s, boss)){
-      // the season 2 bosses shrug off shots
-      s.dead = true; boss.shieldT = 12;
+      // the season 2 bosses shrug off shots… except the yeti's ice shields
+      s.dead = true;
+      if(boss.mode === 'yeti' && (s.vx > 0 ? boss.shL : boss.shR) > 0){
+        const k = s.vx > 0 ? 'shL' : 'shR';
+        boss[k] = Math.max(0, boss[k] - (s.big ? 3 : 1));
+        SFX.glass(); addShake(2);
+        burst(s.x + s.w / 2, s.y + s.h / 2, 10, '#bfe6ff', 2.6, 22, 0.1, 3, 'crumb');
+        if(boss[k] === 0) popup(boss.x + boss.w / 2, boss.y - 12, 'Bouclier brisé !', '#bfe6ff');
+        continue;
+      }
+      boss.shieldT = 12;
       burst(s.x + s.w / 2, s.y + s.h / 2, 6, '#d9e4ff', 2.5, 14, 0, 2.5, 'star');
       SFX.ting();
     }

@@ -1,0 +1,4 @@
+VERSION 29 — Version téléphone
+
+- Le bouton « sauter » est plus grand et collé au bord droit.
+- Zone tactile plus tolérante : chaque doigt appuie sur le bouton le plus proche.

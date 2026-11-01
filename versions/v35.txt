@@ -1,0 +1,19 @@
+VERSION 35 — 1er novembre 2026 (matin)
+
+Écran
+- Le jeu prend toute la fenêtre, sans le cadre autour.
+- Les touches sont dans Paramètres → Commandes.
+
+Nouvelles planches
+- Planche-parachute : elle descend doucement en portant XELIAX. Tête en bas, elle monte.
+- Planches « libres » : elles suivent la gravité à chaque orbe.
+- Planches qui reviennent après s'être posées.
+- Hérisson : on ne peut pas lui sauter dessus ni le toucher au tir ; seule une planche qui tombe le bat.
+
+Monde 1
+- 1-2 Le Chemin des Nuages : après chaque orbe, il faut viser (entre deux poteaux, sur un nuage).
+- 1-3 Les Planches : planches qui tombent, planche-parachute, planches retournées par l'orbe.
+
+La pie (boss du monde 4)
+- Elle plonge beaucoup plus souvent vers toi.
+- Nouvelle phase 3 : 5 points de vie, elle enchaîne les plongeons.

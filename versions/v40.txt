@@ -1,0 +1,31 @@
+VERSION 40 — Boutique, super tir, bonus géants
+
+Boutique (Paramètres → Couleur de XELIAX)
+- Les pièces ramassées vont dans une tirelire.
+- 5 couleurs à acheter (de 50 à 220 pièces) : Citron, Lavande, Corail, Fantôme, Lave.
+- 2 couleurs à débloquer avec les gemmes : Émeraude (3 gemmes), Galaxie (7 gemmes).
+
+Tir
+- Le tir ramasse les pièces qu'il traverse.
+- Chaque ennemi abattu rapporte une pièce (un canon détruit : 3).
+- Garde la touche de tir enfoncée : super tir qui traverse les ennemis.
+
+Monde 1
+- 1-4 refaite d'après ta capture : on descend sur la planche-parachute jusqu'à passer sous
+  le mur qui pend du plafond, puis double saut vers la planche suivante, 4 fois de suite.
+- 1-5 : le passage du hérisson est remplacé par un escalier de planches qui tombent vite.
+- Le coup du hérisson écrasé par la planche n'est plus que dans 1-3.
+
+Monde 2
+- 2-2 : le poteau du haut descend presque jusqu'en bas. Il faut glisser dans le couloir et
+  faire un saut de mur précis sous le poteau, au-dessus des piques.
+- 2-3 : piques sur la face extérieure des poteaux et sur les murs ; on grimpe contre le même poteau.
+- Le Gecko : 5 points de vie en phase 2. Il court au sol et laisse de l'acide vert
+  pendant 5 secondes (à la place des piques).
+
+Bonus (Paramètres → Bonus secret)
+- 4 niveaux au lieu de 8, deux fois plus longs :
+  Les Étoiles : La Course des Étoiles, Le Grand Sommet (lave).
+  Le Cosmos : La Traversée Cosmique, Le Cœur du Cosmos.
+- Il faut les finir le plus vite possible : la ficelle dorée ou de cristal ne se gagne que
+  sous le temps à battre (1:40 pour Les Étoiles, 2:15 pour Le Cosmos).
