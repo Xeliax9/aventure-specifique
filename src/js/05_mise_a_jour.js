@@ -44,6 +44,8 @@ function step(){
   if(state === 'ending'){ updateEnding(); clearPresses(); return; }
   if(state === 'talk'){ stepTalk(); stepHero(); clearPresses(); return; }
   if(state !== 'play'){ updateUiHero(); clearPresses(); return; }
+  // a boss demo is on screen: everything waits until it is closed
+  if(bossDemo){ updateBossDemo(); clearPresses(); return; }
 
   // the final blow freezes the action for a split second
   if(hitStop > 0){ hitStop--; updateCamera(); clearPresses(); return; }
@@ -547,7 +549,7 @@ function updateWorld(){
     }
   }
   bullets = bullets.filter(b => !b.dead && b.x > camX - 40 && b.x < camX + W + 40 && b.y > camY - 40 && b.y < camY + H + 40);
-  for(const f of fires){ f.t++; if(f.t % 9 === 0 && f.t < f.max - 20) particles.push({x:f.x + 6 + Math.random() * (f.w - 12), y:FLOOR - 10, vx:(Math.random() - 0.5) * 0.4, vy:-0.8 - Math.random(), life:26, max:26, color:Math.random() < 0.5 ? '#ffb347' : '#ffe08a', grav:-0.01, size:2.4, type:'dot'}); }
+  for(const f of fires){ f.t++; if(f.t % 9 === 0 && f.t < f.max - 20) particles.push({x:f.x + 6 + Math.random() * (f.w - 12), y:FLOOR - 10, vx:(Math.random() - 0.5) * 0.4, vy:-0.8 - Math.random(), life:26, max:26, color:f.acid ? (Math.random() < 0.5 ? '#9dff5a' : '#d8ffa8') : Math.random() < 0.5 ? '#ffb347' : '#ffe08a', grav:-0.01, size:2.4, type:'dot'}); }
   fires = fires.filter(f => f.t < f.max);
 }
 
@@ -1122,6 +1124,18 @@ function updatePlayer(){
         if(boss[k] === 0) popup(boss.x + boss.w / 2, boss.y - 12, 'Bouclier brisé !', '#bfe6ff');
         continue;
       }
+      // the magpie, dazed against the side: every shot counts (a super shot counts for 3)
+      if(boss.mode === 'magpie' && boss.state === 'dazed' && boss.inv <= 0){
+        magpieShot(boss, s.big ? 3 : 1);
+        burst(s.x + s.w / 2, s.y + s.h / 2, 8, '#ffd54a', 2.4, 18, 0, 3, 'star');
+        continue;
+      }
+      // phase 2: the gecko is dazed after 5 hits while it is on the walls (a super shot counts for 3)
+      if(boss.mode === 'gecko' && boss.phase === 2 && (boss.state === 'crawl' || boss.state === 'climb') && boss.inv <= 0){
+        geckoShot(boss, s.big ? 3 : 1);
+        burst(s.x + s.w / 2, s.y + s.h / 2, 8, '#9dff5a', 2.4, 18, 0.1, 3, 'goo');
+        continue;
+      }
       boss.shieldT = 12;
       burst(s.x + s.w / 2, s.y + s.h / 2, 6, '#d9e4ff', 2.5, 14, 0, 2.5, 'star');
       SFX.ting();
@@ -1188,7 +1202,7 @@ function updatePlayer(){
     if(p.type === 'shoot'){ canShoot = true; showToast('Arme débloquée ! Touche ' + KEYS_TXT.shoot, 140); }
     if(p.type === 'gem'){ chGem = true; score += 100; popup(p.x + 10, p.y, '+100', '#9fe8ff'); showToast('Gemme secrète trouvée !', 130); }
     if(p.type === 'wall'){ hasWall = true; showToast('Tentacules-ventouses ! Saute contre un mur', 170); }
-    if(p.type === 'dash'){ hasDash = true; hasDJ = true; player.dashReady = true; showToast('Double saut amélioré : tu peux aussi dasher ! Touche ' + KEYS_TXT.dash, 200); }
+    if(p.type === 'dash'){ hasDash = true; hasDJ = true; player.dashReady = true; showToast('Le dash ! Touche ' + KEYS_TXT.dash + ' : fonce et brise la glace', 200); }
   }
 
   // key, or the ficelle aux olives in the very last room

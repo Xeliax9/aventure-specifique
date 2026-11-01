@@ -69,10 +69,10 @@ Object.assign(NPCS, {
     ],
   },
   olivia2:{
-    name:'Olivia', base:'olivia', step:null, title:'le double saut amélioré', voice:780, accent:'#b5d66a',
+    name:'Olivia', base:'olivia', step:null, title:'le dash', voice:780, accent:'#b5d66a',
     lines:[
       'Brrr ! Il fait un froid de canard sur ce glacier.',
-      'J\'ai amélioré ton double saut : maintenant, il te permet aussi de dasher !',
+      'Tu as arraché le dash au Gecko Géant ? Bravo ! Il marche aussi juste après ton double saut.',
       'Avec le dash, fonce droit dans les murs de glace : ils volent en éclats !',
       'Et attention au sol gelé : ça glisse, et pas qu\'un peu.',
     ],

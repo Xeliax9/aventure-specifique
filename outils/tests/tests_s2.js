@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
   const b = await chromium.launch(); const p = await b.newPage({viewport:{width:1280,height:800}});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
   await p.goto(require('url').pathToFileURL(process.env.GAME || require('path').resolve(__dirname, '../../dist/aventure.html')).href); await p.waitForTimeout(500);
-  await p.evaluate(()=>{ window.requestAnimationFrame = () => 0; localStorage.clear(); });
+  await p.evaluate(()=>{ window.requestAnimationFrame = () => 0; localStorage.clear(); save.demoSeen = {slime:1, swoop:1, arena:1, ascent:1, gecko:1, yeti:1, magpie:1}; });
   const out = await p.evaluate(()=>{
     const o=[]; const ok=(c,m)=>o.push((c?'PASS ':'FAIL ')+m);
     const run = (n, f) => { for(let i=0;i<n;i++){ if(f && f(i) === false) return i; step(); if(i%5===0) render(Math.random()); } return n; };
@@ -41,7 +41,8 @@ const { chromium } = require('playwright');
     run(330); ok(!cine && boss.state === 'crawl', 'gecko crawls on the wall after its entrance (' + boss.state + ')');
     const states = new Set(); let hits = 0;
     for(let round = 0; round < 20 && boss.alive && !boss.dying; round++){
-      const t = until(() => (boss.state === 'stun' || boss.state === 'stuck') && boss.inv <= 0 && !cine, 2500);
+      // phase 2: it is only dazed after 5 shots while on the walls
+      const t = until(() => { if(boss.phase === 2 && (boss.state === 'crawl' || boss.state === 'climb') && boss.inv <= 0 && frame % 20 === 0) geckoShot(boss, 1); return (boss.state === 'stun' || boss.state === 'stuck') && boss.inv <= 0 && !cine; }, 2500);
       if(t < 0) break;
       states.add(boss.state);
       player.invuln = 0; player.x = boss.x + boss.w / 2 - player.w / 2; player.y = boss.y - player.h - 30; player.vy = 2; player.onGround = false; player.standingOn = null;
@@ -53,7 +54,38 @@ const { chromium } = require('playwright');
     ok(boss.dying > 0, 'gecko: a death scene plays'); run(130);
     ok(!boss.alive && hits === 8, `gecko beaten with 8 stomps (states seen: ${[...states].join(', ')})`);
     ok(states.has('stun') && states.has('stuck'), 'phase 1 it falls on the floor, phase 2 it is stuck on the wall');
+    const rew = powerUps.find(p => p.id === 'boss-reward');
+    ok(rew && rew.type === 'dash' && doorLocked(), 'the gecko drops the dash, the door waits for it');
+    hasDash = false; player.invuln = 99; player.x = rew.x; player.y = rew.y; player.vy = 0; run(3);
+    ok(hasDash && rew.got, 'XELIAX takes the dash');
     ok(!doorLocked(), 'door opens');
+    ok(!(CHAPTERS[7].rooms[0].powerUps || []).some(p => p.type === 'dash') && CHAPTERS[7].grants.dash, 'the glacier starts with the dash, no dash pick-up in 3-1');
+    // ---- gecko phase 2: goes down every 15 s, acid stays 5 s, 5 real shots daze it at the top of the wall
+    newRun(6); clean(); loadRoom(6, CHAPTERS[6].rooms.length - 1); setState('play'); lives = 99; run(330);
+    boss.hp = 1; bossDamage(); if(cine) finishCine(); run(5);
+    ok(boss.phase === 2, 'gecko phase 2 (' + boss.phase + ')');
+    const runStarts = []; let acidEnd = -1, runEnd = -1;
+    for(let i = 0; i < 2200; i++){
+      player.invuln = 99; player.x = 300; player.y = 150 - player.h; player.vy = 0;
+      const st = boss.state; step(); if(i % 7 === 0) render(1);
+      if(boss.state === 'prep' && st !== 'prep') runStarts.push(i);
+      if(st === 'run' && boss.state === 'climb' && runEnd < 0) runEnd = i;
+      if(runEnd >= 0 && acidEnd < 0 && !fires.some(f => f.acid)) acidEnd = i;
+    }
+    ok(runStarts.length >= 2 && Math.abs(runStarts[1] - runStarts[0] - 900) < 60, 'gecko goes down every 15 s (' + runStarts.join(',') + ')');
+    ok(runEnd > 0 && acidEnd - runEnd >= 295 && acidEnd - runEnd <= 305, 'acid stays 5 s after the run (' + (acidEnd - runEnd) + ' frames)');
+    // real shots: stand level with it on the wall, facing it
+    let got = 0;
+    for(let i = 0; i < 1500 && boss.state !== 'stuck' && boss.state !== 'stuckUp'; i++){
+      player.invuln = 99;
+      if(boss.state === 'crawl' && boss.inv <= 0){
+        player.x = boss.side < 0 ? 200 : 420; player.y = boss.y + 6; player.vy = 0; player.facing = boss.side; player.shotCD = 0; player.chargeT = 0;
+        canShoot = true; if(i % 12 === 0){ input.shootPressed = true; input.shootHeld = false; }
+      }
+      const before = boss.shots || 0; step(); if((boss.shots || 0) > before) got++;
+    }
+    ok(got >= 4 && (boss.state === 'stuckUp' || boss.state === 'stuck'), 'real shots count, it is dazed after 5 (' + got + ' counted, ' + boss.state + ')');
+    run(40); ok(boss.state === 'stuck' && Math.abs(boss.y - 40) < 2, 'stuck at the top of the wall (y ' + Math.round(boss.y) + ')');
     // ---- the yeti: stomps do nothing, dash when dizzy
     newRun(7); clean(); loadRoom(7, CHAPTERS[7].rooms.length - 1); setState('play'); lives = 99; hasDash = true;
     run(330); ok(!cine && boss.state === 'walk', 'yeti walks after its entrance');
@@ -80,31 +112,49 @@ const { chromium } = require('playwright');
     // ---- the magpie: floor and ceiling, then the ficelle, then the ending
     newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99;
     run(330); ok(!cine && boss.state === 'hover', 'magpie hovers after her entrance');
-    // phase 1: she only gets stuck in the ceiling (wait upside down, stomp her from below);
-    // phase 2: her trinket armour only gives way to a dash
-    let mhits = 0, ceilHits = 0, dashHits = 0, floorStuckP1 = false;
-    for(let round = 0; round < 40 && boss.alive && !boss.dying; round++){
-      const p2 = boss.phase >= 2;
-      until(() => !boss.nestT, 300);          // let her shake the nest first
-      if(!p2 && gdir > 0){ setGravity(-1); run(40); }
+    // every phase: when she is stuck, dash into her -> slammed against the side -> dazed -> 10 shots = 1 life
+    let mhits = 0, pushes = 0, shotsFired = 0, stompHurt = false, ceilP1 = true, carried = false;
+    for(let round = 0; round < 80 && boss.alive && !boss.dying; round++){
+      until(() => !boss.nestT, 300);
+      if(boss.phase === 1 && gdir > 0){ setGravity(-1); run(40); }
       if(until(() => boss.state === 'stuck' && boss.inv <= 0 && !cine, 2500) < 0) break;
       const ceil = boss.ceil;
-      if(!p2 && !ceil) floorStuckP1 = true;
-      player.invuln = 0; player.onGround = false; player.standingOn = null;
+      if(boss.phase === 1 && !ceil) ceilP1 = false;
       const hp = boss.hp, ph = boss.phase;
-      if(!p2){ gdir = -1; player.x = boss.x + boss.w / 2 - player.w / 2; player.y = boss.y + boss.h + 30; player.vy = -2; run(14); }
-      else {
-        const d = boss.x + boss.w / 2 < W / 2 ? -1 : 1;
-        gdir = ceil ? -1 : 1; player.y = ceil ? 34 : FLOOR - player.h; player.vy = 0; player.onGround = true;
-        player.x = d < 0 ? boss.x + boss.w + 30 : boss.x - 30 - player.w;
-        player.dashReady = true; player.dashCD = 0; player.facing = -d;
-        input.left = d < 0; input.right = d > 0; input.dashPressed = true;
-        run(14); input.left = input.right = false;
+      // a stomp does nothing
+      if(round === 0){
+        gdir = ceil ? -1 : 1; player.invuln = 0;
+        player.x = boss.x + boss.w / 2 - player.w / 2; player.y = ceil ? boss.y + boss.h + 20 : boss.y - player.h - 20; player.vy = 3 * gdir; player.onGround = false; player.standingOn = null;
+        run(10); if(boss.hp < hp) stompHurt = true;
+        if(boss.state !== 'stuck') continue;
       }
-      if(boss.hp < hp || boss.phase > ph || !boss.alive || boss.dying){ mhits++; if(ceil) ceilHits++; if(p2) dashHits++; }
+      // dash into her, towards the nearest side
+      const d = boss.x + boss.w / 2 < W / 2 ? -1 : 1;
+      gdir = ceil ? -1 : 1; player.y = ceil ? 34 : FLOOR - player.h; player.vy = 0; player.onGround = true; player.invuln = 99;
+      player.x = d < 0 ? boss.x + boss.w + 30 : boss.x - 30 - player.w;
+      player.dashReady = true; player.dashCD = 0; player.facing = d;
+      input.left = d < 0; input.right = d > 0; input.dashPressed = true;
+      run(6); input.left = input.right = false;
+      if(boss.state !== 'pushed' && boss.state !== 'dazed') continue;
+      pushes++;
+      until(() => boss.state === 'dazed', 120);
+      // stand level with her and shoot until she loses a life or comes round
+      const before = boss.shotsLeft;
+      for(let i = 0; i < 400 && boss.state === 'dazed' && boss.hp === hp && boss.phase === ph; i++){
+        player.invuln = 99; gdir = ceil ? -1 : 1;
+        player.y = ceil ? 34 : FLOOR - player.h; player.vy = 0; player.onGround = true;
+        player.x = boss.x + boss.w / 2 < W / 2 ? boss.x + boss.w + 60 : boss.x - 60 - player.w; player.facing = boss.x + boss.w / 2 < W / 2 ? -1 : 1;
+        canShoot = true; if(player.shotCD <= 0){ input.shootPressed = true; shotsFired++; }
+        step(); if(i % 7 === 0) render(1);
+      }
+      if(round > 0 && before < MAGPIE_SHOTS) carried = true;
+      if(boss.hp < hp || boss.phase > ph || !boss.alive || boss.dying) mhits++;
       if(cine) finishCine();
     }
-    ok(boss.dying > 0 && mhits === 11 && ceilHits >= 3 && dashHits === 8 && !floorStuckP1, `magpie beaten: 3 stomps on the ceiling, then 3 + 5 dashes (${mhits} hits, ceiling ${ceilHits}, dash ${dashHits})`);
+    ok(!stompHurt, 'jumping on the magpie does nothing');
+    ok(ceilP1, 'phase 1: she only gets stuck in the ceiling');
+    ok(boss.dying > 0 && mhits === 11 && pushes >= 11, `magpie beaten: dash to slam her, then 10 shots per life (${mhits} lives, ${pushes} slams, ${shotsFired} shots)`);
+    ok(carried || shotsFired >= 110, 'the shot count is kept between dazes');
     run(70);
     setGravity(1);
     ok(key && key.kind === 'ficelle', 'she drops the ficelle aux olives');

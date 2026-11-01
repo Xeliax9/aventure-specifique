@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
   const errs = [];
   p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
   await p.goto(require('url').pathToFileURL(process.env.GAME || require('path').resolve(__dirname, '../../dist/aventure.html')).href); await p.waitForTimeout(400);
-  await p.evaluate(() => localStorage.clear());
+  await p.evaluate(() => { localStorage.clear(); save.demoSeen = {slime:1, swoop:1, arena:1, ascent:1, gecko:1, yeti:1, magpie:1}; });
   await p.reload(); await p.waitForTimeout(400);
   await p.evaluate(() => { window.requestAnimationFrame = () => 0; });
   await p.waitForTimeout(100);
@@ -229,6 +229,10 @@ const { chromium } = require('playwright');
   await T(() => { goPage('settings', -1); for(let i = 0; i < 20; i++) step(); goPage('home', -1); for(let i = 0; i < 20; i++) step(); render(1); });
   await click(470, 230); await steps(80);
   ok(await T(() => state === 'pet'), 'clicking the big XELIAX opens his corner');
+  // food is bought with coins: locked at first, bought once, then free
+  ok(await T(() => { SET.creator = false; save.food = {}; save.bank = 100; const ci = FOODS.findIndex(x => x.id === 'croissant'); return !foodOpen(FOODS[ci]) && foodOpen(FOODS[1]); }), 'croissant locked, baguette free');
+  ok(await T(() => { const ci = FOODS.findIndex(x => x.id === 'croissant'); petGive(ci); return !foodOpen(FOODS[ci]) && save.bank === 100; }), 'not enough coins: the croissant stays locked');
+  ok(await T(() => { const oi = FOODS.findIndex(x => x.id === 'olive'); petGive(oi); for(let i = 0; i < 30; i++) step(); render(1); return foodOpen(FOODS[oi]) && save.bank === 20; }), 'the olive is bought for 80 coins');
   await T(() => { closePet(); for(let i = 0; i < 90; i++) step(); render(1); });
   ok(await T(() => state === 'title' && menu.page === 'home'), 'leaving the corner returns to the home page');
   // signature → credits

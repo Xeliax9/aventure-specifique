@@ -6,43 +6,62 @@ function geckoWallX(b, side){ return side < 0 ? ARENA_WALL : W - ARENA_WALL - b.
 
 function setupS2Boss(b){
   b.t = 0; b.vx = 0; b.vy = 0; b.face = -1;
-  if(b.mode === 'gecko'){ b.side = -1; b.state = 'crawl'; b.stT = 150; b.fireT = 70; b.leaps = 0; }
+  if(b.mode === 'gecko'){ b.side = -1; b.state = 'crawl'; b.stT = 150; b.fireT = 70; b.leaps = 0; b.runT = 480; }
   if(b.mode === 'yeti'){ b.y = FLOOR - b.h; b.state = 'walk'; b.stT = 160; b.fireT = 90; b.warn = []; b.shL = b.shR = YETI_SHIELD; b.jumpCD = 150; }
-  if(b.mode === 'magpie'){ b.state = 'hover'; b.stT = 150; b.fireT = 120; b.hx = b.x; }
+  if(b.mode === 'magpie'){ b.state = 'hover'; b.stT = 150; b.fireT = 90; b.hx = b.x; b.shotsLeft = MAGPIE_SHOTS; }
 }
 
 const YETI_SHIELD = 3;
+// the magpie: dash into her when she is stuck to slam her against the side, then 10 shots take one life
+// (the count is kept if she comes round before the end)
+const MAGPIE_SHOTS = 10, MAGPIE_DAZE = 270;
+const GECKO_RUN_EVERY = 900, GECKO_ACID = 300, GECKO_STUCK_Y = 40;   // 15 s between runs, acid stays 5 s, stuck near the top of the wall
 function updateS2Boss(b){
   const p2 = b.phase === 2;
   b.t++;
   if(b.mode === 'gecko'){
+    // phase 2: every 15 seconds it comes down to the floor (wherever it is on the walls)
+    // the clock keeps ticking all the time (15 s from one run to the next); it goes down as soon as it is back on a wall
+    if(p2 && b.runT > 0) b.runT--;
+    if(p2 && (b.state === 'crawl' || b.state === 'climb') && b.runT <= 0){
+      b.runT = GECKO_RUN_EVERY; b.state = 'prep'; b.stT = 50; b.x = geckoWallX(b, b.side);
+      SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il va descendre !', '#9dff5a');
+    }
+    if(b.state === 'prep'){
+      // it shakes, hisses and its eyes turn red, then lets go of the wall
+      if(b.stT % 8 === 0) burst(b.x + b.w / 2, b.y + b.h / 2, 2, '#9dff5a', 1.4, 16, 0.1, 2.5, 'goo');
+      if(--b.stT <= 0){ b.state = 'runDrop'; b.vy = 0; SFX.bossFlee(); }
+      return;
+    }
     if(b.state === 'crawl'){
       const ty = clamp(player.y - 10, 50, FLOOR - b.h - 40);
       b.y += clamp((ty - b.y) * 0.03, -1.6, 1.6) * (p2 ? 1.5 : 1);
       b.x = geckoWallX(b, b.side);
       if(--b.fireT <= 0){ b.fireT = p2 ? 60 : 90; spitAcid(b, p2 ? 3 : b.hp <= b.enrage ? 2 : 1); }
       if(--b.stT <= 0){
-        if(p2 && (b.runNext = !b.runNext)){ b.state = 'runDrop'; b.vy = 0; SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il descend !', '#9dff5a'); }
-        else startLeap(b);
+        startLeap(b);
       }
     } else if(b.state === 'runDrop'){
       b.vy += 0.6; b.y += b.vy;
       if(b.y >= FLOOR - b.h){
         b.y = FLOOR - b.h; b.vy = 0; b.state = 'run'; b.rdir = -b.side; b.lastAcid = b.x;
         addShake(5); SFX.thud(); dust(b.x + b.w / 2, FLOOR, 10);
-        if(!b.toldRun){ b.toldRun = true; showToast('Il court au sol et laisse de l\'acide : monte sur les plateformes !', 160); }
+        if(!b.toldRun){ b.toldRun = true; showToast('Il court au sol et laisse de l\'acide : accroche-toi aux murs ou monte sur les plateformes !', 170); }
       }
     } else if(b.state === 'run'){
       b.x += b.rdir * 4.6; b.face = b.rdir;
       if(Math.abs(b.x - b.lastAcid) >= 34){
         b.lastAcid = b.x;
-        fires.push({x:clamp(b.x + b.w / 2 - 20, ARENA_WALL, W - ARENA_WALL - 40), w:40, t:0, max:300, seed:Math.random() * 10, acid:true});
+        fires.push({x:clamp(b.x + b.w / 2 - 20, ARENA_WALL, W - ARENA_WALL - 40), w:40, t:0, max:9999, seed:Math.random() * 10, acid:true});
         burst(b.x + b.w / 2, FLOOR - 4, 4, '#7ae04a', 1.6, 20, 0.1, 3, 'goo');
       }
       if(frame % 3 === 0) dust(b.x + b.w / 2 - b.rdir * 18, FLOOR, 2);
       if(b.x <= ARENA_WALL || b.x + b.w >= W - ARENA_WALL){
         b.x = clamp(b.x, ARENA_WALL, W - ARENA_WALL - b.w);
         b.side = b.rdir; b.state = 'climb'; addShake(4); SFX.thud();
+        // the whole acid trail stays exactly 5 seconds from now, then dries up everywhere at once
+        for(const f of fires) if(f.acid) f.max = f.t + GECKO_ACID;
+        b.y = FLOOR - b.h;
       }
     } else if(b.state === 'leap'){
       b.lt++;
@@ -51,15 +70,16 @@ function updateS2Boss(b){
       if(k >= 1){
         b.side = -b.side; b.state = 'crawl'; b.leaps++;
         addShake(4); SFX.thud(); dust(b.side < 0 ? ARENA_WALL : W - ARENA_WALL, b.y + b.h / 2, 8);
-        if(b.leaps >= (p2 ? 3 : 2)){
-          b.leaps = 0;
-          if(p2){ b.state = 'stuck'; b.stT = 180; popup(b.x + b.w / 2, b.y - 8, 'Il est sonné !', '#ffe58a'); SFX.warn(); }
-          else { b.state = 'drop'; b.vy = 0; }
-        } else b.stT = p2 ? 70 : 110;
+        if(!p2 && b.leaps >= 2){ b.leaps = 0; b.state = 'drop'; b.vy = 0; }
+        else { if(p2) b.leaps = 0; b.stT = p2 ? 70 : 110; }
       }
     } else if(b.state === 'drop'){
       b.vy += 0.5; b.y += b.vy;
       if(b.y >= FLOOR - b.h){ b.y = FLOOR - b.h; b.vy = 0; b.state = 'stun'; b.stT = 160; addShake(8); SFX.thud(); dust(b.x + b.w / 2, FLOOR, 12); popup(b.x + b.w / 2, b.y - 8, 'Saute-lui dessus !', '#ffe58a'); }
+    } else if(b.state === 'stuckUp'){
+      b.stT++; b.x = geckoWallX(b, b.side);
+      b.y = lerp(b.sy0, GECKO_STUCK_Y, easeOutCubic(Math.min(1, b.stT / 30)));
+      if(b.stT >= 30){ b.state = 'stuck'; b.stT = 300; }
     } else if(b.state === 'stun' || b.state === 'stuck'){
       if(--b.stT <= 0){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 90; b.fireT = 40; }
     } else if(b.state === 'climb'){
@@ -148,15 +168,15 @@ function updateS2Boss(b){
       b.face = player.x + player.w / 2 > b.x + b.w / 2 ? 1 : -1;
       if(!p2 && --b.fireT <= 0){
         // phase 1: a single shiny trinket thrown at XELIAX now and then
-        b.fireT = 120;
+        b.fireT = 70;
         const cx = b.x + b.w / 2, cy = b.y + b.h / 2, a = Math.atan2(player.y + player.h / 2 - cy, player.x + player.w / 2 - cx);
-        bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a) * 2.6, vy:Math.sin(a) * 2.6, kind:'trinket', rot:0});
+        for(const s of [-0.22, 0, 0.22]) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 2.8, vy:Math.sin(a + s) * 2.8, kind:'trinket', rot:0});
         SFX.bossShot();
       }
       if(b.phase >= 2 && --b.fireT <= 0){
-        b.fireT = p3 ? 85 : 70;
+        b.fireT = p3 ? 50 : 48; b.volley = (b.volley || 0) + 1;
         const cx = b.x + b.w / 2, cy = b.y + b.h / 2, a = Math.atan2(player.y + player.h / 2 - cy, player.x + player.w / 2 - cx);
-        for(const s of (p3 ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3])) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
+        for(const s of (p3 || b.volley % 3 === 0 ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3])) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
         SFX.bossShot();
       }
       if(--b.stT <= 0){
@@ -200,7 +220,8 @@ function updateS2Boss(b){
         addShake(10); SFX.thud();
         const sy = b.ceil ? top - 4 : FLOOR;
         burst(b.x + b.w / 2, sy, 12, '#e8d8ff', 3, 30, b.ceil ? -0.1 : 0.1, 3, 'puff');
-        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 8, b.phase === 2 ? 'Coincée ! Dash !' : 'Coincée ! Saute-lui dessus !', '#ffe58a');
+        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 8, 'Coincée ! Dash dedans !', '#ffe58a');
+        if(!b.toldDash){ b.toldDash = true; showToast('Fonce-lui dedans avec le dash pour l\'écraser contre le bord !', 170); }
         if(p2 && !b.ceil){
           bullets.push({x:b.x - 12, y:FLOOR - 14, w:16, h:14, vx:-3.4, vy:0, kind:'wave'});
           bullets.push({x:b.x + b.w - 4, y:FLOOR - 14, w:16, h:14, vx:3.4, vy:0, kind:'wave'});
@@ -212,6 +233,22 @@ function updateS2Boss(b){
     } else if(b.state === 'stuck'){
       if(frame % 10 === 0) b.shakeX = (Math.random() - 0.5) * 3;
       if(--b.stT <= 0){ b.state = 'rise'; }
+    } else if(b.state === 'pushed'){
+      // slammed along the floor / ceiling by the dash, until she hits the side of the nest
+      b.x += b.vx; b.spin = (b.spin || 0) + 0.45;
+      if(frame % 2 === 0) burst(b.x + b.w / 2, b.y + b.h / 2, 1, '#ffffff', 1.5, 14, 0, 3, 'puff');
+      if(b.x <= 30 || b.x + b.w >= W - 30){
+        b.x = clamp(b.x, 30, W - 30 - b.w); b.face = b.vx > 0 ? 1 : -1;
+        b.state = 'dazed'; b.stT = MAGPIE_DAZE; b.spin = 0;
+        addShake(12); SFX.thud(); SFX.crumble();
+        burst(b.vx > 0 ? W - 30 : 30, b.y + b.h / 2, 16, '#e8d8ff', 3, 30, 0.05, 3, 'puff');
+        for(let i = 0; i < 8; i++) particles.push({x:b.x + b.w / 2, y:b.y + b.h / 2, vx:(Math.random() - 0.5) * 4, vy:(Math.random() - 0.5) * 4, life:50, max:50, color:i % 2 ? '#1a1430' : '#ffffff', grav:0.05, size:3, type:'confetti', rot:Math.random() * TAU, vr:0.3, drag:0.95});
+        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 10, 'Sonnée ! Tire-lui dessus !', '#ffe58a');
+        if(!b.toldShoot){ b.toldShoot = true; showToast('Elle est sonnée : tire-lui dessus ! ' + MAGPIE_SHOTS + ' tirs = 1 point de vie', 190); }
+      }
+    } else if(b.state === 'dazed'){
+      if(frame % 8 === 0) b.shakeX = (Math.random() - 0.5) * 2;
+      if(--b.stT <= 0){ b.state = 'rise'; popup(b.x + b.w / 2, b.y - 10, 'Elle reprend ses esprits !', '#ff9ac0'); SFX.warn(); }
     } else if(b.state === 'rise'){
       b.y += (150 - b.y) * 0.08;
       if(Math.abs(b.y - 150) < 4){ b.state = 'hover'; b.stT = p3 ? 60 : p2 ? 75 : 95; b.fireT = 45; }
@@ -219,6 +256,16 @@ function updateS2Boss(b){
   }
 }
 
+// phase 2: each shot on the walls counts; at 5 it slips up to the very top of the wall and stays stuck there
+const GECKO_SHOTS = 5;
+function geckoShot(b, n){
+  b.shots = Math.min(GECKO_SHOTS, (b.shots || 0) + n); b.hitT = 6;
+  SFX.ting(); addShake(1.5);
+  if(b.shots < GECKO_SHOTS){ popup(b.x + b.w / 2, b.y - 10, b.shots + ' / ' + GECKO_SHOTS, '#9dff5a'); return; }
+  b.shots = 0; b.state = 'stuckUp'; b.stT = 0; b.sy0 = b.y; b.x = geckoWallX(b, b.side);
+  popup(b.x + b.w / 2, b.y - 8, 'Il est sonné !', '#ffe58a'); SFX.warn(); addShake(5);
+  if(!b.toldWall){ b.toldWall = true; showToast('Il est collé en haut du mur : grimpe le mur et saute-lui dessus !', 190); }
+}
 function startLeap(b){
   b.state = 'leap'; b.lt = 0; b.ldur = b.phase === 2 ? 42 : 54;
   b.lx0 = b.x; b.ly0 = b.y; b.lx1 = geckoWallX(b, -b.side); b.ly1 = clamp(player.y - 20, 60, 230);
@@ -235,9 +282,17 @@ function spitAcid(b, n){
 
 // when can it be hit, and when is it harmless
 // the magpie can be stomped only in phase 1 (stuck in the ceiling); in phase 2 her trinket armour only gives way to a dash
-function bossWeak(b){ return (b.mode === 'gecko' && (b.state === 'stun' || b.state === 'stuck')) || (b.mode === 'magpie' && b.state === 'stuck' && b.phase !== 2); }
+function bossWeak(b){ return b.mode === 'gecko' && (b.state === 'stun' || b.state === 'stuck' || b.state === 'stuckUp'); }
 function bossDashWeak(b){ return bossWeak(b) || (b.mode === 'yeti' && b.state === 'dizzy') || (b.mode === 'magpie' && b.state === 'stuck'); }
-function bossHarmless(b){ return bossDashWeak(b) || (S2_BOSS.has(b.mode) && b.inv > 0); }
+function bossHarmless(b){ return bossDashWeak(b) || (b.mode === 'magpie' && (b.state === 'pushed' || b.state === 'dazed')) || (S2_BOSS.has(b.mode) && b.inv > 0); }
+// a shot on the dazed magpie: 10 of them take one life
+function magpieShot(b, n){
+  b.shotsLeft = Math.max(0, (b.shotsLeft || MAGPIE_SHOTS) - n); b.hitT = 5;
+  SFX.ting(); addShake(1.2);
+  if(b.shotsLeft > 0){ popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 14 : b.y - 8, String(b.shotsLeft), '#ffe58a'); return; }
+  b.shotsLeft = MAGPIE_SHOTS;
+  bossDamage(); bossHitReact(b);
+}
 function bossHitReact(b){
   if(!b.alive || cine || b.dying) return;
   if(b.mode === 'gecko'){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 90; b.fireT = 60; }
@@ -251,7 +306,14 @@ function bossContact2(prevBottom, prevTop){
   if(!overlap(player, b)) return false;
   const G = gdir;
   const onTop = G > 0 ? (player.vy > 0 && prevBottom <= b.y + 16) : (player.vy < 0 && prevTop >= b.y + b.h - 16);
-  if(player.dashT > 0 && bossDashWeak(b)){
+  if(player.dashT > 0 && b.mode === 'magpie' && b.state === 'stuck'){
+    // the dash slams her along the floor / ceiling towards the side of the nest
+    b.state = 'pushed'; b.vx = player.dashDir * 9; b.face = player.dashDir;
+    addShake(6); SFX.stomp(); burst(b.x + b.w / 2, b.y + b.h / 2, 10, '#ffffff', 3, 20, 0, 3, 'star');
+    player.dashT = 0; player.vx = -player.dashDir * 3.5; player.vy = -5 * G; player.noCut = true;
+    return false;
+  }
+  if(player.dashT > 0 && bossDashWeak(b) && b.mode !== 'magpie'){
     const fromLeft = player.x + player.w / 2 < b.x + b.w / 2;
     if(b.mode === 'yeti' && (fromLeft ? b.shL : b.shR) > 0){
       SFX.ting(); burst(fromLeft ? b.x : b.x + b.w, b.y + b.h / 2, 8, '#bfe6ff', 2.4, 20, 0.05, 3, 'star');
@@ -264,7 +326,7 @@ function bossContact2(prevBottom, prevTop){
   if(onTop){
     if(bossWeak(b) && b.inv <= 0){ bossDamage(); bossHitReact(b); }
     else if(b.mode === 'yeti'){ SFX.ting(); if(toast.t <= 0) showToast('Son casque de glace protège sa tête : utilise le dash !', 110); }
-    else if(b.mode === 'magpie' && b.phase === 2){ SFX.ting(); if(toast.t <= 0) showToast('Son armure de babioles la protège : fonce-lui dedans avec le dash !', 120); }
+    else if(b.mode === 'magpie'){ SFX.ting(); if(toast.t <= 0) showToast('Lui sauter dessus ne sert à rien : dash dedans quand elle est coincée, puis tire !', 140); }
     player.y = G > 0 ? b.y - player.h : b.y + b.h;
     player.vy = -10.5 * G; player.noCut = true; player.usedDJ = false; player.dashReady = true;
     player.sx = 0.75; player.sy = 1.3;
@@ -290,8 +352,11 @@ function drawGecko(b){
   const x = ix(b), y = iy(b), cx = x + b.w / 2, cy = y + b.h / 2;
   const p2 = b.phase === 2, hit = b.hitT > 0 || (b.inv > 0 && Math.floor(b.inv / 4) % 2 === 0);
   const body = hit ? '#ffffff' : p2 ? '#ef7a3c' : '#5fd36a', dark = p2 ? '#6a2410' : '#1f6a2c', belly = p2 ? '#ffd2a0' : '#e8f59a';
-  const dazed = b.state === 'stun' || b.state === 'stuck';
+  const dazed = b.state === 'stun' || b.state === 'stuck' || b.state === 'stuckUp';
+  const prep = b.state === 'prep', run = b.state === 'run', angryEyes = prep || run || b.state === 'runDrop';
   ctx.save(); ctx.translate(cx, cy);
+  // wind-up before the run: it trembles harder and harder
+  if(prep){ const k = 1 - b.stT / 50; ctx.translate((Math.random() - 0.5) * 5 * k, (Math.random() - 0.5) * 3 * k); }
   // orientation: along the wall (head up, feet on the wall), on the floor, or following the leap
   if(b.state === 'leap'){
     const vx = (b.lx1 - b.lx0) / b.ldur, k = b.lt / b.ldur, vy = (b.ly1 - b.ly0) / b.ldur - Math.cos(k * Math.PI) * Math.PI * 80 / b.ldur;
@@ -299,10 +364,16 @@ function drawGecko(b){
   } else if(b.state === 'run' || b.state === 'runDrop'){ if((b.state === 'run' ? b.rdir : -b.side) < 0) ctx.scale(-1, 1); }
   else if(b.state === 'stun' || b.state === 'drop'){ if(b.side > 0) ctx.scale(-1, 1); }
   else { ctx.rotate(-Math.PI / 2); if(b.side < 0) ctx.scale(1, -1); }
-  const wig = Math.sin(b.t * 0.3) * (b.state === 'crawl' || b.state === 'climb' ? 1 : 0.2);
+  const wig = run ? Math.sin(b.t * 0.9) * 1.7 : Math.sin(b.t * 0.3) * (b.state === 'crawl' || b.state === 'climb' ? 1 : prep ? 0.6 : 0.2);
+  // breathing, stretched in the air, squashed against the wall when dazed
+  const breath = 1 + Math.sin(b.t * 0.08) * 0.04;
+  if(b.state === 'leap' || b.state === 'runDrop') ctx.scale(1.15, 0.86);
+  else if(dazed) ctx.scale(0.94, 1.1);
+  else ctx.scale(breath, 1 / breath);
+  const lash = run ? Math.sin(b.t * 0.7) * 10 : prep ? Math.sin(b.t * 1.2) * 6 : 0;
   // tail
   ctx.strokeStyle = dark; ctx.lineWidth = 7; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(-14, 2); ctx.quadraticCurveTo(-30, 4 + wig * 6, -34, -6 + wig * 4); ctx.quadraticCurveTo(-36, -14, -28, -14); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-14, 2); ctx.quadraticCurveTo(-30, 4 + wig * 6 + lash, -34, -6 + wig * 4 + lash * 0.6); ctx.quadraticCurveTo(-36, -14 + lash * 0.4, -28, -14); ctx.stroke();
   ctx.strokeStyle = body; ctx.lineWidth = 4.5; ctx.stroke();
   // legs with sticky toe pads
   for(const [lx, s] of [[-8, 1], [10, -1]]) for(const side of [-1, 1]){
@@ -321,17 +392,41 @@ function drawGecko(b){
   ctx.fillStyle = body; ctx.strokeStyle = dark; ctx.lineWidth = 1.8;
   ctx.beginPath(); ctx.ellipse(20, -1, 11, 9, 0, 0, TAU); ctx.fill(); ctx.stroke();
   for(const ey of [-5, 4]){
-    ctx.fillStyle = '#ffe14d'; ctx.beginPath(); ctx.arc(23, ey, 4.4, 0, TAU); ctx.fill(); ctx.strokeStyle = dark; ctx.lineWidth = 1.2; ctx.stroke();
+    const blink = !dazed && !angryEyes && b.t % 170 < 6;
+    ctx.fillStyle = angryEyes ? '#ff5a3c' : '#ffe14d'; ctx.beginPath(); ctx.ellipse(23, ey, 4.4, blink ? 0.8 : 4.4, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = dark; ctx.lineWidth = 1.2; ctx.stroke();
+    if(blink) continue;
     if(dazed){
       ctx.strokeStyle = dark; ctx.lineWidth = 1; ctx.beginPath();
       for(let k = 0; k < 14; k++){ const a = k * 0.7 + frame * 0.25, r = k * 0.28; ctx.lineTo(23 + Math.cos(a) * r, ey + Math.sin(a) * r); }
       ctx.stroke();
     } else { ctx.fillStyle = '#14082a'; ctx.fillRect(22.4, ey - 3.4, 1.6, 6.8); }
   }
-  ctx.strokeStyle = dark; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(30, 2); ctx.quadraticCurveTo(26, 6, 21, 5); ctx.stroke();
+  if(angryEyes){
+    // mouth wide open, hissing
+    ctx.fillStyle = '#7a1630'; ctx.beginPath(); ctx.moveTo(31, 0); ctx.lineTo(22, 3); ctx.lineTo(30, 7); ctx.closePath(); ctx.fill();
+  } else { ctx.strokeStyle = dark; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(30, 2); ctx.quadraticCurveTo(26, 6, 21, 5); ctx.stroke(); }
+  // tongue: a quick flick now and then, hanging out when dazed
+  const flick = b.t % 130, tl = dazed ? 7 + Math.sin(frame * 0.1) * 1.5 : flick < 14 ? Math.sin(flick / 14 * Math.PI) * 14 : 0;
+  if(tl > 0.5){
+    ctx.strokeStyle = '#ff6b9a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(30, 3); ctx.lineTo(30 + tl, 3 + (dazed ? tl * 0.6 : 0)); ctx.stroke();
+    if(!dazed){ ctx.beginPath(); ctx.moveTo(30 + tl, 3); ctx.lineTo(32 + tl, 1); ctx.moveTo(30 + tl, 3); ctx.lineTo(32 + tl, 5); ctx.stroke(); }
+  }
   if(b.state === 'crawl' && b.fireT < 14){ ctx.fillStyle = '#9dff5a'; ctx.beginPath(); ctx.arc(31, 2, 3 + (14 - b.fireT) * 0.2, 0, TAU); ctx.fill(); }
   ctx.restore();
-  if(dazed) for(let i = 0; i < 3; i++){ const a = frame * 0.12 + i * TAU / 3; ctx.fillStyle = '#ffe066'; star(cx + Math.cos(a) * 22, y - 8 + Math.sin(a) * 5, 3.4, frame * 0.1); }
+  if(dazed){
+    for(let i = 0; i < 3; i++){ const a = frame * 0.12 + i * TAU / 3; ctx.fillStyle = '#ffe066'; star(cx + Math.cos(a) * 22, y - 8 + Math.sin(a) * 5, 3.4, frame * 0.1); }
+    // sweat drops
+    for(let i = 0; i < 2; i++){ const k = ((frame + i * 25) % 50) / 50; ctx.fillStyle = 'rgba(140,200,255,' + (1 - k) + ')'; ctx.beginPath(); ctx.arc(cx + (i ? 16 : -16), y + 4 + k * 14, 2.4, 0, TAU); ctx.fill(); }
+  }
+  // phase 2: how many shots it has taken (5 = dazed)
+  if(p2 && b.shots > 0 && !dazed){
+    for(let i = 0; i < GECKO_SHOTS; i++){
+      ctx.fillStyle = i < b.shots ? '#9dff5a' : 'rgba(30,40,30,0.45)';
+      ctx.beginPath(); ctx.arc(cx - 16 + i * 8, y - 12, 3, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#1f3a1f'; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
 }
 
 function drawYeti(b){
@@ -402,11 +497,11 @@ function drawYeti(b){
 }
 
 function drawMagpie(b){
-  const x = ix(b) + (b.state === 'stuck' ? (b.shakeX || 0) : 0), y = iy(b), cx = x + b.w / 2, cy = y + b.h / 2;
+  const x = ix(b) + (b.state === 'stuck' || b.state === 'dazed' ? (b.shakeX || 0) : 0), y = iy(b), cx = x + b.w / 2, cy = y + b.h / 2;
   const p2 = b.phase === 2, hit = b.hitT > 0 || (b.inv > 0 && Math.floor(b.inv / 4) % 2 === 0);
   const p3 = b.phase === 3, black = hit ? '#ffffff' : '#1a1430', blue = hit ? '#ffffff' : p3 ? '#e0242a' : p2 ? '#b8306a' : '#2f5ad8';
   if(p3){ softGlow(cx, cy, 44, 34, '255,60,60', 0.25 + 0.1 * Math.sin(frame * 0.2)); if(frame % 5 === 0) particles.push({x:cx + (Math.random() - 0.5) * 36, y:cy + (Math.random() - 0.5) * 24, vx:(Math.random() - 0.5) * 1.2, vy:-0.8, life:26, max:26, color:Math.random() < 0.5 ? '#ff3d3d' : '#ffb03d', grav:-0.02, size:2.6, type:'dot'}); }
-  const stuck = b.state === 'stuck', dive = b.state === 'dive', aim = b.state === 'aim';
+  const stuck = b.state === 'stuck' || b.state === 'dazed', dive = b.state === 'dive', aim = b.state === 'aim', pushed = b.state === 'pushed';
   if(aim){
     // a dotted line to where she's about to dive
     ctx.strokeStyle = `rgba(255,80,80,${0.5 + 0.4 * Math.sin(frame * 0.5)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
@@ -419,6 +514,8 @@ function drawMagpie(b){
   let ang = 0;
   if(dive) ang = Math.atan2(b.vy, Math.abs(b.vx) + 0.001) * (b.vx < 0 ? -1 : 1);
   if(stuck) ang = b.ceil ? -1.25 : 1.25;
+  if(pushed) ang = b.spin || 0;
+  if(b.state === 'dazed'){ ang = b.ceil ? -0.5 : 0.5; ctx.scale(0.85, 1.12); }   // squashed against the side
   ctx.scale(b.face || 1, 1);
   ctx.rotate(ang);
   const flap = stuck ? Math.sin(frame * 0.8) * 0.9 : dive ? -0.9 : Math.sin(frame * 0.3) * 0.8;
@@ -462,6 +559,16 @@ function drawMagpie(b){
   ctx.fillStyle = '#4a4a5a'; ctx.beginPath(); ctx.moveTo(23, -8); ctx.lineTo(34, -5); ctx.lineTo(23, -3); ctx.closePath(); ctx.fill();
   ctx.restore();
   if(stuck) for(let i = 0; i < 3; i++){ const a = frame * 0.12 + i * TAU / 3; ctx.fillStyle = '#ffe066'; star(cx + Math.cos(a) * 22, (b.ceil ? y + b.h + 10 : y - 8) + Math.sin(a) * 5, 3.4, frame * 0.1); }
+  // how many shots are still needed for the next life (kept from one daze to the next)
+  if((b.state === 'dazed' || b.state === 'stuck' || pushed) && !b.dying){
+    const py = b.ceil ? y + b.h + 24 : y - 22, n = MAGPIE_SHOTS, left = b.shotsLeft || n;
+    for(let i = 0; i < n; i++){
+      ctx.fillStyle = i < left ? '#ffd54a' : 'rgba(40,30,60,0.4)';
+      ctx.beginPath(); ctx.arc(cx - (n - 1) * 3.5 + i * 7, py, 2.6, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#3a2a10'; ctx.lineWidth = 0.8; ctx.stroke();
+    }
+    if(b.state === 'dazed'){ const k = b.stT / MAGPIE_DAZE; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(cx - 18, py + (b.ceil ? 6 : -9), 36 * k, 3); }
+  }
 }
 
 
