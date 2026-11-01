@@ -262,7 +262,7 @@ const STEP = 1000 / 60;
 const GRAVITY = 0.55, MAX_FALL = 12, JUMP_V = -10.6, DJ_V = -9.2, SPRING_V = -15;
 const RUN = 3.6, ACCEL_GROUND = 0.35, ACCEL_AIR = 0.2;
 const COYOTE = 6, BUFFER = 7;
-const SHOT_SPEED = 7.5, SHOT_COOLDOWN = 16;
+const SHOT_SPEED = 7.5, SHOT_COOLDOWN = 16, CHARGE_FULL = 40;
 const FLOOR = 340;
 // season 2: wall slide / wall jump, dash, slippery ice
 const WALL_SLIDE = 2.2, WJ_VX = 4.8, WJ_VY = -9.9, WALL_LOCK = 11, WALL_COY = 6;
@@ -708,149 +708,131 @@ const CHAPTERS = [
     ],
   },
   {
-    name:'Les Étoiles', color:'#ffd54a', sky:['#070b26', '#2a1f5c'], deco:'night', tint:'#14103a', bonus:true, grants:{dj:true, shoot:true},
+    name:'Les Étoiles', color:'#ffd54a', sky:['#070b26', '#2a1f5c'], deco:'night', tint:'#14103a', bonus:true, parTime:100000, grants:{dj:true, shoot:true},
     rooms:[
       {
-        name:'Le Sentier des Étoiles',
-        width:2400,
+        name:'La Course des Étoiles',
+        width:6434,
         start:{x:24, y:300},
         platforms:[
-          {x:0, y:340, w:110, h:20},
-          {x:2250, y:300, w:150, h:60},
-          {x:250, y:300, w:40},
-          {x:430, y:240, w:40, crumble:true},
-          {x:610, y:280, w:44, move:{axis:'y', min:220, max:300, speed:1.5}},
-          {x:800, y:300, w:40, crumble:true},
-          {x:990, y:300, w:50, move:{axis:'x', min:970, max:1080, speed:2}},
-          {x:1250, y:290, w:40, crumble:true},
-          {x:1430, y:250, w:60},
-          {x:1640, y:200, w:40, crumble:true},
-          {x:1810, y:250, w:44, move:{axis:'y', min:170, max:280, speed:1.6}},
-          {x:1990, y:270, w:40, crumble:true},
+          {x:0, y:340, w:180, h:20, solid:true},
+          {x:290, y:290, w:44, crumble:true},
+          {x:455, y:245, w:44, crumble:true},
+          {x:620, y:290, w:44, crumble:true},
+          {x:785, y:250, w:44, crumble:true},
+          {x:990, y:300, w:120, h:60, solid:true},
+          {x:1200, y:280, w:50, move:{axis:'y', min:200, max:300, speed:1.8}},
+          {x:1370, y:230, w:50, move:{axis:'y', min:160, max:290, speed:2}},
+          {x:1530, y:340, w:520, h:20, solid:true},
+          {x:1530, y:0, w:520, h:236, solid:true},
+          {x:2180, y:300, w:50, h:60, solid:true},
+          {x:2355, y:250, w:50, h:110, solid:true},
+          {x:2530, y:300, w:50, h:60, solid:true},
+          {x:2705, y:220, w:60, h:140, solid:true},
+          {x:2940, y:300, w:140, h:60, solid:true},
+          {x:3295, y:300, w:100, h:60, solid:true},
+          {x:3610, y:270, w:100, h:90, solid:true},
+          {x:3770, y:300, w:50, move:{axis:'x', min:3750, max:3970, speed:2.2}},
+          {x:4110, y:270, w:50, move:{axis:'x', min:4070, max:4310, speed:2.4}},
+          {x:4070, y:0, w:300, h:150, solid:true},
+          {x:4410, y:340, w:160, h:20, solid:true},
+          {x:4640, y:300, w:44, crumble:true},
+          {x:4760, y:250, w:44, crumble:true},
+          {x:4880, y:200, w:44, crumble:true},
+          {x:5000, y:150, w:44, crumble:true},
+          {x:5180, y:200, w:120, h:20},
+          {x:5450, y:260, w:46, h:100, solid:true},
+          {x:5636, y:300, w:46, h:60, solid:true},
+          {x:5832, y:250, w:46, h:110, solid:true},
+          {x:6038, y:290, w:46, h:70, solid:true},
+          {x:6214, y:340, w:220, h:20, solid:true},
         ],
-        spikes:[{x:760, y:150, w:560, down:true}], turrets:[{x:1700, y:80, dir:'aim', rate:125, hp:3}],
-        bats:[
-          {x:520, y:150, ax:70, ay:35, speed:0.045},
-          {x:1540, y:140, ax:70, ay:30, speed:0.05},
-          {x:2120, y:150, ax:80, ay:35, speed:0.05},
-        ],
-        signs:[{x:40, y:340, text:'Défi bonus : chaque saut compte'}],
-        checkpoints:[{x:1436, y:250}],
-        coins:[[180, 280], [270, 270], [360, 230], [450, 210], [540, 240], [632, 190], [720, 250], [820, 270], [905, 270], [1015, 270], [1180, 260], [1270, 260], [1350, 240], [1550, 200], [1660, 170], [1740, 200], [1832, 140], [1920, 220], [2010, 240], [2130, 250], [2320, 270]],
-        door:{x:2340, y:260},
-      },
-      {
-        name:'La Cheminée',
-        height:1620,
-        start:{x:200, y:1540},
-        platforms:[
-          {x:0, y:1580, w:640, h:40},
-          {x:120, y:1300, w:330, h:24, solid:true},
-          {x:190, y:1020, w:330, h:24, solid:true},
-          {x:120, y:740, w:330, h:24, solid:true},
-          {x:190, y:460, w:330, h:24, solid:true},
-          {x:120, y:180, w:330, h:24, solid:true},
-          {x:300, y:1490, w:44},
-          {x:470, y:1400, w:40, crumble:true},
-          {x:300, y:1210, w:44, crumble:true},
-          {x:130, y:1120, w:40},
-          {x:300, y:930, w:44, move:{axis:'x', min:260, max:350, speed:1.4}},
-          {x:470, y:840, w:40, crumble:true},
-          {x:300, y:650, w:44},
-          {x:130, y:560, w:40, crumble:true},
-          {x:300, y:370, w:44, move:{axis:'y', min:340, max:400, speed:1.2}},
-          {x:470, y:280, w:40, crumble:true},
-        ],
-        walls:[{x:0, y:-200, w:120, h:1780}, {x:520, y:-200, w:120, h:1780}],
         spikes:[
-          {x:250, y:1300, w:60},
-          {x:330, y:1020, w:60},
-          {x:250, y:740, w:60},
-          {x:330, y:460, w:60},
-          {x:250, y:180, w:50},
+          {x:1530, y:236, w:520, down:true},
+          {x:4070, y:150, w:300, down:true},
         ],
         turrets:[
-          {x:120, y:1276, dir:'right', rate:110, hp:3},
-          {x:496, y:996, dir:'left', rate:105, hp:3},
-          {x:120, y:716, dir:'right', rate:100, hp:3},
-          {x:496, y:436, dir:'left', rate:95, hp:3},
+          {x:2690, y:60, dir:'aim', rate:95, hp:3},
+          {x:5460, y:90, dir:'aim', rate:100, hp:3},
+        ],
+        enemies:[
+          {on:8, from:150, to:300, speed:1.6},
+          {on:8, from:330, to:500, speed:1.8},
+          {on:25, from:0, to:120, speed:1.6},
         ],
         bats:[
-          {x:320, y:1160, ax:100, ay:25, speed:0.045},
-          {x:320, y:880, ax:110, ay:25, speed:0.05},
-          {x:320, y:600, ax:110, ay:25, speed:0.05},
-          {x:320, y:320, ax:100, ay:25, speed:0.055},
+          {x:510, y:150, ax:80, ay:30, speed:0.05},
+          {x:3190, y:230, ax:30, ay:40, speed:0.06},
+          {x:3505, y:230, ax:30, ay:40, speed:0.06},
+          {x:5784, y:170, ax:110, ay:30, speed:0.05},
         ],
-        checkpoints:[{x:400, y:1020}, {x:400, y:460}],
-        coins:[[322, 1460], [490, 1370], [490, 1330], [322, 1180], [150, 1090], [150, 1050], [322, 900], [490, 810], [490, 770], [322, 620], [150, 530], [150, 490], [322, 340], [490, 250], [490, 210], [300, 150], [230, 150]],
-        door:{x:150, y:140},
+        signs:[{x:60, y:340, text:'Défi : finis le plus vite possible !'}, {x:1550, y:340, text:'Plafond piquant : petits sauts et tirs !'}],
+        checkpoints:[{x:1550, y:340}, {x:3650, y:270}],
+        coins:[[90, 310], [312, 260], [477, 215], [642, 260], [807, 220], [1050, 270], [1225, 170], [1395, 130], [1790, 310], [2205, 270], [2380, 220], [2555, 270], [2735, 190], [3010, 270], [3190, 200], [3345, 270], [3505, 200], [3660, 240], [3860, 260], [4190, 230], [4490, 310], [4662, 270], [4782, 220], [4902, 170], [5022, 120], [5473, 230], [5659, 270], [5855, 220], [6061, 260], [6324, 310]],
+        door:{x:6354, y:300},
       },
       {
-        name:'Le Pont des Comètes',
-        width:2400,
-        start:{x:20, y:300},
-        platforms:[
-          {x:0, y:340, w:120, h:20},
-          {x:2180, y:300, w:220, h:60},
-          {x:260, y:300, w:50, move:{axis:'y', min:230, max:310, speed:1.6}},
-          {x:450, y:250, w:80},
-          {x:670, y:210, w:40, crumble:true},
-          {x:850, y:260, w:56, move:{axis:'x', min:850, max:960, speed:2.2}},
-          {x:1150, y:300, w:100},
-          {x:1390, y:250, w:44},
-          {x:1570, y:190, w:40, crumble:true},
-          {x:1750, y:240, w:56, move:{axis:'y', min:160, max:290, speed:1.7}},
-          {x:1945, y:230, w:40, crumble:true},
-        ],
-        spikes:[
-          {x:420, y:140, w:300, down:true},
-          {x:1360, y:110, w:260, down:true},
-          {x:1880, y:140, w:130, down:true},
-        ],
-        turrets:[{x:1080, y:96, dir:'aim', rate:120, hp:2}, {x:2110, y:110, dir:'aim', rate:115, hp:2}], enemies:[{on:3, from:0, to:56, speed:1.4}, {on:6, from:0, to:76, speed:1.6}], bats:[{x:770, y:150, ax:70, ay:30, speed:0.05}, {x:1660, y:280, ax:70, ay:25, speed:0.05}], signs:[{x:40, y:340, text:'Pics au plafond : petits sauts !'}],
-        checkpoints:[{x:1160, y:300}],
-        coins:[[190, 280], [285, 200], [390, 240], [490, 220], [600, 220], [690, 180], [780, 220], [878, 230], [1050, 250], [1200, 270], [1320, 250], [1412, 220], [1490, 210], [1590, 160], [1680, 200], [1778, 130], [1870, 220], [1965, 200], [2100, 240], [2320, 270]],
-        door:{x:2340, y:260},
-      },
-      {
-        name:'Le Sommet',
-        height:1800, finale:true, gold:'gold',
-        lava:{start:1860, speed:0.5, min:140, delay:170},
+        name:'Le Grand Sommet',
+        height:3600,
+        finale:true,
+        gold:'gold',
+        lava:{start:3660, speed:0.62, min:140, delay:150},
         keySpot:{x:290, y:84},
-        start:{x:300, y:1740},
+        start:{x:300, y:3540},
         platforms:[
-          {x:0, y:1780, w:640, h:20},
-          {x:180, y:1675, w:60},
-          {x:360, y:1570, w:56, crumble:true},
-          {x:520, y:1465, w:60},
-          {x:330, y:1360, w:60, move:{axis:'x', min:300, max:400, speed:1.4}},
-          {x:120, y:1255, w:56},
-          {x:270, y:1150, w:50, crumble:true},
-          {x:450, y:1045, w:60},
-          {x:560, y:940, w:56, move:{axis:'y', min:910, max:975, speed:1.1}},
-          {x:380, y:835, w:50, crumble:true},
-          {x:200, y:730, w:60},
-          {x:40, y:625, w:60, move:{axis:'x', min:30, max:130, speed:1.5}},
-          {x:240, y:520, w:50, crumble:true},
-          {x:420, y:415, w:60},
-          {x:560, y:310, w:50, move:{axis:'y', min:290, max:335, speed:1.2}},
-          {x:390, y:205, w:50, crumble:true},
+          {x:0, y:3580, w:640, h:20},
+          {x:170, y:3475, w:56},
+          {x:360, y:3371, w:56},
+          {x:520, y:3267, w:50, crumble:true},
+          {x:330, y:3163, w:56, move:{axis:'x', min:270, max:390, speed:1.6}},
+          {x:130, y:3059, w:56, move:{axis:'y', min:3029, max:3089, speed:1.3}},
+          {x:280, y:2955, w:50, crumble:true},
+          {x:470, y:2851, w:56},
+          {x:560, y:2747, w:56},
+          {x:380, y:2643, w:50, crumble:true},
+          {x:190, y:2539, w:56, move:{axis:'x', min:130, max:250, speed:1.6}},
+          {x:60, y:2435, w:56, move:{axis:'y', min:2405, max:2465, speed:1.3}},
+          {x:250, y:2331, w:50, crumble:true},
+          {x:440, y:2227, w:56},
+          {x:170, y:2123, w:56},
+          {x:360, y:2019, w:50, crumble:true},
+          {x:520, y:1915, w:56, move:{axis:'x', min:460, max:570, speed:1.6}},
+          {x:330, y:1811, w:56, move:{axis:'y', min:1781, max:1841, speed:1.3}},
+          {x:130, y:1707, w:50, crumble:true},
+          {x:280, y:1603, w:56},
+          {x:470, y:1499, w:56},
+          {x:560, y:1395, w:50, crumble:true},
+          {x:380, y:1291, w:56, move:{axis:'x', min:320, max:440, speed:1.6}},
+          {x:190, y:1187, w:56, move:{axis:'y', min:1157, max:1217, speed:1.3}},
+          {x:60, y:1083, w:50, crumble:true},
+          {x:250, y:979, w:56},
+          {x:440, y:875, w:56},
+          {x:170, y:771, w:50, crumble:true},
+          {x:360, y:667, w:56, move:{axis:'x', min:300, max:420, speed:1.6}},
+          {x:520, y:563, w:56, move:{axis:'y', min:533, max:593, speed:1.3}},
+          {x:330, y:459, w:50, crumble:true},
+          {x:130, y:355, w:56},
+          {x:280, y:251, w:56},
           {x:200, y:100, w:180},
         ],
         turrets:[
-          {x:0, y:1330, dir:'right', rate:130},
-          {x:616, y:1120, dir:'left', rate:120},
-          {x:0, y:810, dir:'right', rate:115},
-          {x:616, y:490, dir:'left', rate:110},
+          {x:0, y:2989, dir:'right', rate:115},
+          {x:616, y:2469, dir:'left', rate:115},
+          {x:0, y:1949, dir:'right', rate:115},
+          {x:616, y:1429, dir:'left', rate:115},
+          {x:0, y:909, dir:'right', rate:115},
+          {x:616, y:389, dir:'left', rate:115},
         ],
         bats:[
-          {x:300, y:1500, ax:110, ay:25, speed:0.04},
-          {x:330, y:1090, ax:120, ay:25, speed:0.045},
-          {x:300, y:670, ax:120, ay:25, speed:0.05},
-          {x:300, y:260, ax:110, ay:25, speed:0.05},
+          {x:320, y:3113, ax:130, ay:25, speed:0.05},
+          {x:320, y:2385, ax:130, ay:25, speed:0.05},
+          {x:320, y:1657, ax:130, ay:25, speed:0.05},
+          {x:320, y:929, ax:130, ay:25, speed:0.05},
+          {x:320, y:201, ax:130, ay:25, speed:0.05},
         ],
-        signs:[{x:430, y:1780, text:'La lave monte : grimpe jusqu\'à la ficelle dorée !'}],
-        coins:[[210, 1645], [386, 1540], [550, 1435], [360, 1330], [148, 1225], [295, 1120], [480, 1015], [588, 880], [405, 805], [230, 700], [70, 595], [265, 490], [450, 385], [585, 260], [415, 175], [250, 70], [330, 70]],
+        signs:[{x:430, y:3580, text:'La lave monte vite : fonce jusqu\'à la ficelle dorée !'}],
+        checkpoints:[{x:270, y:2331}, {x:210, y:1187}],
+        coins:[[198, 3445], [388, 3341], [548, 3237], [358, 3133], [158, 3029], [308, 2925], [498, 2821], [588, 2717], [408, 2613], [218, 2509], [88, 2405], [278, 2301], [468, 2197], [198, 2093], [388, 1989], [548, 1885], [358, 1781], [158, 1677], [308, 1573], [498, 1469], [588, 1365], [408, 1261], [218, 1157], [88, 1053], [278, 949], [468, 845], [198, 741], [388, 637], [548, 533], [358, 429], [158, 325], [308, 221]],
         door:null,
       },
     ],
@@ -995,40 +977,37 @@ const CHAPTERS = [
       },
       {
         name:'Les Parachutes',
-        width:2500,
+        width:2510,
         start:{x:40, y:280},
         platforms:[
-          {x:0, y:320, w:420, h:40, solid:true},
-          {x:450, y:230, w:110, fall:true, lift:true},
-          {x:660, y:190, w:110, fall:true, lift:true},
-          {x:870, y:160, w:110, fall:true, lift:true},
-          {x:1080, y:320, w:700, h:40, solid:true},
-          {x:1100, y:250, w:70, h:20},
-          {x:1190, y:180, w:150, h:20},
-          {x:1340, y:180, w:96, fall:true, again:true},
-          {x:1436, y:0, w:150, h:276, solid:true},
-          {x:1660, y:225, w:100, h:20},
-          {x:1790, y:110, w:120, fall:true, lift:true},
-          {x:2010, y:130, w:110, fall:true, lift:true},
-          {x:1780, y:320, w:420, h:40, solid:true},
-          {x:2200, y:320, w:300, h:40, solid:true},
+          {x:0, y:320, w:300, h:40, solid:true},
+          {x:200, y:240, w:80, h:20},
+          {x:330, y:170, w:110, fall:true, lift:true},
+          {x:460, y:0, w:36, h:190, solid:true, hang:true},
+          {x:580, y:210, w:110, fall:true, lift:true},
+          {x:710, y:0, w:36, h:190, solid:true, hang:true},
+          {x:830, y:210, w:110, fall:true, lift:true},
+          {x:960, y:0, w:36, h:190, solid:true, hang:true},
+          {x:1080, y:210, w:110, fall:true, lift:true},
+          {x:1210, y:0, w:36, h:190, solid:true, hang:true},
+          {x:1330, y:300, w:300, h:60, solid:true},
+          {x:1670, y:225, w:100, h:20},
+          {x:1800, y:110, w:120, fall:true, lift:true},
+          {x:2020, y:130, w:110, fall:true, lift:true},
+          {x:1770, y:320, w:440, h:40, solid:true},
+          {x:2210, y:320, w:300, h:40, solid:true},
         ],
-        spikes:[{x:1780, y:320, w:420}],
+        spikes:[{x:1770, y:320, w:440}],
         enemies:[
-          {on:0, from:150, to:400, speed:1},
-          {on:4, from:280, to:560, speed:1.1, spiky:true},
-          {on:13, from:60, to:200, speed:1.2},
+          {on:0, from:20, to:180, speed:1},
+          {on:10, from:80, to:280, speed:1.2},
+          {on:15, from:60, to:220, speed:1.2},
         ],
-        bats:[{x:1960, y:220, ax:40, ay:30, speed:0.04}],
-        signs:[
-          {x:150, y:320, text:'Les parachutes descendent : saute de l\'un à l\'autre !'},
-          {x:1130, y:320, text:'Encore un hérisson… tu sais quoi faire'},
-          {x:1690, y:225, text:'Grand saut, puis laisse-toi porter'},
-        ],
-        powerUps:[{x:705, y:80, type:'gem'}, {x:1260, y:140, type:'life'}],
-        checkpoints:[{x:1110, y:320}, {x:1700, y:225}, {x:2240, y:320}],
-        coins:[[150, 290], [300, 290], [505, 200], [600, 160], [715, 160], [810, 120], [925, 130], [1020, 200], [1135, 220], [1220, 150], [1300, 150], [1500, 300], [1620, 290], [1710, 190], [1850, 80], [1950, 100], [2065, 100], [2160, 200], [2300, 290], [2400, 290]],
-        door:{x:2440, y:280},
+        bats:[{x:1970, y:220, ax:40, ay:30, speed:0.04}], signs:[{x:110, y:320, text:'Descends assez bas pour passer sous le mur, puis double saut !'}, {x:1410, y:300, text:'Grand saut, puis laisse-toi porter'}],
+        powerUps:[{x:1030, y:150, type:'gem'}, {x:1470, y:260, type:'life'}],
+        checkpoints:[{x:1360, y:300}, {x:1710, y:225}, {x:2250, y:320}],
+        coins:[[150, 290], [240, 210], [385, 140], [480, 250], [540, 180], [635, 180], [730, 250], [790, 180], [885, 180], [980, 250], [1135, 180], [1230, 250], [1290, 180], [1410, 270], [1560, 270], [1720, 195], [1860, 80], [1960, 100], [2075, 100], [2170, 200], [2310, 290], [2410, 290]],
+        door:{x:2450, y:280},
       },
       {
         name:'Le Pont Retourné',
@@ -1045,28 +1024,29 @@ const CHAPTERS = [
           {x:1330, y:90, w:110, fall:true, lift:true},
           {x:1530, y:120, w:110, fall:true, lift:true},
           {x:1700, y:0, w:500, h:40, solid:true},
-          {x:1950, y:320, w:950, h:40, solid:true},
-          {x:2150, y:180, w:130, h:20},
-          {x:2280, y:180, w:96, fall:true, again:true},
-          {x:2376, y:0, w:150, h:276, solid:true},
+          {x:1950, y:320, w:350, h:40, solid:true},
+          {x:2300, y:320, w:400, h:40, solid:true},
+          {x:2330, y:270, w:80, fall:true},
+          {x:2450, y:220, w:80, fall:true},
+          {x:2570, y:170, w:80, fall:true},
+          {x:2700, y:140, w:200, h:220, solid:true},
         ],
-        flips:[{x:1010, y:250}, {x:2120, y:0, w:16, h:360, set:1}], spikes:[{x:380, y:320, w:520}],
+        flips:[{x:1010, y:250}, {x:2120, y:0, w:16, h:360, set:1}], spikes:[{x:380, y:320, w:520}, {x:2300, y:320, w:400}],
         enemies:[
           {on:0, from:150, to:360, speed:1},
           {on:6, from:150, to:380, speed:1.2, ceil:true},
-          {on:10, from:250, to:600, speed:1.1, spiky:true},
-          {on:10, from:700, to:900, speed:1.3},
+          {on:10, from:150, to:340, speed:1.3},
         ],
-        bats:[{x:1480, y:270, ax:70, ay:25, speed:0.04}, {x:2700, y:200, ax:60, ay:30, speed:0.045}],
+        bats:[{x:1480, y:270, ax:70, ay:25, speed:0.04}, {x:2520, y:55, ax:70, ay:20, speed:0.045}],
         signs:[
           {x:150, y:320, text:'Les planches tombent sur les piques : un pont !'},
           {x:960, y:320, text:'Tête en bas, les parachutes montent !'},
-          {x:2000, y:320, text:'Fais tomber la planche au bon moment'},
+          {x:2000, y:320, text:'Ces planches tombent vite : grimpe sans t\'arrêter !'},
         ],
         powerUps:[{x:655, y:95, type:'gem'}, {x:1585, y:220, type:'life'}],
         checkpoints:[{x:940, y:320}, {x:1760, y:40, ceil:true}, {x:2000, y:320}],
-        coins:[[150, 290], [300, 290], [475, 205], [655, 175], [835, 205], [1000, 290], [1100, 80], [1200, 80], [1385, 140], [1480, 170], [1585, 170], [1680, 120], [1800, 80], [1950, 80], [2060, 120], [2215, 150], [2450, 300], [2650, 290], [2800, 290]],
-        door:{x:2840, y:280},
+        coins:[[150, 290], [300, 290], [475, 205], [655, 175], [835, 205], [1000, 290], [1100, 80], [1200, 80], [1385, 140], [1480, 170], [1585, 170], [1680, 120], [1800, 80], [1950, 80], [2060, 120], [2150, 290], [2370, 240], [2490, 190], [2610, 140], [2760, 110], [2820, 110]],
+        door:{x:2840, y:100},
       },
       {
         name:'La Tempête Rose',
@@ -1182,15 +1162,15 @@ const CHAPTERS = [
           {x:1250, y:260, w:90, move:{axis:'x', min:1250, max:1420, speed:1.1}},
           {x:1520, y:220, w:90, move:{axis:'y', min:160, max:320, speed:1}},
           {x:1700, y:240, w:240, h:360, solid:true},
-          {x:1970, y:0, w:24, h:200, solid:true, hang:true},
-          {x:1940, y:560, w:120, h:40, solid:true},
-          {x:2060, y:80, w:340, h:520, solid:true},
+          {x:1990, y:0, w:24, h:420, solid:true, hang:true},
+          {x:1940, y:560, w:140, h:40, solid:true},
+          {x:2080, y:80, w:320, h:520, solid:true},
         ],
         spikes:[
           {x:300, y:280, h:110, side:'right'},
           {x:380, y:390, h:70, side:'left'},
           {x:620, y:560, w:60},
-          {x:1940, y:560, w:120},
+          {x:1940, y:560, w:140},
         ],
         turrets:[{x:824, y:400, dir:'right', rate:95}],
         enemies:[
@@ -1206,7 +1186,7 @@ const CHAPTERS = [
         ],
         powerUps:[{x:340, y:520, type:'gem'}, {x:1100, y:206, type:'life'}],
         checkpoints:[{x:460, y:560}, {x:960, y:240}, {x:1760, y:240}],
-        coins:[[150, 170], [340, 230], [350, 330], [350, 430], [450, 530], [560, 530], [720, 530], [860, 500], [860, 400], [860, 300], [1000, 210], [1120, 210], [1295, 220], [1420, 220], [1565, 150], [1660, 200], [1800, 210], [1900, 210], [2025, 400], [2025, 290], [2025, 180], [2150, 50], [2260, 50]],
+        coins:[[150, 170], [340, 230], [350, 330], [350, 430], [450, 530], [560, 530], [720, 530], [860, 500], [860, 400], [860, 300], [1000, 210], [1120, 210], [1295, 220], [1420, 220], [1565, 150], [1660, 200], [1800, 210], [1900, 210], [1965, 400], [2040, 470], [2047, 300], [2047, 180], [2150, 50], [2260, 50]],
         door:{x:2340, y:40},
         noDJ:true,
       },
@@ -1227,17 +1207,29 @@ const CHAPTERS = [
           {x:156, y:60, w:24, h:220, solid:true, hang:true},
           {x:300, y:120, w:300, h:24, solid:true},
         ],
-        spikes:[{x:300, y:1400, w:80}, {x:300, y:1060, w:40}], turrets:[{x:40, y:620, dir:'right', rate:100}],
+        spikes:[
+          {x:300, y:1400, w:80},
+          {x:300, y:1060, w:40},
+          {x:484, y:1060, h:260, side:'right'},
+          {x:600, y:1080, h:280, side:'left'},
+          {x:156, y:700, h:260, side:'left'},
+          {x:40, y:724, h:296, side:'right'},
+          {x:464, y:340, h:260, side:'right'},
+          {x:600, y:364, h:296, side:'left'},
+          {x:156, y:60, h:220, side:'left'},
+          {x:40, y:60, h:230, side:'right'},
+        ],
+        turrets:[{x:40, y:620, dir:'right', rate:100}],
         enemies:[
           {on:4, from:20, to:200, speed:1.1},
           {on:6, from:20, to:150, speed:1.2},
           {on:8, from:120, to:280, speed:1.3},
         ],
-        bats:[{x:330, y:900, ax:70, ay:30, speed:0.04}, {x:300, y:220, ax:70, ay:30, speed:0.045}], signs:[{x:300, y:1400, text:'La faille s\'élargit : saut de mur, puis double saut !'}, {x:420, y:700, text:'Le canon tire sous le pilier : vise le bon moment'}],
-        powerUps:[{x:220, y:1366, type:'doubleJump'}, {x:570, y:380, type:'gem'}, {x:440, y:666, type:'life'}],
+        bats:[{x:330, y:900, ax:70, ay:30, speed:0.04}, {x:300, y:220, ax:70, ay:30, speed:0.045}], signs:[{x:300, y:1400, text:'Piques partout : saute du poteau et reviens dessus au double saut !'}, {x:420, y:700, text:'Le canon tire sous le pilier : vise le bon moment'}],
+        powerUps:[{x:220, y:1366, type:'doubleJump'}, {x:520, y:390, type:'gem'}, {x:440, y:666, type:'life'}],
         checkpoints:[{x:80, y:1060}, {x:540, y:700}, {x:80, y:340}],
         npcs:[{who:'gaston3', x:120, y:1400}],
-        coins:[[420, 1370], [540, 1300], [540, 1200], [540, 1100], [400, 1030], [250, 1030], [100, 960], [100, 860], [100, 760], [230, 660], [360, 670], [530, 600], [530, 500], [530, 400], [400, 310], [250, 310], [100, 240], [100, 140], [240, 40], [400, 90], [480, 90]],
+        coins:[[420, 1370], [430, 1300], [430, 1200], [430, 1100], [400, 1030], [250, 1030], [205, 960], [205, 860], [205, 760], [230, 660], [360, 670], [415, 600], [415, 500], [415, 400], [400, 310], [250, 310], [205, 240], [205, 140], [240, 40], [400, 90], [480, 90]],
         door:{x:540, y:80},
       },
       {
@@ -1256,11 +1248,11 @@ const CHAPTERS = [
           {x:600, y:-300, w:40, h:300, slick:true},
           {x:600, y:0, w:40, h:340},
         ],
-        signs:[{x:80, y:340, text:'Quand il tombe, saute-lui dessus !'}],
+        signs:[{x:80, y:340, text:'Quand il tombe, saute-lui dessus ! Quand il court, monte !'}],
         powerUps:[{x:310, y:120, type:'life'}],
         coins:[[185, 206], [455, 206]],
-        boss:{mode:'gecko', name:'Le Gecko Géant', hp:3, hp2:3, x:40, y:150, w:40, h:40},
-        phase2Spikes:[{x:200, y:340, w:240}], needsBoss:true,
+        boss:{mode:'gecko', name:'Le Gecko Géant', hp:3, hp2:5, x:40, y:150, w:40, h:40},
+        needsBoss:true,
         door:{x:520, y:300},
       },
     ],
@@ -1547,165 +1539,150 @@ const CHAPTERS = [
   // ==== END SEASON 2 ====
   // ==== BONUS 2 ====
   {
-    name:'Le Cosmos', bonus:true, bonus2:true, deco:'cosmos', grants:{dj:true, shoot:true, wall:true, dash:true},
+    name:'Le Cosmos', bonus:true, bonus2:true, parTime:135000, deco:'cosmos', grants:{dj:true, shoot:true, wall:true, dash:true},
     rooms:[
       {
-        name:'L\'Apesanteur',
-        width:2760,
+        name:'La Traversée Cosmique',
+        width:5670,
         start:{x:30, y:300},
         platforms:[
-          {x:0, y:340, w:380, h:20},
-          {x:0, y:-200, w:860, h:228, solid:true, slick:true},
-          {x:1010, y:340, w:360, h:20},
-          {x:1330, y:-200, w:330, h:228, solid:true, slick:true},
-          {x:1790, y:340, w:340, h:20},
-          {x:2070, y:-200, w:430, h:228, solid:true, slick:true},
-          {x:2590, y:340, w:170, h:20},
+          {x:0, y:340, w:200, h:20, solid:true},
+          {x:140, y:0, w:240, h:270, solid:true},
+          {x:300, y:340, w:160, h:20, solid:true},
+          {x:460, y:340, w:300, h:20, solid:true},
+          {x:580, y:0, w:28, h:150, solid:true},
+          {x:760, y:340, w:180, h:20, solid:true},
+          {x:890, y:70, w:220, h:290, solid:true},
+          {x:1110, y:0, w:700, h:40, solid:true},
+          {x:1810, y:340, w:160, h:20, solid:true},
+          {x:2230, y:260, w:140, h:100, solid:true},
+          {x:2540, y:0, w:220, h:40, solid:true},
+          {x:2850, y:300, w:150, h:60, solid:true},
+          {x:3000, y:0, w:700, h:40, solid:true},
+          {x:3700, y:340, w:160, h:20, solid:true},
+          {x:4120, y:260, w:140, h:100, solid:true},
+          {x:4430, y:0, w:220, h:40, solid:true},
+          {x:4740, y:300, w:150, h:60, solid:true},
+          {x:4890, y:0, w:340, h:240, solid:true},
+          {x:4890, y:340, w:340, h:20, solid:true},
+          {x:5230, y:300, w:60, h:60, solid:true},
+          {x:5290, y:340, w:130, h:20, solid:true},
+          {x:5410, y:120, w:260, h:240, solid:true},
+        ],
+        walls:[
+          {x:580, y:150, w:28, h:190, glass:true},
+          {x:790, y:70, w:24, h:200},
+          {x:5310, y:60, w:24, h:200},
         ],
         flips:[
-          {x:310, y:316},
-          {x:950, y:150},
-          {x:1300, y:316},
-          {x:1676, y:28, w:24, h:300, set:1},
-          {x:2172, y:248},
-          {x:2530, y:112},
+          {x:1130, y:0, w:16, h:360, set:-1},
+          {x:1800, y:0, w:16, h:360, set:1},
+          {x:2440, y:200},
+          {x:2790, y:100},
+          {x:3020, y:0, w:16, h:360, set:-1},
+          {x:3690, y:0, w:16, h:360, set:1},
+          {x:4330, y:200},
+          {x:4680, y:100},
         ],
         spikes:[
-          {x:560, y:28, w:60, down:true},
-          {x:1150, y:340, w:44},
-          {x:1440, y:28, w:50, down:true},
-          {x:1560, y:28, w:40, down:true},
-          {x:2290, y:28, w:60, down:true},
+          {x:140, y:270, w:240, down:true},
+          {x:1270, y:40, w:90, down:true},
+          {x:1530, y:40, w:90, down:true},
+          {x:2620, y:40, w:60, down:true},
+          {x:3160, y:40, w:90, down:true},
+          {x:3420, y:40, w:90, down:true},
+          {x:4510, y:40, w:60, down:true},
+          {x:4890, y:240, w:340, down:true},
         ],
-        enemies:[{on:2, from:200, to:320, speed:1.1}, {on:4, from:150, to:300, speed:1.2}], bats:[{x:700, y:200, ax:40, ay:60, speed:0.04}, {x:1950, y:150, ax:60, ay:40, speed:0.045}], signs:[{x:40, y:340, text:'Défi cosmique 1 : l\'apesanteur'}, {x:1830, y:340, text:'Saute dans l\'orbe, au-dessus du vide'}],
-        checkpoints:[{x:1040, y:340}, {x:1810, y:340}],
-        coins:[[150, 312], [240, 312], [440, 44], [520, 44], [590, 110], [680, 44], [780, 44], [950, 100], [960, 240], [1080, 312], [1260, 250], [1380, 44], [1465, 110], [1520, 44], [1580, 110], [1630, 44], [1880, 312], [1990, 312], [2172, 200], [2220, 44], [2320, 110], [2420, 44], [2530, 170], [2640, 312]],
-        door:{x:2700, y:300},
-      },
-      {
-        name:'Les Parois',
-        height:1800,
-        start:{x:60, y:1720},
-        platforms:[
-          {x:0, y:1760, w:640, h:40},
-          {x:360, y:1400, w:180, h:20},
-          {x:40, y:830, w:200, h:20},
-          {x:430, y:700, w:186, h:20},
-          {x:170, y:180, w:250, h:20},
+        turrets:[
+          {x:5206, y:310, dir:'left', rate:90, hp:3},
         ],
-        walls:[
-          {x:0, y:-200, w:24, h:2000, slick:true},
-          {x:616, y:-200, w:24, h:2000, slick:true},
-          {x:200, y:1400, w:30, h:300},
-          {x:330, y:1400, w:30, h:300},
-          {x:470, y:1180, w:30, h:110},
-          {x:300, y:1070, w:30, h:110},
-          {x:470, y:960, w:30, h:110},
-          {x:300, y:850, w:30, h:110},
-          {x:380, y:560, w:20, h:290, glass:true},
-          {x:430, y:200, w:30, h:440},
-          {x:586, y:200, w:30, h:440},
-        ],
-        spikes:[
-          {x:470, y:960, w:30},
-          {x:300, y:850, w:30},
-          {x:460, y:360, h:60, side:'right'},
-          {x:586, y:270, h:60, side:'left'},
-          {x:430, y:210, h:420, side:'left'},
-        ],
-        bats:[{x:400, y:1560, ax:40, ay:50, speed:0.04}, {x:180, y:500, ax:60, ay:40, speed:0.045}], signs:[{x:70, y:1760, text:'Défi cosmique 2 : les parois'}],
-        checkpoints:[{x:380, y:1400}, {x:60, y:830}, {x:470, y:700}],
-        coins:[[270, 1650], [270, 1560], [270, 1470], [430, 1360], [455, 1250], [390, 1150], [455, 1030], [390, 930], [140, 790], [330, 700], [415, 640], [510, 560], [510, 450], [510, 340], [510, 240], [320, 140]],
-        door:{x:220, y:140},
-      },
-      {
-        name:'La Comète',
-        width:2800,
-        start:{x:30, y:300},
-        platforms:[
-          {x:0, y:340, w:600, h:20},
-          {x:0, y:-200, w:700, h:260, solid:true, slick:true},
-          {x:900, y:340, w:420, h:20},
-          {x:1000, y:-200, w:260, h:480, solid:true, slick:true},
-          {x:1420, y:300, w:60, move:{axis:'x', min:1370, max:1560, speed:1.6}},
-          {x:1720, y:340, w:250, h:20},
-          {x:2300, y:340, w:500, h:20},
-          {x:2500, y:-200, w:300, h:260, solid:true, slick:true},
-        ],
-        walls:[
-          {x:300, y:60, w:24, h:280, glass:true},
-          {x:1520, y:-200, w:24, h:430, glass:true},
-          {x:2620, y:60, w:24, h:280, glass:true},
-        ],
-        spikes:[{x:1095, y:340, w:70}, {x:1720, y:340, w:40}],
         enemies:[
-          {on:2, from:20, to:90, speed:1},
-          {on:5, from:60, to:240, speed:1.3},
-          {on:6, from:40, to:280, speed:1.4},
+          {on:18, from:120, to:300, speed:1.8},
         ],
-        bats:[{x:780, y:200, ax:50, ay:50, speed:0.04}, {x:2080, y:150, ax:70, ay:40, speed:0.05}], signs:[{x:60, y:340, text:'Défi cosmique 3 : la comète'}, {x:920, y:340, text:'Pics dans le tunnel : petit saut, puis dash !'}],
-        checkpoints:[{x:930, y:340}, {x:1820, y:340}],
-        coins:[[150, 312], [350, 300], [420, 312], [520, 312], [650, 240], [750, 220], [850, 260], [960, 312], [1130, 300], [1290, 312], [1450, 250], [1640, 250], [1800, 312], [1900, 312], [1980, 250], [2140, 250], [2340, 312], [2430, 312], [2560, 312], [2665, 300], [2700, 312]],
-        door:{x:2740, y:300},
+        bats:[
+          {x:1460, y:110, ax:60, ay:20, speed:0.05},
+          {x:3350, y:110, ax:60, ay:20, speed:0.05},
+        ],
+        signs:[{x:60, y:340, text:'Défi cosmique : chaque seconde compte !'}, {x:210, y:340, text:'Pas de saut ici : dash !'}, {x:2860, y:300, text:'Vise l\'orbe, puis encore une !'}, {x:4750, y:300, text:'Vise l\'orbe, puis encore une !'}],
+        checkpoints:[{x:700, y:340}, {x:1850, y:340}, {x:3740, y:340}],
+        coins:[[250, 312], [852, 260], [852, 170], [852, 100], [1210, 70], [1410, 70], [1670, 70], [2120, 150], [2440, 150], [2570, 70], [2730, 70], [3100, 70], [3300, 70], [3560, 70], [4010, 150], [4330, 150], [4460, 70], [4620, 70], [5372, 250], [5372, 150]],
+        door:{x:5590, y:80},
       },
       {
         name:'Le Cœur du Cosmos',
-        height:2680, finale:true, gold:'crystal',
-        keySpot:{x:160, y:162},
-        start:{x:560, y:2600},
+        height:4400,
+        finale:true,
+        gold:'crystal',
+        keySpot:{x:160, y:132},
+        start:{x:560, y:4320},
         platforms:[
-          {x:0, y:2640, w:640, h:40},
-          {x:20, y:1560, w:240, h:20, solid:true},
-          {x:240, y:1260, w:220, h:20, solid:true},
-          {x:494, y:1100, w:122, h:20},
-          {x:274, y:620, w:226, h:20, solid:true},
-          {x:20, y:620, w:230, h:20, solid:true},
-          {x:20, y:120, w:300, h:24, solid:true},
-          {x:330, y:2570, w:90},
-          {x:150, y:2500, w:90},
-          {x:30, y:2430, w:100},
-          {x:460, y:2380, w:120},
-          {x:490, y:2310, w:80},
-          {x:500, y:2240, w:80, crumble:true},
-          {x:60, y:2210, w:110},
-          {x:150, y:2140, w:90},
-          {x:40, y:2060, w:90},
-          {x:20, y:1960, w:240, h:20},
-          {x:60, y:550, w:90},
-          {x:180, y:480, w:80},
-          {x:60, y:410, w:90},
-          {x:180, y:345, w:80},
+          {x:0, y:4360, w:640, h:40},
+          {x:380, y:4260, w:60},
+          {x:200, y:4160, w:50, crumble:true},
+          {x:60, y:4060, w:60},
+          {x:230, y:3960, w:50, crumble:true},
+          {x:420, y:3860, w:60},
+          {x:20, y:3840, w:200, h:20, solid:true},
+          {x:220, y:3370, w:180, h:20, solid:true},
+          {x:500, y:3330, w:116, h:20, solid:true},
+          {x:120, y:3000, w:440, h:24, solid:true},
+          {x:20, y:3160, w:90, h:20, solid:true},
+          {x:180, y:3060, w:60},
+          {x:360, y:2960, w:56, move:{axis:'x', min:290, max:430, speed:1.7}},
+          {x:500, y:2860, w:50, crumble:true},
+          {x:300, y:2760, w:60},
+          {x:110, y:2660, w:56, move:{axis:'x', min:40, max:180, speed:1.7}},
+          {x:260, y:2560, w:50, crumble:true},
+          {x:450, y:2460, w:60},
+          {x:300, y:2440, w:200, h:20, solid:true},
+          {x:280, y:1920, w:150, h:20, solid:true},
+          {x:60, y:1830, w:70, h:20, solid:true},
+          {x:300, y:1750, w:70, h:20, solid:true},
+          {x:500, y:1670, w:70, h:20, solid:true},
+          {x:330, y:1570, w:60},
+          {x:160, y:1470, w:50, crumble:true},
+          {x:40, y:1370, w:60},
+          {x:200, y:1270, w:50, crumble:true},
+          {x:380, y:1170, w:60},
+          {x:520, y:1070, w:50, crumble:true},
+          {x:330, y:970, w:60},
+          {x:160, y:870, w:50, crumble:true},
+          {x:40, y:770, w:60},
+          {x:200, y:670, w:50, crumble:true},
+          {x:380, y:570, w:60},
+          {x:520, y:470, w:50, crumble:true},
+          {x:330, y:370, w:60},
+          {x:160, y:270, w:50, crumble:true},
+          {x:20, y:150, w:300, h:24, solid:true},
         ],
         walls:[
-          {x:0, y:-200, w:20, h:3100, slick:true},
-          {x:616, y:-200, w:24, h:3100, slick:true},
-          {x:500, y:640, w:24, h:400},
-          {x:592, y:640, w:24, h:400},
-          {x:250, y:400, w:24, h:240, glass:true},
-          {x:290, y:2150, w:20, h:280, glass:true},
-          {x:330, y:1990, w:20, h:260, glass:true},
+          {x:0, y:-200, w:20, h:4600, slick:true},
+          {x:616, y:-200, w:24, h:4600, slick:true},
+          {x:98, y:3370, w:24, h:430},
+          {x:198, y:3370, w:24, h:430},
+          {x:470, y:3200, w:24, h:150, glass:true},
+          {x:418, y:1920, w:24, h:490},
+          {x:518, y:1920, w:24, h:490},
         ],
         flips:[
-          {x:150, y:1932},
-          {x:20, y:1050, w:596, h:16, set:1},
-          {x:220, y:296},
+          {x:470, y:3270},
+          {x:120, y:3000, w:16, h:330, set:1},
         ],
         spikes:[
-          {x:140, y:1580, w:44, down:true},
-          {x:330, y:1280, w:40, down:true},
-          {x:524, y:800, h:60, side:'right'},
-          {x:592, y:700, h:60, side:'left'},
-          {x:500, y:660, h:370, side:'left'},
+          {x:260, y:3024, w:70, down:true},
+        ],
+        turrets:[
+          {x:20, y:2740, dir:'right', rate:105},
+          {x:592, y:2540, dir:'left', rate:105},
         ],
         bats:[
-          {x:540, y:2330, ax:30, ay:30, speed:0.04},
-          {x:330, y:1700, ax:90, ay:40, speed:0.04},
-          {x:330, y:900, ax:70, ay:60, speed:0.045},
-          {x:420, y:430, ax:40, ay:40, speed:0.045},
+          {x:420, y:3590, ax:120, ay:60, speed:0.045},
+          {x:250, y:2140, ax:120, ay:60, speed:0.05},
         ],
-        signs:[{x:400, y:2640, text:'Dernier défi : grimpe, puis tous les pouvoirs !'}, {x:45, y:2430, text:'Trop loin ? Saut, double saut, puis dash !'}],
-        checkpoints:[{x:30, y:1960}, {x:60, y:1580, ceil:true}, {x:540, y:1100}, {x:420, y:620}],
-        coins:[[375, 2535], [195, 2465], [80, 2395], [200, 2390], [400, 2370], [520, 2345], [530, 2275], [540, 2205], [420, 2190], [240, 2185], [115, 2175], [195, 2105], [85, 2025], [120, 1760], [120, 1660], [220, 1600], [300, 1420], [400, 1300], [482, 1160], [560, 1060], [558, 960], [558, 860], [558, 760], [558, 680], [400, 580], [300, 590], [105, 515], [220, 445], [105, 375], [220, 250], [230, 170]],
+        signs:[{x:400, y:4360, text:'Dernier défi : grimpe le plus vite possible !'}],
+        checkpoints:[{x:60, y:3840}, {x:540, y:3330}, {x:400, y:2440}],
+        coins:[[408, 4232], [228, 4132], [88, 4032], [258, 3932], [448, 3832], [160, 3720], [160, 3610], [160, 3500], [160, 3390], [450, 3310], [400, 3050], [200, 3050], [208, 3032], [388, 2932], [528, 2832], [328, 2732], [138, 2632], [288, 2532], [478, 2432], [480, 2330], [480, 2220], [480, 2110], [480, 2000], [95, 1800], [335, 1720], [535, 1640], [358, 1542], [188, 1442], [68, 1342], [228, 1242], [408, 1142], [548, 1042], [358, 942], [188, 842], [68, 742], [228, 642], [408, 542], [548, 442], [358, 342], [188, 242]],
         door:null,
       },
     ],
@@ -1799,7 +1776,7 @@ const S2_BOSS = new Set(['gecko', 'yeti', 'magpie']);
 //  SAVE
 // =====================================================================
 const SAVE_KEY = 'platformer_save_v2';
-const freshSave = () => ({ unlocked:1, gems:CHAPTERS.map(() => false), bestRun:null, bestCh:CHAPTERS.map(() => null), recipe:[false,false,false,false], unlocked2:1, bestRun2:null, seen:{} });
+const freshSave = () => ({ unlocked:1, gems:CHAPTERS.map(() => false), bestRun:null, bestCh:CHAPTERS.map(() => null), recipe:[false,false,false,false], unlocked2:1, bestRun2:null, seen:{}, bank:0, owned:{} });
 let save = freshSave();
 try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) save = Object.assign(save, s); }catch(e){}
 if(!Array.isArray(save.recipe) || save.recipe.length !== 4) save.recipe = [false,false,false,false];
@@ -1887,11 +1864,23 @@ const SKINS = [
   {id:'nuit', name:'Nuit', body:'#262046', deep:'#0b0918', light:'#6a63a8'},
   {id:'or', name:'Or', body:'#c08a0a', deep:'#553a00', light:'#ffd85a', lock:'gold'},
   {id:'cristal', name:'Cristal', body:'#2a9cc0', deep:'#0a4458', light:'#b4f2ff', lock:'crystal'},
+  {id:'citron', name:'Citron', body:'#c9b40c', deep:'#4d4400', light:'#fff36a', price:50},
+  {id:'lavande', name:'Lavande', body:'#8a6ad8', deep:'#33236a', light:'#d2c2ff', price:80},
+  {id:'corail', name:'Corail', body:'#e0505a', deep:'#5a1218', light:'#ff9a8a', price:120},
+  {id:'fantome', name:'Fantôme', body:'#b8b4cc', deep:'#47435a', light:'#ffffff', price:160},
+  {id:'lave', name:'Lave', body:'#2a1010', deep:'#0c0303', light:'#ff6a2a', price:220},
+  {id:'emeraude', name:'Émeraude', body:'#0a7a3a', deep:'#02301a', light:'#5cff9a', gems:3},
+  {id:'galaxie', name:'Galaxie', body:'#3a1a7a', deep:'#0a0424', light:'#ff7af0', gems:7},
 ];
+// the shop: every coin picked up goes into XELIAX's piggy bank, to spend on colours
+if(!(save.bank >= 0)) save.bank = 0;
+if(!save.owned || typeof save.owned !== 'object') save.owned = {};
+const gemCount = () => (save.gems || []).filter(Boolean).length;
+function addBank(n){ save.bank = (save.bank || 0) + n; persist(); }
 save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, timer:true, lives:5, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
 if(![3, 5, 7, 9].includes(save.settings.lives)) save.settings.lives = 5;
 const SET = save.settings;
-const skinOpen = s => !s.lock || SET.creator || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle);
+const skinOpen = s => SET.creator || (s.price ? !!(save.owned || {})[s.id] : s.gems ? gemCount() >= s.gems : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
 const skinOf = () => SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
 const startLives = () => SET.lives || 5;
 function applySettings(){
@@ -2246,7 +2235,8 @@ function chapterClear(){
   if(chGem && !chapter.bonus) save.gems[chIndex] = true;
   if(chapter.bonus){
     timerRunning = false;
-    if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true;
+    clearInfo.fast = !chapter.parTime || t <= chapter.parTime;
+    if(clearInfo.fast){ if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true; }
     clearInfo.bonus2 = !!chapter.bonus2;
     score += 500;
     setState('chapter');
@@ -2550,7 +2540,9 @@ function startFinale(){
   setFace(anim, 'open', 200);
   SFX.key();
   if(chIndex === STORY_END && !key.gold && !room.ending2) steal = {x:0, y:0, w:48, h:40, state:'hover', phase:1, face:-1, hitT:0, inv:0, lost:true, got:false, on:false};
-  showToast(key.gold === 'crystal' ? 'La ficelle de cristal ! Défi bonus réussi !' : key.gold ? 'La ficelle dorée ! Défi bonus réussi !' : 'XELIAX a retrouvé la ficelle aux olives !', 170);
+  const late = chapter.bonus && chapter.parTime && elapsed - chStartTime > chapter.parTime;
+  if(late) showToast(`Trop lent ! Il fallait moins de ${fmt(chapter.parTime)} : réessaie !`, 200);
+  else showToast(key.gold === 'crystal' ? 'La ficelle de cristal ! Défi bonus réussi !' : key.gold ? 'La ficelle dorée ! Défi bonus réussi !' : 'XELIAX a retrouvé la ficelle aux olives !', 170);
 }
 
 function barrierOn(){ return !!(room && room.barrierY && boss && boss.alive); }
@@ -3069,7 +3061,7 @@ function step(){
     SFX.warn();
   }
   if(cine) updateCine();
-  if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)) timerRunning = true;
+  if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)){ timerRunning = true; if(chapter.bonus && chapter.parTime && rIndex === 0 && elapsed - chStartTime < 100) showToast(`Temps à battre : ${fmt(chapter.parTime)} — fonce !`, 200); }
   if(timerRunning && !cine) elapsed += STEP;        // the clock waits during cinematics
   if(phaseT > 0 && --phaseT === 0) transition(() => loadRoom(chIndex, rIndex + 1));
 
@@ -4010,8 +4002,33 @@ function updatePlayer(){
       SFX.shoot();
     }
   }
+  // charged shot: keep the shoot key down, let go when XELIAX glows
+  if(canShoot && input.shootHeld && !cine && finaleT === 0){
+    player.charge = (player.charge || 0) + 1;
+    if(player.charge === CHARGE_FULL){ tone(880, 0.12, 'triangle', 0.04, 1320); sparkle(player.x + player.w / 2, player.y + player.h / 2, 10, '#ffd54a'); }
+    if(player.charge > 12 && frame % 4 === 0){
+      const a = Math.random() * TAU, r = 22;
+      particles.push({x:player.x + player.w / 2 + Math.cos(a) * r, y:player.y + player.h / 2 + Math.sin(a) * r, vx:-Math.cos(a) * 1.4, vy:-Math.sin(a) * 1.4, life:14, max:14,
+        color:player.charge >= CHARGE_FULL ? '#ffd54a' : '#b9a2ff', grav:0, size:2.4, type:'dot'});
+    }
+  } else {
+    if((player.charge || 0) >= CHARGE_FULL && canShoot && state === 'play'){
+      anim.shootT = 14; addShake(3); SFX.shoot(); tone(220, 0.2, 'sawtooth', 0.04, 90);
+      if(room.shootUp) shots.push({x:player.x + player.w / 2 - 7, y:player.y - 20, w:14, h:22, vx:0, vy:-10, big:true, hits:new Set()});
+      else {
+        shots.push({x:player.facing > 0 ? player.x + player.w : player.x - 22, y:G > 0 ? player.y + 8 : player.y + player.h - 20, w:22, h:12, vx:player.facing * 9, vy:0, big:true, hits:new Set()});
+        player.vx -= player.facing * 2.2;
+      }
+    }
+    player.charge = 0;
+  }
   for(const s of shots){
     s.x += s.vx; s.y += s.vy;
+    // a shot catches the coins it flies through
+    for(const c of coins) if(!c.got && overlap(s, {x:c.x - 8, y:c.y - 8, w:16, h:16})){
+      c.got = true; score += 10; chCoins++; collected.add(c.id); addBank(1);
+      sparkle(c.x, c.y, 5, '#ffe066'); popup(c.x, c.y - 8, '+10', '#ffe066'); flyCoin(c.x, c.y); SFX.coin();
+    }
     const hitWall = solids.find(w => !w.gone && overlap(s, w));
     if(hitWall){
       s.dead = true; burst(s.x + s.w / 2, s.y + s.h / 2, 5, '#d9d0ff', 1.6, 14, 0, 2.2, 'star');
@@ -4063,17 +4080,19 @@ function updatePlayer(){
           if(toast.t <= 0) showToast('Ses piques arrêtent les tirs… une planche ?', 90);
           continue;
         }
-        e.alive = false; s.dead = true; score += 25;
+        e.alive = false; score += 25; addBank(1);
+        if(s.big) s.hits.add(e); else s.dead = true;
+        popup(e.x + e.w / 2, e.y - 6, '+1 🪙', '#ffe066');
         killFx(e); SFX.stomp();
       }
     }
     for(const t of turrets){
       if(t.alive && !s.dead && overlap(s, t)){
-        s.dead = true; t.hp--; t.flash = 8;
+        s.dead = true; t.hp -= s.big ? 3 : 1; t.flash = 8;
         burst(s.x, s.y, 6, '#ffd54a', 2, 15, 0.05, 2.5, 'star');
         if(t.hp <= 0){
-          t.alive = false; score += 50;
-          popup(t.x + 12, t.y, '+50', '#ffd54a');
+          t.alive = false; score += 50; addBank(3);
+          popup(t.x + 12, t.y, '+3 🪙', '#ffd54a');
           burst(t.x + 12, t.y + 12, 18, '#ffb27a', 4, 35, 0.15, 3);
           burst(t.x + 12, t.y + 12, 10, '#ffffff', 2, 30, -0.02, 5, 'puff');
           addShake(5); SFX.stomp();
@@ -4136,7 +4155,7 @@ function updatePlayer(){
   for(const c of coins){
     if(c.got) continue;
     if(overlap(player, {x:c.x - 8, y:c.y - 8, w:16, h:16})){
-      c.got = true; score += 10; chCoins++; collected.add(c.id);
+      c.got = true; score += 10; chCoins++; collected.add(c.id); addBank(1);
       sparkle(c.x, c.y, 5, '#ffe066');
       popup(c.x, c.y - 8, '+10', '#ffe066');
       flyCoin(c.x, c.y);
@@ -4254,7 +4273,29 @@ function updateS2Boss(b){
       b.y += clamp((ty - b.y) * 0.03, -1.6, 1.6) * (p2 ? 1.5 : 1);
       b.x = geckoWallX(b, b.side);
       if(--b.fireT <= 0){ b.fireT = p2 ? 60 : 90; spitAcid(b, p2 ? 3 : b.hp <= b.enrage ? 2 : 1); }
-      if(--b.stT <= 0) startLeap(b);
+      if(--b.stT <= 0){
+        if(p2 && (b.runNext = !b.runNext)){ b.state = 'runDrop'; b.vy = 0; SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il descend !', '#9dff5a'); }
+        else startLeap(b);
+      }
+    } else if(b.state === 'runDrop'){
+      b.vy += 0.6; b.y += b.vy;
+      if(b.y >= FLOOR - b.h){
+        b.y = FLOOR - b.h; b.vy = 0; b.state = 'run'; b.rdir = -b.side; b.lastAcid = b.x;
+        addShake(5); SFX.thud(); dust(b.x + b.w / 2, FLOOR, 10);
+        if(!b.toldRun){ b.toldRun = true; showToast('Il court au sol et laisse de l\'acide : monte sur les plateformes !', 160); }
+      }
+    } else if(b.state === 'run'){
+      b.x += b.rdir * 4.6; b.face = b.rdir;
+      if(Math.abs(b.x - b.lastAcid) >= 34){
+        b.lastAcid = b.x;
+        fires.push({x:clamp(b.x + b.w / 2 - 20, ARENA_WALL, W - ARENA_WALL - 40), w:40, t:0, max:300, seed:Math.random() * 10, acid:true});
+        burst(b.x + b.w / 2, FLOOR - 4, 4, '#7ae04a', 1.6, 20, 0.1, 3, 'goo');
+      }
+      if(frame % 3 === 0) dust(b.x + b.w / 2 - b.rdir * 18, FLOOR, 2);
+      if(b.x <= ARENA_WALL || b.x + b.w >= W - ARENA_WALL){
+        b.x = clamp(b.x, ARENA_WALL, W - ARENA_WALL - b.w);
+        b.side = b.rdir; b.state = 'climb'; addShake(4); SFX.thud();
+      }
     } else if(b.state === 'leap'){
       b.lt++;
       const k = Math.min(1, b.lt / b.ldur);
@@ -4274,6 +4315,7 @@ function updateS2Boss(b){
     } else if(b.state === 'stun' || b.state === 'stuck'){
       if(--b.stT <= 0){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 90; b.fireT = 40; }
     } else if(b.state === 'climb'){
+      b.x = geckoWallX(b, b.side);
       b.y -= 2.6;
       if(b.y <= 170){ b.state = 'crawl'; b.stT = p2 ? 80 : 120; b.fireT = 40; }
     }
@@ -4474,7 +4516,8 @@ function drawGecko(b){
   if(b.state === 'leap'){
     const vx = (b.lx1 - b.lx0) / b.ldur, k = b.lt / b.ldur, vy = (b.ly1 - b.ly0) / b.ldur - Math.cos(k * Math.PI) * Math.PI * 80 / b.ldur;
     ctx.rotate(Math.atan2(vy, vx)); if(vx < 0) ctx.scale(1, -1);
-  } else if(b.state === 'stun' || b.state === 'drop'){ if(b.side > 0) ctx.scale(-1, 1); }
+  } else if(b.state === 'run' || b.state === 'runDrop'){ if((b.state === 'run' ? b.rdir : -b.side) < 0) ctx.scale(-1, 1); }
+  else if(b.state === 'stun' || b.state === 'drop'){ if(b.side > 0) ctx.scale(-1, 1); }
   else { ctx.rotate(-Math.PI / 2); if(b.side < 0) ctx.scale(1, -1); }
   const wig = Math.sin(b.t * 0.3) * (b.state === 'crawl' || b.state === 'climb' ? 1 : 0.2);
   // tail
@@ -6586,6 +6629,13 @@ function drawBullet(b){
 
 function drawShot(s){
   const x = ix(s), y = iy(s);
+  if(s.big){
+    softGlow(x + s.w / 2, y + s.h / 2, 22, 16, '255,213,74', 0.55);
+    ctx.fillStyle = '#ffd54a'; rr(x - 2, y - 2, s.w + 4, s.h + 4, 7); ctx.fill();
+    ctx.fillStyle = '#ffffff'; rr(x + 3, y + 2, s.w - 6, s.h - 4, 4); ctx.fill();
+    if(fxTick && frame % 2 === 0) particles.push({x:x + s.w / 2, y:y + s.h / 2, vx:-s.vx * 0.1, vy:(Math.random() - 0.5), life:14, max:14, color:'#ffd54a', grav:0, size:2.6, type:'star'});
+    return;
+  }
   const vert = s.vy !== 0;
   for(let i = 3; i >= 1; i--){
     ctx.fillStyle = `rgba(185,162,255,${0.12 * (4 - i)})`;
@@ -6857,6 +6907,15 @@ function drawKO(b){
 function drawFire(f){
   const grow = Math.min(1, f.t / 10) * Math.min(1, (f.max - f.t) / 20);
   if(grow <= 0) return;
+  if(f.acid){
+    // a bubbling puddle of green acid
+    softGlow(f.x + f.w / 2, FLOOR - 4, f.w * 0.8, 12 * grow, '120,230,70', 0.45 * grow);
+    ctx.fillStyle = 'rgba(110,220,60,' + (0.85 * grow) + ')';
+    ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, FLOOR - 2, f.w / 2 + 2, 6 * grow, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(200,255,140,' + (0.8 * grow) + ')';
+    for(let i = 0; i < 3; i++){ const ph = frame * 0.12 + f.seed + i * 2.1, bx = f.x + 8 + i * (f.w - 16) / 2, by = FLOOR - 5 - Math.abs(Math.sin(ph)) * 6 * grow; ctx.beginPath(); ctx.arc(bx, by, 2.2 * grow, 0, TAU); ctx.fill(); }
+    return;
+  }
   softGlow(f.x + f.w / 2, FLOOR - 6, f.w * 0.8, 16 * grow, '255,140,40', 0.45 * grow);
   const n = 5;
   for(let i = 0; i < n; i++){
@@ -9265,7 +9324,7 @@ function settingsRows(){
     if(SET.creator){ setSetting('creator', false); showToast('Admin déconnecté', 90); SFX.menu(); } else openAdmin();
   }});
   if(bonusVisible()) rows.push({kind:'link', id:'bonus', label:'Bonus secret', icon:'secret', tile:'#c9930e', to:'bonus',
-    value:`${BONUS_CH.filter(isUnlocked).length * 4} défis`, badge:!save.bonusFolderSeen});
+    value:`${BONUS_CH.filter(isUnlocked).length * 2} défis`, badge:!save.bonusFolderSeen});
   return rows;
 }
 function sonRows(){
@@ -9327,7 +9386,15 @@ function resetProgress(){
   showToast('Progression effacée : on repart de zéro !', 130);
   SFX.crumble(); addShake(6);
 }
-const skinHint = s => s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
+const skinHint = s => s.price ? `${s.price} pièces : clique pour l'acheter (tu en as ${save.bank})` : s.gems ? `Trouve ${s.gems} gemmes 💎 pour la débloquer (tu en as ${gemCount()})` : s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
+function buySkin(s){
+  if(!s.price || skinOpen(s)) return false;
+  if(save.bank < s.price){ showToast(`Il te faut ${s.price} pièces (tu en as ${save.bank}). Ramasse-en dans les niveaux !`, 130); SFX.hurt(); return true; }
+  save.bank -= s.price; save.owned = save.owned || {}; save.owned[s.id] = true; persist();
+  setSetting('skin', s.id); titleHero.hop = 1; titleHero.wobV += 0.6;
+  showToast(`${s.name} achetée ! XELIAX adore sa nouvelle couleur`, 130); SFX.key(); confetti(196, 200, 30);
+  return true;
+}
 function lookPick(d){
   const n = SKINS.length;
   menu.sel.look = (menu.sel.look + d + n) % n;
@@ -9339,7 +9406,7 @@ function lookClick(j){
   menu.sel.look = j;
   const s = SKINS[j];
   if(skinOpen(s)){ if(s.id !== skinOf().id){ setSetting('skin', s.id); titleHero.hop = 1; titleHero.wobV += 0.5; } SFX.coin(); }
-  else { showToast(skinHint(s), 110); SFX.hurt(); }
+  else if(!buySkin(s)){ showToast(skinHint(s), 110); SFX.hurt(); }
 }
 
 // ---------------------------------------------------------------- credits (and the creator's secret)
@@ -9466,7 +9533,7 @@ function menuKey(k, rep = false){
     return;
   }
   if(p === 'credits'){ if(ok || up) menu.credFast = true; return; }
-  if(p === 'look'){ if(left || right) lookPick(left ? -1 : 1); else if(ok && !rep) goBack(); return; }
+  if(p === 'look'){ if(left || right) lookPick(left ? -1 : 1); else if(ok && !rep){ const s = SKINS[menu.sel.look]; if(!(s && buySkin(s))) goBack(); } return; }
   if(p === 'controls'){ if(ok && !rep) goBack(); return; }
   const rows = pageRows(p), n = rows.length;
   if(!n) return;
@@ -10044,7 +10111,7 @@ function drawLook(act){
   drawHero(titleHero, px, py - hop, 3.7, focOpen ? {} : {tint:'#171032'});
   if(!focOpen) heading('?', px + 2, py - 150, 30, '#ffd54a');
   SKINS.forEach((s, j) => {
-    const sx = 350 + (j % 4) * 60, sy = 120 + Math.floor(j / 4) * 74, open = skinOpen(s), on = s.id === cur.id, f = j === menu.sel.look;
+    const sx = 330 + (j % 5) * 54, sy = 104 + Math.floor(j / 5) * 64, open = skinOpen(s), on = s.id === cur.id, f = j === menu.sel.look;
     if(f){ ctx.strokeStyle = '#ffd54a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx, sy, 24, 0, TAU); ctx.stroke(); }
     if(on){ ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, 20.5, 0, TAU); ctx.stroke(); }
     const g = ctx.createRadialGradient(sx - 5, sy - 6, 2, sx, sy, 18);
@@ -10053,15 +10120,16 @@ function drawLook(act){
     ctx.strokeStyle = s.deep; ctx.lineWidth = 1.4; ctx.stroke();
     for(const [ex, ey, r] of [[-5, -4, 4.4], [5, -1, 3.6]]){ ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(sx + ex, sy + ey, r, 0, TAU); ctx.fill(); ctx.fillStyle = '#14033f'; ctx.beginPath(); ctx.arc(sx + ex + 1.2, sy + ey + 0.8, r * 0.45, 0, TAU); ctx.fill(); }
     if(!open){ ctx.fillStyle = 'rgba(14,9,34,0.62)'; ctx.beginPath(); ctx.arc(sx, sy, 17.5, 0, TAU); ctx.fill(); padlock(sx, sy, 0.75); }
-    txt(s.name, sx, sy + 36, 11.5, open ? '#efe8ff' : '#9d95c8', 600);
-    if(act) hit(sx - 28, sy - 25, 56, 66, {id:'skin' + j, click:() => lookClick(j), hover:() => { menu.sel.look = j; }});
+    txt(open || !(s.price || s.gems) ? s.name : s.price ? s.price + ' 🪙' : s.gems + ' 💎', sx, sy + 32, 10.5, open ? '#efe8ff' : s.price ? '#ffd54a' : s.gems ? '#9df0ff' : '#9d95c8', 600);
+    if(act) hit(sx - 26, sy - 24, 52, 60, {id:'skin' + j, click:() => lookClick(j), hover:() => { menu.sel.look = j; }});
   });
-  txt(foc.name, 440, 282, 17, '#ffffff', 700);
-  txt(focOpen ? (foc.id === cur.id ? 'La couleur de XELIAX en ce moment' : 'Clique dessus pour la choisir') : skinHint(foc), 440, 300, 11.5, focOpen ? '#c9c1f0' : '#ffd54a', 500);
+  txt(foc.name, 438, 296, 17, '#ffffff', 700);
+  txt(focOpen ? (foc.id === cur.id ? 'La couleur de XELIAX en ce moment' : 'Clique dessus pour la choisir') : skinHint(foc), 438, 314, 11, focOpen ? '#c9c1f0' : '#ffd54a', 500);
+  txt(`🪙 ${save.bank} pièces   ·   💎 ${gemCount()} gemmes`, 438, 74, 12, '#ffe58a', 700);
   if(!TOUCH) promptLine([{key:'◀'}, {key:'▶'}, {text:'changer de couleur'}, {gap:10}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
 }
 const CONTROL_ROWS = [
-  ['Bouger', ['A', 'D'], '◀ ▶'], ['Sauter, double saut', ['W', 'Espace'], '▲'], ['Tirer', ['J'], '●'], ['Dash', ['K', 'Maj'], '»'],
+  ['Bouger', ['A', 'D'], '◀ ▶'], ['Sauter, double saut', ['W', 'Espace'], '▲'], ['Tirer (garder : super tir)', ['J'], '●'], ['Dash', ['K', 'Maj'], '»'],
   ['Parler', ['E'], '●'], ['Pause', ['P', 'Échap'], 'II'], ['Couper le son', ['M'], ''],
 ];
 function drawControls(act){
@@ -10154,7 +10222,7 @@ function drawBonus(act){
     if(s && menu.shakeT > 0) ax += Math.sin(menu.shakeT * 1.7) * menu.shakeT * 0.35;
     drawAppIcon(i, ax, cy - (s ? 3 : 0) + (REDUCED || !s ? 0 : Math.sin(frame * 0.05) * 1.4), 84 * (s ? 1.14 : 1), {sel:s});
     txt(c.name, cx, cy + 68, 14.5, open ? '#ffffff' : '#a49cd0', 600);
-    txt(open ? (c.bonus2 ? '4 défis : gravité, murs et dash' : '4 défis : double saut et tir') : lockText(i), cx, cy + 86, 11.5, open ? '#d6ceff' : '#ff9aa8', 500);
+    txt(open ? `2 défis géants · à battre : ${fmt(c.parTime)}` : lockText(i), cx, cy + 86, 11.5, open ? '#d6ceff' : '#ff9aa8', 500);
     if(open){
       const got = c.bonus2 ? save.crystalFicelle : save.goldFicelle, label = `${c.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée'} : ${got ? 'gagnée !' : 'à gagner'}`;
       ctx.font = `600 11.5px ${FU}`; const lw = ctx.measureText(label).width;
@@ -10653,7 +10721,7 @@ window.addEventListener('keydown', e => {
   if(k === 'a' || k === 'arrowleft') input.left = true;
   if(k === 'd' || k === 'arrowright') input.right = true;
   if((k === 'w' || k === ' ' || k === 'arrowup' || k === 'enter') && !e.repeat) pressJump();
-  if(k === 'j' && !e.repeat && state === 'play') input.shootPressed = true;
+  if(k === 'j' && !e.repeat && state === 'play'){ input.shootPressed = true; input.shootHeld = true; }
   if((k === 'k' || k === 'shift') && !e.repeat && state === 'play') input.dashPressed = true;
   if((k === 'e' || k === 's' || k === 'arrowdown') && !e.repeat) interact();
   if((k === 'p' || k === 'escape') && !e.repeat){ if(state === 'talk') endTalk(); else togglePause(); }
@@ -10667,8 +10735,9 @@ window.addEventListener('keyup', e => {
   if(k === 'a' || k === 'arrowleft') input.left = false;
   if(k === 'd' || k === 'arrowright') input.right = false;
   if(k === 'w' || k === ' ' || k === 'arrowup' || k === 'enter'){ input.jumpHeld = false; menu.credFast = false; }
+  if(k === 'j') input.shootHeld = false;
 });
-window.addEventListener('blur', () => { input.left = input.right = input.jumpHeld = false; if(state === 'play') setState('pause'); });
+window.addEventListener('blur', () => { input.left = input.right = input.jumpHeld = input.shootHeld = false; if(state === 'play') setState('pause'); });
 
 const PAD_FN = {};
 function bindPad(id, down, up){
@@ -10683,7 +10752,7 @@ function bindPad(id, down, up){
 bindPad('left',  () => { if(state === 'title') menuKey('arrowleft'); else if(state === 'pet') petSelect(-1); else input.left = true; },  () => { input.left = false; });
 bindPad('right', () => { if(state === 'title') menuKey('arrowright'); else if(state === 'pet') petSelect(1); else input.right = true; }, () => { input.right = false; });
 bindPad('jump',  () => { if(state === 'pet') petGive(pet.sel); else if(state === 'title') menuKey('enter'); else pressJump(); }, () => { input.jumpHeld = false; menu.credFast = false; });
-bindPad('shoot', () => { if(state === 'title'){ menuKey('escape'); return; } if(state === 'pet'){ closePet(); return; } if(interact()) return; if(state === 'play') input.shootPressed = true; else backToMenu(); });
+bindPad('shoot', () => { if(state === 'title'){ menuKey('escape'); return; } if(state === 'pet'){ closePet(); return; } if(interact()) return; if(state === 'play'){ input.shootPressed = true; input.shootHeld = true; } else backToMenu(); }, () => { input.shootHeld = false; });
 bindPad('pause', () => { if(state === 'title'){ menuKey('escape'); return; } if(state === 'pet') closePet(); else togglePause(); });
 bindPad('dash', () => { if(state === 'play') input.dashPressed = true; });
 // fingers on the pad: each one belongs to the nearest button (within a generous radius), and can slide from one to another

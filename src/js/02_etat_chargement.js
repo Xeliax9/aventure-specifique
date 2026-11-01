@@ -339,7 +339,8 @@ function chapterClear(){
   if(chGem && !chapter.bonus) save.gems[chIndex] = true;
   if(chapter.bonus){
     timerRunning = false;
-    if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true;
+    clearInfo.fast = !chapter.parTime || t <= chapter.parTime;
+    if(clearInfo.fast){ if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true; }
     clearInfo.bonus2 = !!chapter.bonus2;
     score += 500;
     setState('chapter');

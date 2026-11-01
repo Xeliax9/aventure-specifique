@@ -1,4 +1,4 @@
-# Historique du projet (résumé de la conversation avec Claude dans l'application, jusqu'au 31 octobre 2026)
+# Historique du projet (résumé de la conversation avec Claude dans l'application, jusqu'au 1er novembre 2026)
 
 À lire avec `CLAUDE.md`. Ce fichier résume ce qui a été décidé et ce que l'utilisateur a aimé ou non.
 
@@ -26,12 +26,18 @@
 - v34 : monde 1 refait encore (1-1 gardé) ; 4-1 L'Orage et 4-2 Le Grand Arbre refaits (ils étaient « impossibles »).
   Projet découpé en fichiers (`src/`, `outils/`), mis sur GitHub (Xeliax9/aventure-specifique).
 
+- v35 (31 oct. – 1er nov., Claude Code) : jeu en plein écran (plus de cadre) ; nouvelles planches (parachute `lift`,
+  libres `free`, `again`) et hérisson ; monde 1 : 1-2 et 1-3 refaits autour de « viser après l'orbe », 1-4 Les Parachutes
+  et 1-5 Le Pont Retourné ajoutées, la Tempête Rose devient 1-6. Pie : plonge plus souvent + phase 3 à 5 PV.
+  Glacier : 3-4 La Tour de Glace (son dessin). Boss final saison 1 plus dur (sol brûlant, attaque spéciale toutes les 10 s).
+  Fin de saison 1 plus spectaculaire. Cinématique du vol du double saut. Boutique de couleurs et super tir.
+- Retours du 1er novembre : **1-3 « vraiment super »** (planches qui tombent, planche qui plane, sauts à timer),
+  1-4 (Tempête Rose) « pas mal », **phase 3 de la pie « succulente »**. Il veut d'autres niveaux avec ces mécaniques.
+
 ## À faire / idées en attente
-- Faire jouer et valider le nouveau monde 1 (1-2 Chemin des Nuages, 1-3 Les Planches, 1-4 Tempête Rose) et 4-1 / 4-2.
-- Idée de l'utilisateur (dessin) : niveaux « tour de glace » — mur de gauche et de droite, on grimpe en zigzag
-  (saut de mur puis dash vers le même mur), plateforme cassable au milieu, bloc suspendu avec piques sur un côté,
-  chauve-souris en haut, machine qui tire des flammes tout droit, piques en bas du mur de droite. À intégrer proprement
-  dans le Glacier sans le vider.
+- Faire valider : 1-4 Les Parachutes, 1-5 Le Pont Retourné, 3-4 La Tour de Glace, boss final saison 1, fin de saison 1,
+  cinématique du double saut, boutique, super tir ; et toujours 4-1 / 4-2.
+- Idées possibles : chapeaux / accessoires à acheter (pas seulement des couleurs), autres choses à débloquer avec les gemmes.
 - GitHub Pages possible (copier `dist/aventure.html` en `index.html`) pour un lien public.
 - Le jeu est aussi publié comme page Claude (lien privé de l'utilisateur) : la version là-bas peut être en retard.
 

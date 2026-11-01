@@ -20,7 +20,29 @@ function updateS2Boss(b){
       b.y += clamp((ty - b.y) * 0.03, -1.6, 1.6) * (p2 ? 1.5 : 1);
       b.x = geckoWallX(b, b.side);
       if(--b.fireT <= 0){ b.fireT = p2 ? 60 : 90; spitAcid(b, p2 ? 3 : b.hp <= b.enrage ? 2 : 1); }
-      if(--b.stT <= 0) startLeap(b);
+      if(--b.stT <= 0){
+        if(p2 && (b.runNext = !b.runNext)){ b.state = 'runDrop'; b.vy = 0; SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il descend !', '#9dff5a'); }
+        else startLeap(b);
+      }
+    } else if(b.state === 'runDrop'){
+      b.vy += 0.6; b.y += b.vy;
+      if(b.y >= FLOOR - b.h){
+        b.y = FLOOR - b.h; b.vy = 0; b.state = 'run'; b.rdir = -b.side; b.lastAcid = b.x;
+        addShake(5); SFX.thud(); dust(b.x + b.w / 2, FLOOR, 10);
+        if(!b.toldRun){ b.toldRun = true; showToast('Il court au sol et laisse de l\'acide : monte sur les plateformes !', 160); }
+      }
+    } else if(b.state === 'run'){
+      b.x += b.rdir * 4.6; b.face = b.rdir;
+      if(Math.abs(b.x - b.lastAcid) >= 34){
+        b.lastAcid = b.x;
+        fires.push({x:clamp(b.x + b.w / 2 - 20, ARENA_WALL, W - ARENA_WALL - 40), w:40, t:0, max:300, seed:Math.random() * 10, acid:true});
+        burst(b.x + b.w / 2, FLOOR - 4, 4, '#7ae04a', 1.6, 20, 0.1, 3, 'goo');
+      }
+      if(frame % 3 === 0) dust(b.x + b.w / 2 - b.rdir * 18, FLOOR, 2);
+      if(b.x <= ARENA_WALL || b.x + b.w >= W - ARENA_WALL){
+        b.x = clamp(b.x, ARENA_WALL, W - ARENA_WALL - b.w);
+        b.side = b.rdir; b.state = 'climb'; addShake(4); SFX.thud();
+      }
     } else if(b.state === 'leap'){
       b.lt++;
       const k = Math.min(1, b.lt / b.ldur);
@@ -40,6 +62,7 @@ function updateS2Boss(b){
     } else if(b.state === 'stun' || b.state === 'stuck'){
       if(--b.stT <= 0){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 90; b.fireT = 40; }
     } else if(b.state === 'climb'){
+      b.x = geckoWallX(b, b.side);
       b.y -= 2.6;
       if(b.y <= 170){ b.state = 'crawl'; b.stT = p2 ? 80 : 120; b.fireT = 40; }
     }
@@ -240,7 +263,8 @@ function drawGecko(b){
   if(b.state === 'leap'){
     const vx = (b.lx1 - b.lx0) / b.ldur, k = b.lt / b.ldur, vy = (b.ly1 - b.ly0) / b.ldur - Math.cos(k * Math.PI) * Math.PI * 80 / b.ldur;
     ctx.rotate(Math.atan2(vy, vx)); if(vx < 0) ctx.scale(1, -1);
-  } else if(b.state === 'stun' || b.state === 'drop'){ if(b.side > 0) ctx.scale(-1, 1); }
+  } else if(b.state === 'run' || b.state === 'runDrop'){ if((b.state === 'run' ? b.rdir : -b.side) < 0) ctx.scale(-1, 1); }
+  else if(b.state === 'stun' || b.state === 'drop'){ if(b.side > 0) ctx.scale(-1, 1); }
   else { ctx.rotate(-Math.PI / 2); if(b.side < 0) ctx.scale(1, -1); }
   const wig = Math.sin(b.t * 0.3) * (b.state === 'crawl' || b.state === 'climb' ? 1 : 0.2);
   // tail

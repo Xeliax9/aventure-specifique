@@ -260,7 +260,7 @@ window.addEventListener('keydown', e => {
   if(k === 'a' || k === 'arrowleft') input.left = true;
   if(k === 'd' || k === 'arrowright') input.right = true;
   if((k === 'w' || k === ' ' || k === 'arrowup' || k === 'enter') && !e.repeat) pressJump();
-  if(k === 'j' && !e.repeat && state === 'play') input.shootPressed = true;
+  if(k === 'j' && !e.repeat && state === 'play'){ input.shootPressed = true; input.shootHeld = true; }
   if((k === 'k' || k === 'shift') && !e.repeat && state === 'play') input.dashPressed = true;
   if((k === 'e' || k === 's' || k === 'arrowdown') && !e.repeat) interact();
   if((k === 'p' || k === 'escape') && !e.repeat){ if(state === 'talk') endTalk(); else togglePause(); }
@@ -274,8 +274,9 @@ window.addEventListener('keyup', e => {
   if(k === 'a' || k === 'arrowleft') input.left = false;
   if(k === 'd' || k === 'arrowright') input.right = false;
   if(k === 'w' || k === ' ' || k === 'arrowup' || k === 'enter'){ input.jumpHeld = false; menu.credFast = false; }
+  if(k === 'j') input.shootHeld = false;
 });
-window.addEventListener('blur', () => { input.left = input.right = input.jumpHeld = false; if(state === 'play') setState('pause'); });
+window.addEventListener('blur', () => { input.left = input.right = input.jumpHeld = input.shootHeld = false; if(state === 'play') setState('pause'); });
 
 const PAD_FN = {};
 function bindPad(id, down, up){
@@ -290,7 +291,7 @@ function bindPad(id, down, up){
 bindPad('left',  () => { if(state === 'title') menuKey('arrowleft'); else if(state === 'pet') petSelect(-1); else input.left = true; },  () => { input.left = false; });
 bindPad('right', () => { if(state === 'title') menuKey('arrowright'); else if(state === 'pet') petSelect(1); else input.right = true; }, () => { input.right = false; });
 bindPad('jump',  () => { if(state === 'pet') petGive(pet.sel); else if(state === 'title') menuKey('enter'); else pressJump(); }, () => { input.jumpHeld = false; menu.credFast = false; });
-bindPad('shoot', () => { if(state === 'title'){ menuKey('escape'); return; } if(state === 'pet'){ closePet(); return; } if(interact()) return; if(state === 'play') input.shootPressed = true; else backToMenu(); });
+bindPad('shoot', () => { if(state === 'title'){ menuKey('escape'); return; } if(state === 'pet'){ closePet(); return; } if(interact()) return; if(state === 'play'){ input.shootPressed = true; input.shootHeld = true; } else backToMenu(); }, () => { input.shootHeld = false; });
 bindPad('pause', () => { if(state === 'title'){ menuKey('escape'); return; } if(state === 'pet') closePet(); else togglePause(); });
 bindPad('dash', () => { if(state === 'play') input.dashPressed = true; });
 // fingers on the pad: each one belongs to the nearest button (within a generous radius), and can slide from one to another

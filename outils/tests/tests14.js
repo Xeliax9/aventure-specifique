@@ -122,7 +122,7 @@ const { chromium } = require('playwright');
     lives=99; for(let i=0;i<30 && boss.alive;i++){ boss.inv=0; bossDamage(); step(); }
     run(130); ok(!boss.alive, 'the death scene ends'); ok(key && key.kind === 'ficelle', 'escape: ficelle waits at the top');
     player.x = key.x + 6; player.y = key.y - 10; player.vy = 0; run(3);
-    ok(finaleT > 0, 'finale started'); run(400); ok(state === 'play' && finaleT >= finaleEnd() && steal && steal.got, 'the magpie steals the ficelle, then the finale waits for Space'); pressJump(); step(); ok(state === 'win', 'win screen');
+    ok(finaleT > 0, 'finale started'); run(520); ok(state === 'play' && finaleT >= finaleEnd() && steal && steal.got, 'the magpie steals the ficelle, then the finale waits for Space'); pressJump(); step(); ok(state === 'win', 'win screen');
     render(1);
     // game over rules
     newRun(0); clean(); loadRoom(0,2); setState('play'); lives=1; killPlayer(); confirmAction(); run(60); ok(chIndex===0 && rIndex===0, 'normal game over -> start of chapter');

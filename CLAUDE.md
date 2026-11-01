@@ -23,18 +23,28 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
 - Vérifier qu'une salle saison 2 est faisable (copie exacte de la physique) :
   `node outils/verif/route2.js outils/cache/chapters2.js 2-3 --gates` (avec la variable `NOLONE=1` pour interdire
   l'escalade d'un seul mur). `--gates` dit quels éléments sont obligatoires / évitables, `--verbose` liste les étapes.
-- Robot qui joue un parcours dans le vrai moteur : `outils/robot/bot.js` (+ `harness.js`).
+- Robot qui joue un parcours dans le vrai moteur : `outils/robot/bot.js` (+ `harness.js`) pour le Glacier ;
+  `outils/robot/bot1.js <salle> <parcours.json>` pour le monde 1 (double saut + tir, planches qui bougent) ;
+  parcours validés dans `outils/robot/parcours/`. **route2 ne simule pas les planches qui tombent** : pour elles, le robot.
+- Node.js n'est pas installé sur le PC : Claude télécharge un Node portable dans son dossier temporaire.
 
 ## Physique utile (px, 60 images/s)
 Saut ~102 px de haut, double saut ~178, dash ~95 px à l'horizontale, course 3,6 px/image.
 Mur : saut de mur 4,8 px/image d'éloignement, ~89 px de montée ; cheminée de 60 à 90 px de large.
 Orbes roses = inversent la gravité ; rideaux (`w`,`h`,`set`) = forcent une direction.
-Planches `fall:true` : tombent dans le sens de la gravité, se posent sur les pointes des piques (pont).
-Sortir par le haut de l'écran la tête en bas = mort.
+Planches `fall:true` : tombent dans le sens de la gravité, se posent sur les pointes des piques (pont), écrasent les
+ennemis. `again:true` : reviennent après s'être posées. `lift:true` : planche-parachute (descend lentement en portant
+XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la gravité à chaque orbe.
+Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
+Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v34, 31 octobre 2026)
-- S2 monde 1 refait (1-1 Tête en bas, 1-2 Chemin des Nuages, 1-3 Les Planches, 1-4 Tempête Rose) : à faire valider.
-- S2 monde 2 : validé par l'utilisateur (un cœur par salle).
-- Glacier 3-2 / 3-3 : version d'origine corrigée.
-- S2 monde 4 : 4-1 et 4-2 refaits plus justes : à faire valider.
-- Fin de saison 1 : la pie vole la ficelle (scène dans `05_mise_a_jour.js`, `updateSteal`).
+## État (v35, 1er novembre 2026)
+- S2 monde 1 : 1-1 Tête en bas, 1-2 Chemin des Nuages, 1-3 Les Planches (validée et adorée), 1-4 Les Parachutes,
+  1-5 Le Pont Retourné (nouvelles, à faire valider), 1-6 La Tempête Rose (ex-1-4, validée).
+- S2 monde 2 : validé (un cœur par salle). Cinématique en 2-1 : la pie vole le double saut (`djSteal`), Gaston le rend en 2-3.
+- Glacier : 3-4 La Tour de Glace (nouvelle, dessin de l'utilisateur), boss Yéti en 3-5.
+- S2 monde 4 : la pie (4-3) a 3 phases (3 / 3 / 5 PV) ; la phase 3 enchaîne les plongeons (validée et adorée).
+- Saison 1 : boss final (L'Ascension) avec sol brûlant (`hotFloor`) et attaque spéciale toutes les 10 s
+  (pluie de feu, anneaux, spirale) ; fin de saison 1 avec feux d'artifice, « QUOI ?! » et carton « À suivre… ».
+- Boutique : pièces → tirelire (`save.bank`), couleurs à acheter (`price`) ou à débloquer avec les gemmes (`gems`).
+- Tir : attrape les pièces, ennemi abattu = +1 pièce, super tir en gardant la touche (`CHARGE_FULL`).

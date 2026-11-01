@@ -54,7 +54,7 @@ function step(){
     SFX.warn();
   }
   if(cine) updateCine();
-  if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)) timerRunning = true;
+  if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)){ timerRunning = true; if(chapter.bonus && chapter.parTime && rIndex === 0 && elapsed - chStartTime < 100) showToast(`Temps à battre : ${fmt(chapter.parTime)} — fonce !`, 200); }
   if(timerRunning && !cine) elapsed += STEP;        // the clock waits during cinematics
   if(phaseT > 0 && --phaseT === 0) transition(() => loadRoom(chIndex, rIndex + 1));
 
@@ -995,8 +995,33 @@ function updatePlayer(){
       SFX.shoot();
     }
   }
+  // charged shot: keep the shoot key down, let go when XELIAX glows
+  if(canShoot && input.shootHeld && !cine && finaleT === 0){
+    player.charge = (player.charge || 0) + 1;
+    if(player.charge === CHARGE_FULL){ tone(880, 0.12, 'triangle', 0.04, 1320); sparkle(player.x + player.w / 2, player.y + player.h / 2, 10, '#ffd54a'); }
+    if(player.charge > 12 && frame % 4 === 0){
+      const a = Math.random() * TAU, r = 22;
+      particles.push({x:player.x + player.w / 2 + Math.cos(a) * r, y:player.y + player.h / 2 + Math.sin(a) * r, vx:-Math.cos(a) * 1.4, vy:-Math.sin(a) * 1.4, life:14, max:14,
+        color:player.charge >= CHARGE_FULL ? '#ffd54a' : '#b9a2ff', grav:0, size:2.4, type:'dot'});
+    }
+  } else {
+    if((player.charge || 0) >= CHARGE_FULL && canShoot && state === 'play'){
+      anim.shootT = 14; addShake(3); SFX.shoot(); tone(220, 0.2, 'sawtooth', 0.04, 90);
+      if(room.shootUp) shots.push({x:player.x + player.w / 2 - 7, y:player.y - 20, w:14, h:22, vx:0, vy:-10, big:true, hits:new Set()});
+      else {
+        shots.push({x:player.facing > 0 ? player.x + player.w : player.x - 22, y:G > 0 ? player.y + 8 : player.y + player.h - 20, w:22, h:12, vx:player.facing * 9, vy:0, big:true, hits:new Set()});
+        player.vx -= player.facing * 2.2;
+      }
+    }
+    player.charge = 0;
+  }
   for(const s of shots){
     s.x += s.vx; s.y += s.vy;
+    // a shot catches the coins it flies through
+    for(const c of coins) if(!c.got && overlap(s, {x:c.x - 8, y:c.y - 8, w:16, h:16})){
+      c.got = true; score += 10; chCoins++; collected.add(c.id); addBank(1);
+      sparkle(c.x, c.y, 5, '#ffe066'); popup(c.x, c.y - 8, '+10', '#ffe066'); flyCoin(c.x, c.y); SFX.coin();
+    }
     const hitWall = solids.find(w => !w.gone && overlap(s, w));
     if(hitWall){
       s.dead = true; burst(s.x + s.w / 2, s.y + s.h / 2, 5, '#d9d0ff', 1.6, 14, 0, 2.2, 'star');
@@ -1048,17 +1073,19 @@ function updatePlayer(){
           if(toast.t <= 0) showToast('Ses piques arrêtent les tirs… une planche ?', 90);
           continue;
         }
-        e.alive = false; s.dead = true; score += 25;
+        e.alive = false; score += 25; addBank(1);
+        if(s.big) s.hits.add(e); else s.dead = true;
+        popup(e.x + e.w / 2, e.y - 6, '+1 🪙', '#ffe066');
         killFx(e); SFX.stomp();
       }
     }
     for(const t of turrets){
       if(t.alive && !s.dead && overlap(s, t)){
-        s.dead = true; t.hp--; t.flash = 8;
+        s.dead = true; t.hp -= s.big ? 3 : 1; t.flash = 8;
         burst(s.x, s.y, 6, '#ffd54a', 2, 15, 0.05, 2.5, 'star');
         if(t.hp <= 0){
-          t.alive = false; score += 50;
-          popup(t.x + 12, t.y, '+50', '#ffd54a');
+          t.alive = false; score += 50; addBank(3);
+          popup(t.x + 12, t.y, '+3 🪙', '#ffd54a');
           burst(t.x + 12, t.y + 12, 18, '#ffb27a', 4, 35, 0.15, 3);
           burst(t.x + 12, t.y + 12, 10, '#ffffff', 2, 30, -0.02, 5, 'puff');
           addShake(5); SFX.stomp();
@@ -1121,7 +1148,7 @@ function updatePlayer(){
   for(const c of coins){
     if(c.got) continue;
     if(overlap(player, {x:c.x - 8, y:c.y - 8, w:16, h:16})){
-      c.got = true; score += 10; chCoins++; collected.add(c.id);
+      c.got = true; score += 10; chCoins++; collected.add(c.id); addBank(1);
       sparkle(c.x, c.y, 5, '#ffe066');
       popup(c.x, c.y - 8, '+10', '#ffe066');
       flyCoin(c.x, c.y);

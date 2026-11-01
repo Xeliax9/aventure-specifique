@@ -271,7 +271,9 @@ function startFinale(){
   setFace(anim, 'open', 200);
   SFX.key();
   if(chIndex === STORY_END && !key.gold && !room.ending2) steal = {x:0, y:0, w:48, h:40, state:'hover', phase:1, face:-1, hitT:0, inv:0, lost:true, got:false, on:false};
-  showToast(key.gold === 'crystal' ? 'La ficelle de cristal ! Défi bonus réussi !' : key.gold ? 'La ficelle dorée ! Défi bonus réussi !' : 'XELIAX a retrouvé la ficelle aux olives !', 170);
+  const late = chapter.bonus && chapter.parTime && elapsed - chStartTime > chapter.parTime;
+  if(late) showToast(`Trop lent ! Il fallait moins de ${fmt(chapter.parTime)} : réessaie !`, 200);
+  else showToast(key.gold === 'crystal' ? 'La ficelle de cristal ! Défi bonus réussi !' : key.gold ? 'La ficelle dorée ! Défi bonus réussi !' : 'XELIAX a retrouvé la ficelle aux olives !', 170);
 }
 
 function barrierOn(){ return !!(room && room.barrierY && boss && boss.alive); }
