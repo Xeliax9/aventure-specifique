@@ -184,6 +184,7 @@ function render(alpha){
   const ck = cineBars();
   if(ck < 0.99){ ctx.save(); ctx.globalAlpha = 1 - ck; drawHUD(); ctx.restore(); }
   drawCine();
+  drawFinaleOverlay(cx, cy);
   drawFinalePrompt();
   drawBanner();
   if(state === 'pause') drawPause();
