@@ -35,6 +35,7 @@ function pill(x, y, w, h){
 }
 
 function drawHUD(){
+  if(isSpeedrun() && state === 'play'){ drawSrHud(); return; }   // speedrun: the big timer, no hearts
   const top = 8, hh = 24;
   const slots = Math.min(8, Math.max(startLives(), lives));
   const heartsW = 14 + slots * 15 + (lives > 8 ? 24 : 0);
@@ -1439,11 +1440,12 @@ function drawChapterClear(){
   panelContent(b);
   drawHero(uiHero, W / 2, b.y + 2 - Math.abs(Math.sin(frame * 0.16)) * 10, 1.8, {});
   heading(clearInfo.bonus ? 'Défi bonus réussi !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, 27, CH_ACCENT[chIndex]);
-  txt(clearInfo.bonus ? (clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
+  txt(clearInfo.bonus ? (!clearInfo.fast ? 'Trop lent pour la ficelle : R pour retenter !' : clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
   const rows = [
     ['Temps', fmt(counted(clearInfo.time, 10)), clearInfo.newBest && stateT > 50 ? 'Record !' : ''],
-    ['Pièces', `${Math.round(counted(clearInfo.coins, 20))} sur ${clearInfo.total}`, clearInfo.coins === clearInfo.total && stateT > 60 ? 'Toutes !' : ''],
-    [clearInfo.bonus ? (clearInfo.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée') : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus || clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
+    clearInfo.bonus ? ['Médaille', stateT > 40 ? (clearInfo.medal ? clearInfo.medal[0].toUpperCase() + clearInfo.medal.slice(1) : 'aucune') : '', clearInfo.medal === 'or' && stateT > 55 ? 'Or !' : '']
+      : ['Pièces', `${Math.round(counted(clearInfo.coins, 20))} sur ${clearInfo.total}`, clearInfo.coins === clearInfo.total && stateT > 60 ? 'Toutes !' : ''],
+    [clearInfo.bonus ? (clearInfo.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée') : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus ? (clearInfo.fast ? 'gagnée' : 'trop lent') : clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
     chapter.season === 2 || chapter.bonus2 ? ['Pouvoirs', stateT > 45 ? ['gravité', hasWall && 'murs', hasDash && 'dash'].filter(Boolean).join(', ') : '', ''] : ['Recette', stateT > 45 ? recipeShort() : '', ''],
     ['Score', String(Math.round(counted(score, 30))), ''],
   ];

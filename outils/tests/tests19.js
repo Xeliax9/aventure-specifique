@@ -184,11 +184,23 @@ const { chromium } = require('playwright');
     return res;
   });
   ok(rnd.length === 2, 'random play in the 2 cosmic rooms: ' + rnd.join(', '));
-  // game over in a cosmic room: only that room restarts
-  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); lives = 1; player.invuln = 0; hurt(0); });
-  ok(await T(() => state === 'over'), 'game over in B2-2');
-  await T(() => { confirmAction(); for(let i = 0; i < 80; i++) step(); });
-  ok(await T(() => chIndex === 9 && rIndex === 1 && state === 'play' && lives === startLives()), 'retry restarts that room only');
+  // speedrun mode: one hit and you're out (no hearts), back at once; R restarts; splits, record and ghost
+  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); player.invuln = 0; hurt(0); });
+  ok(await T(() => state === 'play' && player.dead && lives === 99), 'speedrun: one hit = back to the flag, no game over, no hearts');
+  ok(await T(() => { for(let i = 0; i < 40; i++) step(); render(1); return !player.dead && state === 'play'; }), 'speedrun: XELIAX is back at once');
+  ok(await T(() => { elapsed = 5000; srRestart(); return rIndex === 0 && elapsed === 0 && state === 'play'; }), 'R starts the whole challenge again');
+  ok(await T(() => {
+    save.speed = {}; srRestart(); timerRunning = true;
+    for(let i = 0; i < 120; i++){ input.right = true; step(); } input.right = false;
+    srSplit(); for(let i = 0; i < 60; i++) step();
+    chapterClear(); return !!(save.speed[9] && save.speed[9].ghost.length > 100 && save.speed[9].splits.length === 1 && clearInfo.srNew);
+  }), 'finishing saves the record, its splits and its ghost');
+  ok(await T(() => {
+    srRestart(); timerRunning = true; for(let i = 0; i < 100; i++){ step(); if(i % 10 === 0) render(1); }
+    srSplit(); render(1); return srun.pop && typeof srun.pop.d === 'number' && srun.pop.d < 0;
+  }), 'second run: the ghost runs alongside, the split shows the gap to the record (green when faster)');
+  ok(await T(() => srMedal(9, CHAPTERS[9].parTime) === 'or' && srMedal(9, CHAPTERS[9].parTime * 1.2) === 'argent' && srMedal(9, CHAPTERS[9].parTime * 1.4) === 'bronze' && srMedal(9, CHAPTERS[9].parTime * 2) === null), 'medals: gold, silver, bronze');
+  await T(() => { setState('play'); timerRunning = false; });
   // the crystal ficelle
   await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); bannerT = 0; for(let i = 0; i < 10; i++) step(); });
   ok(await T(() => key && key.kind === 'ficelle' && key.gold === 'crystal'), 'the crystal ficelle waits at the top of « Le Cœur du Cosmos »');

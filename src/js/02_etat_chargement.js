@@ -205,6 +205,7 @@ function stepHero(){
 // =====================================================================
 function loadRoom(ci, ri){
   chIndex = ci; rIndex = ri;
+  if(ri > 0 && CHAPTERS[ci].bonus && state === 'play' && timerRunning) srSplit();   // speedrun: a split at each new room
   chapter = CHAPTERS[ci];
   room = chapter.rooms[ri];
   room.w = room.width || W;
@@ -298,6 +299,7 @@ function startChapter(ci, advancing){
   hasDash = advancing ? (hasDash || !!g.dash) : !!g.dash;
   lives = advancing ? Math.max(lives, startLives()) : startLives();
   chStartTime = elapsed; chCoins = 0; chGem = false;
+  if(CHAPTERS[ci].bonus){ srReset(); lives = 99; }
   collected = new Set();
   chCoinsTotal = CHAPTERS[ci].rooms.reduce((a, r) => a + (r.coins || []).length, 0);
   loadRoom(ci, 0);
@@ -340,6 +342,7 @@ function chapterClear(){
   if(chGem && !chapter.bonus) save.gems[chIndex] = true;
   if(chapter.bonus){
     timerRunning = false;
+    srFinish(t);
     clearInfo.fast = !chapter.parTime || t <= chapter.parTime;
     if(clearInfo.fast){ if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true; }
     clearInfo.bonus2 = !!chapter.bonus2;

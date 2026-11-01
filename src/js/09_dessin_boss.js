@@ -408,6 +408,7 @@ function drawWorld(){
   drawBoss();
   for(const s of shots) drawShot(s);
   for(const b of bullets) drawBullet(b);
+  drawSrGhost();
   drawPlayer();
   drawSteal();
   if(room.lava) drawRisingLava();

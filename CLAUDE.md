@@ -39,7 +39,7 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v45, 1er novembre 2026)
+## État (v46, 1er novembre 2026)
 - S2 monde 1 : 1-1 Tête en bas, 1-2 Chemin des Nuages, 1-3 Les Planches (validée et adorée), 1-4 Les Parachutes,
   1-5 Le Pont Retourné (nouvelles, à faire valider), 1-6 La Tempête Rose (ex-1-4, validée).
 - S2 monde 2 : validé (un cœur par salle). v42 : 2-2 poteaux infranchissables par le haut + fin bas-haut-bas-haut ; 2-3 piques côté milieu, on grimpe entre poteau et mur. Cinématique en 2-1 : la pie vole le double saut (`djSteal`), Gaston le rend en 2-3.
@@ -48,4 +48,5 @@ Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'
 - Saison 1 : boss final : phase 1 change de côté (`sideT`), phase 2 sol tout en lave (`hotFloor.lava`), envol sur une plateforme (`launchTo`) puis lave rapide ; avant : sol brûlant (`hotFloor`) et attaque spéciale toutes les 10 s
   (pluie de feu, anneaux, spirale) ; fin de saison 1 avec feux d'artifice, « QUOI ?! » et carton « À suivre… ».
 - Boutique : pièces → tirelire (`save.bank`), couleurs à acheter (`price`) ou à débloquer avec les gemmes (`gems`).
+- Bonus = mode speedrun (`13c_speedrun.js`) : chrono + temps intermédiaires, médailles, fantôme (`save.speed`), R = recommencer, un coup = mort sans cœurs.
 - Tir : attrape les pièces, ennemi abattu = +1 pièce, super tir en gardant la touche (`CHARGE_FULL`).

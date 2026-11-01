@@ -95,6 +95,7 @@ function dropBossReward(b){
 // =====================================================================
 function hurt(fromX){
   if(player.invuln > 0 || player.dead || cine) return;
+  if(isSpeedrun()){ srDeath(); return; }          // speedrun: one hit and you're out
   if(idle.phase) idleReset();
   lives--;
   SFX.hurt();
@@ -112,6 +113,7 @@ function hurt(fromX){
 // spikes, pits, lava pools: lose a life and respawn at the last checkpoint
 function killPlayer(){
   if(player.dead) return;
+  if(isSpeedrun()){ idleReset(); srDeath(); return; }
   idleReset();
   lives--;
   addShake(7);
@@ -269,6 +271,7 @@ function startEscape(announce){
 // XELIAX grabs the ficelle aux olives: a short celebration, then the ending
 function startFinale(){
   finaleT = 1;
+  if(isSpeedrun()) timerRunning = false;
   key.got = true;
   player.invuln = 9999; player.hurtT = 0;
   for(const e of [...enemies, ...bats]) if(e.alive){ e.alive = false; burst(e.x + e.w / 2, e.y + e.h / 2, 8, '#ffffff', 1.6, 26, -0.01, 4, 'puff'); }
