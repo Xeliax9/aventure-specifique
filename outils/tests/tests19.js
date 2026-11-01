@@ -115,7 +115,7 @@ const { chromium } = require('playwright');
   await T(() => { menu.sel.look = 5; }); await key('ArrowRight');
   ok(await T(() => menu.sel.look === 6 && SET.skin === 'menthe'), 'the gold colour stays locked without the golden ficelle');
   await T(() => render(1));
-  const lockX = await T(() => 350 + (7 % 4) * 60), lockY = await T(() => 120 + 74);
+  const lockX = await T(() => 330 + (7 % 5) * 54), lockY = await T(() => 104 + 64);
   await click(lockX, lockY);
   ok(await T(() => toast.t > 0 && /cristal/.test(toast.text)), 'clicking the crystal colour explains how to get it');
   await T(() => { lookClick(0); });
@@ -166,7 +166,7 @@ const { chromium } = require('playwright');
   // every room loads and survives a bit of random play
   const rnd = await T(() => {
     const res = [];
-    for(let ri = 0; ri < 4; ri++){
+    for(let ri = 0; ri < 2; ri++){
       newRun(9); fade = 0; fadeDir = 0; pendingAction = null; loadRoom(9, ri); setState('play'); lives = 99;
       for(let f = 0; f < 1500; f++){
         input.left = Math.random() < 0.3; input.right = !input.left && Math.random() < 0.6;
@@ -183,17 +183,17 @@ const { chromium } = require('playwright');
     input.left = input.right = input.jumpHeld = false;
     return res;
   });
-  ok(rnd.length === 4, 'random play in the 4 cosmic rooms: ' + rnd.join(', '));
+  ok(rnd.length === 2, 'random play in the 2 cosmic rooms: ' + rnd.join(', '));
   // game over in a cosmic room: only that room restarts
-  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 2); setState('play'); lives = 1; player.invuln = 0; hurt(0); });
-  ok(await T(() => state === 'over'), 'game over in B2-3');
+  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); lives = 1; player.invuln = 0; hurt(0); });
+  ok(await T(() => state === 'over'), 'game over in B2-2');
   await T(() => { confirmAction(); for(let i = 0; i < 80; i++) step(); });
-  ok(await T(() => chIndex === 9 && rIndex === 2 && state === 'play' && lives === startLives()), 'retry restarts that room only');
+  ok(await T(() => chIndex === 9 && rIndex === 1 && state === 'play' && lives === startLives()), 'retry restarts that room only');
   // the crystal ficelle
-  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 3); setState('play'); bannerT = 0; for(let i = 0; i < 10; i++) step(); });
+  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); bannerT = 0; for(let i = 0; i < 10; i++) step(); });
   ok(await T(() => key && key.kind === 'ficelle' && key.gold === 'crystal'), 'the crystal ficelle waits at the top of « Le Cœur du Cosmos »');
-  await T(() => { setGravity(-1); player.x = 60; player.y = 160; player.vy = -2; player.invuln = 999; for(let i = 0; i < 30; i++) step(); });
-  ok(await T(() => player.onGround && gdir === -1 && Math.abs(player.y - 144) < 1), 'XELIAX stands upside down under the top platform');
+  await T(() => { player.x = 40; player.y = 150 - player.h - 2; player.vy = 0; player.invuln = 999; for(let i = 0; i < 30; i++) step(); });
+  ok(await T(() => player.onGround && gdir === 1 && Math.abs(player.y + player.h - 150) < 1), 'XELIAX stands on the top platform');
   await T(() => { input.right = true; for(let i = 0; i < 40 && finaleT === 0; i++) step(); input.right = false; });
   ok(await T(() => finaleT > 0), 'walking to it grabs the crystal ficelle');
   await T(() => { for(let i = 0; i < 200; i++){ step(); if(i % 10 === 0) render(1); } });

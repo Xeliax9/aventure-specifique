@@ -1,0 +1,7 @@
+VERSION 32 — Mondes 1 et 2 refaits
+
+- Saison 2, mondes 1 et 2 : refaits dans le style de la saison 1.
+- Glacier 3-2 et 3-3 : remis comme avant, mais corrigés :
+  - plus de piques sur le dessus des blocs « Rebondis de bloc en bloc » ;
+  - plus de piques sur les murs à grimper ;
+  - ajout de canons à flammes, de chauves-souris et d'une plateforme cassable.

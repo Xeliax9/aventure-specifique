@@ -7,10 +7,11 @@ function geckoWallX(b, side){ return side < 0 ? ARENA_WALL : W - ARENA_WALL - b.
 function setupS2Boss(b){
   b.t = 0; b.vx = 0; b.vy = 0; b.face = -1;
   if(b.mode === 'gecko'){ b.side = -1; b.state = 'crawl'; b.stT = 150; b.fireT = 70; b.leaps = 0; }
-  if(b.mode === 'yeti'){ b.y = FLOOR - b.h; b.state = 'walk'; b.stT = 160; b.fireT = 90; b.warn = []; }
+  if(b.mode === 'yeti'){ b.y = FLOOR - b.h; b.state = 'walk'; b.stT = 160; b.fireT = 90; b.warn = []; b.shL = b.shR = YETI_SHIELD; b.jumpCD = 150; }
   if(b.mode === 'magpie'){ b.state = 'hover'; b.stT = 150; b.fireT = 120; b.hx = b.x; }
 }
 
+const YETI_SHIELD = 3;
 function updateS2Boss(b){
   const p2 = b.phase === 2;
   b.t++;
@@ -72,6 +73,33 @@ function updateS2Boss(b){
     // falling icicles announced by a shadow on the floor
     for(const w of b.warn) if(--w.t === 0) bullets.push({x:w.x - 6, y:-30, w:12, h:26, vx:0, vy:2, grav:0.42, kind:'icicle'});
     b.warn = b.warn.filter(w => w.t > 0);
+    if(b.state === 'walk' && p2 && --b.jumpCD <= 0 && player.onGround && player.y + player.h <= FLOOR - 60){
+      const pc = player.x + player.w / 2, pl = platforms.find(q => !q.solid && !q.move && pc > q.x && pc < q.x + q.w && Math.abs(player.y + player.h - q.y) < 4);
+      if(pl){ b.state = 'jump'; b.lt = 0; b.lx0 = b.x; b.ly0 = b.y; b.lx1 = pl.x + pl.w / 2 - b.w / 2; b.ly1 = pl.y - b.h; b.ldown = false; SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il saute !', '#bfe6ff'); }
+    }
+    if(b.state === 'jump'){
+      b.lt++;
+      const k = Math.min(1, b.lt / 46);
+      b.x = lerp(b.lx0, b.lx1, k); b.y = lerp(b.ly0, b.ly1, k) - Math.sin(k * Math.PI) * 110;
+      b.face = Math.sign(b.lx1 - b.lx0) || b.face;
+      if(k >= 1){
+        addShake(7); SFX.thud(); dust(b.x + b.w / 2, b.y + b.h, 10);
+        if(b.ldown){ b.state = 'walk'; b.stT = 90; b.jumpCD = 280; }
+        else { b.state = 'perch'; b.stT = 75; b.fireT = 20; }
+      }
+    } else if(b.state === 'perch'){
+      b.face = Math.sign(player.x + player.w / 2 - (b.x + b.w / 2)) || b.face;
+      if(--b.fireT <= 0){
+        b.fireT = 28;
+        const cx = b.x + b.w / 2, cy = b.y + 10, dx = player.x + player.w / 2 - cx;
+        bullets.push({x:cx - 7, y:cy - 7, w:14, h:14, vx:clamp(dx / 45, -5.5, 5.5), vy:-4, grav:0.2, kind:'snow'});
+        SFX.bossShot();
+      }
+      if(--b.stT <= 0){
+        const tx = b.x + b.w / 2 < W / 2 ? W - 140 - b.w : 140;
+        b.state = 'jump'; b.lt = 0; b.lx0 = b.x; b.ly0 = b.y; b.lx1 = tx; b.ly1 = FLOOR - b.h; b.ldown = true;
+      }
+    }
     if(b.state === 'walk'){
       const dir = Math.sign(player.x + player.w / 2 - (b.x + b.w / 2)) || b.face;
       b.face = dir;
@@ -94,7 +122,7 @@ function updateS2Boss(b){
         b.state = 'dizzy'; b.stT = p2 ? 115 : 150;
         addShake(13); SFX.thud(); SFX.crumble();
         burst(b.cdir > 0 ? W - 32 : 32, b.y + 20, 16, '#e8f8ff', 3, 30, 0.1, 3, 'puff');
-        popup(b.x + b.w / 2, b.y - 10, 'Fonce dedans : dash !', '#ffe58a');
+        popup(b.x + b.w / 2, b.y - 10, (b.cdir > 0 ? b.shL : b.shR) > 0 ? 'Casse son bouclier au tir, puis dash !' : 'Fonce dedans : dash !', '#ffe58a');
         if(p2) for(let i = 0; i < 4; i++) b.warn.push({x:60 + Math.random() * (W - 120), t:30 + i * 14});
       }
     } else if(b.state === 'dizzy'){
@@ -158,7 +186,7 @@ function updateS2Boss(b){
           return;
         }
         b.x = clamp(b.x, 30, W - 30 - b.w); b.y = b.ty;
-        if(!p2 && b.ty > 150){
+        if(b.phase === 1 && b.ty > 150){
           // phase 1: the hay is far too soft, she bounces straight back up
           b.state = 'bounce'; b.stT = 22; b.vy = -6.5; b.vx *= 0.25;
           addShake(5); SFX.spring(); dust(b.x + b.w / 2, FLOOR, 14);
@@ -213,7 +241,7 @@ function bossHarmless(b){ return bossDashWeak(b) || (S2_BOSS.has(b.mode) && b.in
 function bossHitReact(b){
   if(!b.alive || cine || b.dying) return;
   if(b.mode === 'gecko'){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 90; b.fireT = 60; }
-  if(b.mode === 'yeti'){ b.state = 'walk'; b.stT = 170; b.fireT = 70; }
+  if(b.mode === 'yeti'){ b.state = 'walk'; b.stT = 170; b.fireT = 70; b.shL = b.shR = YETI_SHIELD; b.y = FLOOR - b.h; }
   if(b.mode === 'magpie'){ b.state = 'rise'; b.nestT = 50; }   // ...then she shakes the nest
 }
 
@@ -224,7 +252,12 @@ function bossContact2(prevBottom, prevTop){
   const G = gdir;
   const onTop = G > 0 ? (player.vy > 0 && prevBottom <= b.y + 16) : (player.vy < 0 && prevTop >= b.y + b.h - 16);
   if(player.dashT > 0 && bossDashWeak(b)){
-    if(b.inv <= 0){ bossDamage(); bossHitReact(b); }
+    const fromLeft = player.x + player.w / 2 < b.x + b.w / 2;
+    if(b.mode === 'yeti' && (fromLeft ? b.shL : b.shR) > 0){
+      SFX.ting(); burst(fromLeft ? b.x : b.x + b.w, b.y + b.h / 2, 8, '#bfe6ff', 2.4, 20, 0.05, 3, 'star');
+      if(toast.t <= 0) showToast('Son bouclier de glace tient bon : tire dessus d\'abord !', 120);
+    }
+    else if(b.inv <= 0){ bossDamage(); bossHitReact(b); }
     player.dashT = 0; player.vx = -player.dashDir * 3.5; player.vy = -5 * G; player.noCut = true;
     return false;
   }
@@ -303,6 +336,15 @@ function drawGecko(b){
 
 function drawYeti(b){
   const x = ix(b), y = iy(b), cx = x + b.w / 2, base = y + b.h;
+  // ice shields on both sides: shoot them to pieces
+  for(const [side, hp] of [[-1, b.shL], [1, b.shR]]){
+    if(!(hp > 0)) continue;
+    const sx = side < 0 ? x - 12 : x + b.w + 2, a = 0.45 + 0.18 * hp;
+    ctx.fillStyle = 'rgba(190,235,255,' + a + ')'; rr(sx, y + 4, 10, b.h - 8, 4); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.strokeStyle = 'rgba(40,110,170,0.7)'; ctx.lineWidth = 1;
+    for(let c = 0; c < YETI_SHIELD - hp; c++){ ctx.beginPath(); ctx.moveTo(sx + 1, y + 12 + c * 12); ctx.lineTo(sx + 9, y + 18 + c * 12); ctx.stroke(); }
+  }
   const p2 = b.phase === 2, hit = b.hitT > 0 || (b.inv > 0 && Math.floor(b.inv / 4) % 2 === 0);
   const fur = hit ? '#ffffff' : '#eef6ff', shadeC = '#a8c4e6', face = p2 ? '#7a8ad8' : '#6aa6e0';
   const charging = b.state === 'charge', roar = b.state === 'roar', dizzy = b.state === 'dizzy';

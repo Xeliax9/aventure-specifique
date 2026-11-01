@@ -8,6 +8,7 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
 - Après chaque modification : reconstruire (`node outils/build.js`), lancer les tests, puis **rappeler à l'utilisateur
   de faire `git add .`, `git commit -m "…"`, `git push`** (ou proposer de le faire pour lui).
 - Ne pas mettre de piques sur les murs qu'on doit escalader ; pas de pièges invisibles ; niveaux lisibles comme la saison 1.
+- À chaque nouvelle version : ajouter `versions/vNN.txt` (changements expliqués simplement, en français).
 
 ## Organisation
 - `src/page.html`, `src/style.css` : la page ; `src/ordre.json` : ordre d'assemblage des scripts.
@@ -38,7 +39,7 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v35, 1er novembre 2026)
+## État (v41, 1er novembre 2026)
 - S2 monde 1 : 1-1 Tête en bas, 1-2 Chemin des Nuages, 1-3 Les Planches (validée et adorée), 1-4 Les Parachutes,
   1-5 Le Pont Retourné (nouvelles, à faire valider), 1-6 La Tempête Rose (ex-1-4, validée).
 - S2 monde 2 : validé (un cœur par salle). Cinématique en 2-1 : la pie vole le double saut (`djSteal`), Gaston le rend en 2-3.

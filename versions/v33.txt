@@ -1,0 +1,4 @@
+VERSION 33 — Monde 2 validé
+
+- Monde 2 (Les Gorges) validé.
+- Un cœur ajouté dans chaque salle.

@@ -1,0 +1,5 @@
+VERSION 31 — Corrections
+
+- Yéti : après un coup de dash, il ne blesse plus XELIAX par erreur.
+- Un boss de la saison 2 qui vient d'être touché est inoffensif un court instant.
+- Le message « Bats le boss pour ouvrir ! » n'apparaît plus qu'une seule fois.

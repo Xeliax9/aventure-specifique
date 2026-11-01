@@ -1,0 +1,5 @@
+VERSION 34 — Le projet sur GitHub
+
+- Monde 1 refait encore une fois (1-1 gardé).
+- 4-1 L'Orage et 4-2 Le Grand Arbre refaits : ils étaient impossibles.
+- Le jeu est découpé en fichiers (src/, outils/) et mis sur GitHub.
