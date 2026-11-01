@@ -4,7 +4,10 @@ Le jeu est découpé en petits fichiers dans `src/`. Le script `outils/build.js`
 `dist/aventure.html`, qu'on ouvre dans un navigateur pour jouer (aucune connexion nécessaire).
 
 ## Jouer
-Ouvre `dist/aventure.html` dans ton navigateur.
+En ligne : https://xeliax9.github.io/aventure-specifique/ (publié automatiquement à chaque tag).
+
+En local : lance `node outils/build.js`, puis ouvre `dist/aventure.html` dans ton navigateur
+(le dossier `dist/` n'est pas versionné, il est généré par le build).
 
 ## Modifier puis reconstruire
 ```
