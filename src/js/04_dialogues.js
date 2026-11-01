@@ -24,7 +24,9 @@ function advanceTalk(){
   if(talk.line < D.lines.length){ SFX.menu(); return; }
   if(D.step == null){
     save.talked = save.talked || {}; save.talked[talk.npc.who] = true; persist();
+    const n = talk.npc;
     endTalk();
+    if(n.gives) npcGive(n);
     return;
   }
   const isNew = !save.recipe[D.step];
@@ -37,6 +39,16 @@ function advanceTalk(){
     sparkle(n.x + 13, n.y - 30, 14, '#ffe066');
     SFX.key();
   }
+}
+// someone hands XELIAX a power at the end of the talk (Gaston gives the suckers in 2-1)
+function npcGive(n){
+  if(n.gives === 'wall' && hasWall) return;
+  if(n.gives === 'wall') hasWall = true;
+  const cx = player.x + player.w / 2, cy = player.y + player.h / 2, col = POWER_COLORS[n.gives] || '#ffffff';
+  ring(cx, cy, col, 6, 50, 26); sparkle(cx, cy, 16, col); burst(cx, cy, 12, col, 2.4, 30, 0.02, 3, 'star');
+  setFace(anim, 'open', 60); anim.wobV += 0.6;
+  SFX.power();
+  showToast('Gaston t\'a donné les ventouses ! Saute contre un mur', 190);
 }
 function animNpcs(){
   for(const n of npcs){

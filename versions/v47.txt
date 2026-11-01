@@ -1,0 +1,11 @@
+VERSION 47 — Gaston donne les ventouses
+
+2-1 Les Ventouses
+- Les ventouses (le pouvoir pour grimper aux murs) ne traînent plus par terre au début
+  de la salle : c'est Gaston qui te les donne à la fin de votre discussion.
+- Si tu passes devant lui sans lui parler, un message te dit d'aller le voir (touche E).
+
+Rappel des pouvoirs de la saison 2
+- Ventouses : données par Gaston en 2-1.
+- Double saut : volé par la pie en 2-1, rendu par Gaston en 2-3.
+- Dash : laissé par le Gecko Géant quand tu le bats (2-4).

@@ -35,11 +35,18 @@ const { chromium } = require('playwright');
     input.left = input.right = input.jumpHeld = false;
     o.push('random play in all season 2 rooms done');
 
+    // ---- 2-1: Gaston gives the suckers at the end of his talk
+    newRun(6); clean(); loadRoom(6, 0); setState('play'); cine = null; steal = null; hasWall = false;
+    ok(!powerUps.some(p => p.type === 'wall'), '2-1: no suckers lying on the floor');
+    { const g = npcs.find(n => n.who === 'gaston2'); player.x = g.x + 4; player.y = g.y - player.h; player.vy = 0; player.onGround = true; for(let i = 0; i < 5; i++){ player.x = g.x + 4; step(); }
+      ok(interact() && state === 'talk', 'talking to Gaston');
+      for(let i = 0; i < 40 && state === 'talk'; i++){ advanceTalk(); advanceTalk(); }
+      ok(state === 'play' && hasWall, 'at the end of the talk, Gaston gives the suckers'); }
     // ---- the gecko: stomp it when it falls, phase 2 it stays stuck on the wall
     newRun(6); clean(); loadRoom(6, CHAPTERS[6].rooms.length - 1); setState('play'); lives = 99;
     ok(cine && cine.kind === 'intro', 'gecko entrance');
     run(330); ok(!cine && boss.state === 'crawl', 'gecko crawls on the wall after its entrance (' + boss.state + ')');
-    const states = new Set(); let hits = 0;
+    const states = new Set(); let hits = 0; let dmg = 0; const realDamage = bossDamage; bossDamage = function(){ dmg++; return realDamage.apply(this, arguments); };
     for(let round = 0; round < 20 && boss.alive && !boss.dying; round++){
       // phase 2: it is only dazed after 5 shots while on the walls
       const t = until(() => { if(boss.phase === 2 && (boss.state === 'crawl' || boss.state === 'climb') && boss.inv <= 0 && frame % 20 === 0) geckoShot(boss, 1); return (boss.state === 'stun' || boss.state === 'stuck') && boss.inv <= 0 && !cine; }, 2500);
@@ -52,7 +59,8 @@ const { chromium } = require('playwright');
       if(cine){ finishCine(); }
     }
     ok(boss.dying > 0, 'gecko: a death scene plays'); run(130);
-    ok(!boss.alive && hits === 8, `gecko beaten with 8 stomps (states seen: ${[...states].join(', ')})`);
+    bossDamage = realDamage;
+    ok(!boss.alive && dmg === 8, `gecko beaten with 8 hits (${dmg} hits, states seen: ${[...states].join(', ')})`);
     ok(states.has('stun') && states.has('stuck'), 'phase 1 it falls on the floor, phase 2 it is stuck on the wall');
     const rew = powerUps.find(p => p.id === 'boss-reward');
     ok(rew && rew.type === 'dash' && doorLocked(), 'the gecko drops the dash, the door waits for it');

@@ -389,6 +389,7 @@ if(require.main === module){
     const base = Object.assign({dj:false, wall:false, dash:false}, c.grants || {});
     const abil = {...base};
     c.rooms.forEach((room, ri) => {
+      for(const n of (room.npcs || [])) if(n.gives === 'wall') abil.wall = true;
       for(const pu of (room.powerUps || [])){ if(pu.type === 'wall') abil.wall = true; if(pu.type === 'dash') abil.dash = true; if(pu.type === 'doubleJump') abil.dj = true; }
       if(process.argv.includes('--nodash')) abil.dash = false;
       if(process.argv.includes('--nowall')) abil.wall = false;
