@@ -1,0 +1,2 @@
+{"hop":[{"start":[200,280]},["walk",355],["jump"],["land",1],["walk",515],["jump"],["land",1],["walk",695],["jump"],["land",1],["walk",880],["jump"],["land",1],["info"],["walk",990],["jump"],["air",1,6],["land",0],["info"],["walk",1290],["jump"],["air",1,10],["land",0],["info"],["walk",1425],["jump"],["land",1],["info"],["walk",1625],["jump"],["land",1],["info"],["walk",2090],["go",2140],["land",0],["info"]],
+"ride":[{"start":[200,280]},["walk",355],["jump"],["land",1],["walk",470],["waitY",280],["wait",10],["info"],["walk",515],["jump"],["land",1],["info"]]}

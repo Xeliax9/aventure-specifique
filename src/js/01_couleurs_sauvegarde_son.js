@@ -81,7 +81,7 @@ const S2_BOSS = new Set(['gecko', 'yeti', 'magpie']);
 //  SAVE
 // =====================================================================
 const SAVE_KEY = 'platformer_save_v2';
-const freshSave = () => ({ unlocked:1, gems:CHAPTERS.map(() => false), bestRun:null, bestCh:CHAPTERS.map(() => null), recipe:[false,false,false,false], unlocked2:1, bestRun2:null, seen:{} });
+const freshSave = () => ({ unlocked:1, gems:CHAPTERS.map(() => false), bestRun:null, bestCh:CHAPTERS.map(() => null), recipe:[false,false,false,false], unlocked2:1, bestRun2:null, seen:{}, bank:0, owned:{} });
 let save = freshSave();
 try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) save = Object.assign(save, s); }catch(e){}
 if(!Array.isArray(save.recipe) || save.recipe.length !== 4) save.recipe = [false,false,false,false];
@@ -169,11 +169,23 @@ const SKINS = [
   {id:'nuit', name:'Nuit', body:'#262046', deep:'#0b0918', light:'#6a63a8'},
   {id:'or', name:'Or', body:'#c08a0a', deep:'#553a00', light:'#ffd85a', lock:'gold'},
   {id:'cristal', name:'Cristal', body:'#2a9cc0', deep:'#0a4458', light:'#b4f2ff', lock:'crystal'},
+  {id:'citron', name:'Citron', body:'#c9b40c', deep:'#4d4400', light:'#fff36a', price:50},
+  {id:'lavande', name:'Lavande', body:'#8a6ad8', deep:'#33236a', light:'#d2c2ff', price:80},
+  {id:'corail', name:'Corail', body:'#e0505a', deep:'#5a1218', light:'#ff9a8a', price:120},
+  {id:'fantome', name:'Fantôme', body:'#b8b4cc', deep:'#47435a', light:'#ffffff', price:160},
+  {id:'lave', name:'Lave', body:'#2a1010', deep:'#0c0303', light:'#ff6a2a', price:220},
+  {id:'emeraude', name:'Émeraude', body:'#0a7a3a', deep:'#02301a', light:'#5cff9a', gems:3},
+  {id:'galaxie', name:'Galaxie', body:'#3a1a7a', deep:'#0a0424', light:'#ff7af0', gems:7},
 ];
+// the shop: every coin picked up goes into XELIAX's piggy bank, to spend on colours
+if(!(save.bank >= 0)) save.bank = 0;
+if(!save.owned || typeof save.owned !== 'object') save.owned = {};
+const gemCount = () => (save.gems || []).filter(Boolean).length;
+function addBank(n){ save.bank = (save.bank || 0) + n; persist(); }
 save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, timer:true, lives:5, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
 if(![3, 5, 7, 9].includes(save.settings.lives)) save.settings.lives = 5;
 const SET = save.settings;
-const skinOpen = s => !s.lock || SET.creator || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle);
+const skinOpen = s => SET.creator || (s.price ? !!(save.owned || {})[s.id] : s.gems ? gemCount() >= s.gems : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
 const skinOf = () => SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
 const startLives = () => SET.lives || 5;
 function applySettings(){

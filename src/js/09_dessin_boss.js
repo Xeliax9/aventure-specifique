@@ -259,6 +259,15 @@ function drawKO(b){
 function drawFire(f){
   const grow = Math.min(1, f.t / 10) * Math.min(1, (f.max - f.t) / 20);
   if(grow <= 0) return;
+  if(f.acid){
+    // a bubbling puddle of green acid
+    softGlow(f.x + f.w / 2, FLOOR - 4, f.w * 0.8, 12 * grow, '120,230,70', 0.45 * grow);
+    ctx.fillStyle = 'rgba(110,220,60,' + (0.85 * grow) + ')';
+    ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, FLOOR - 2, f.w / 2 + 2, 6 * grow, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(200,255,140,' + (0.8 * grow) + ')';
+    for(let i = 0; i < 3; i++){ const ph = frame * 0.12 + f.seed + i * 2.1, bx = f.x + 8 + i * (f.w - 16) / 2, by = FLOOR - 5 - Math.abs(Math.sin(ph)) * 6 * grow; ctx.beginPath(); ctx.arc(bx, by, 2.2 * grow, 0, TAU); ctx.fill(); }
+    return;
+  }
   softGlow(f.x + f.w / 2, FLOOR - 6, f.w * 0.8, 16 * grow, '255,140,40', 0.45 * grow);
   const n = 5;
   for(let i = 0; i < n; i++){

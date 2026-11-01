@@ -36,11 +36,11 @@ const { chromium } = require('playwright');
     o.push('random play in all season 2 rooms done');
 
     // ---- the gecko: stomp it when it falls, phase 2 it stays stuck on the wall
-    newRun(6); clean(); loadRoom(6, 3); setState('play'); lives = 99;
+    newRun(6); clean(); loadRoom(6, CHAPTERS[6].rooms.length - 1); setState('play'); lives = 99;
     ok(cine && cine.kind === 'intro', 'gecko entrance');
     run(330); ok(!cine && boss.state === 'crawl', 'gecko crawls on the wall after its entrance (' + boss.state + ')');
     const states = new Set(); let hits = 0;
-    for(let round = 0; round < 8 && boss.alive && !boss.dying; round++){
+    for(let round = 0; round < 20 && boss.alive && !boss.dying; round++){
       const t = until(() => (boss.state === 'stun' || boss.state === 'stuck') && boss.inv <= 0 && !cine, 2500);
       if(t < 0) break;
       states.add(boss.state);
@@ -51,11 +51,11 @@ const { chromium } = require('playwright');
       if(cine){ finishCine(); }
     }
     ok(boss.dying > 0, 'gecko: a death scene plays'); run(130);
-    ok(!boss.alive && hits === 6, `gecko beaten with 6 stomps (states seen: ${[...states].join(', ')})`);
+    ok(!boss.alive && hits === 8, `gecko beaten with 8 stomps (states seen: ${[...states].join(', ')})`);
     ok(states.has('stun') && states.has('stuck'), 'phase 1 it falls on the floor, phase 2 it is stuck on the wall');
     ok(!doorLocked(), 'door opens');
     // ---- the yeti: stomps do nothing, dash when dizzy
-    newRun(7); clean(); loadRoom(7, 3); setState('play'); lives = 99; hasDash = true;
+    newRun(7); clean(); loadRoom(7, CHAPTERS[7].rooms.length - 1); setState('play'); lives = 99; hasDash = true;
     run(330); ok(!cine && boss.state === 'walk', 'yeti walks after its entrance');
     until(() => boss.state === 'dizzy' && !cine, 1500);
     ok(boss.state === 'dizzy', 'yeti charges into a wall and gets dizzy');
@@ -78,13 +78,13 @@ const { chromium } = require('playwright');
     ok(!boss.alive && yhits === 6, `yeti beaten with 6 dashes (${yhits})`);
     // icicles in phase 2 appeared?
     // ---- the magpie: floor and ceiling, then the ficelle, then the ending
-    newRun(8); clean(); loadRoom(8, 2); setState('play'); lives = 99;
+    newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99;
     run(330); ok(!cine && boss.state === 'hover', 'magpie hovers after her entrance');
     // phase 1: she only gets stuck in the ceiling (wait upside down, stomp her from below);
     // phase 2: her trinket armour only gives way to a dash
     let mhits = 0, ceilHits = 0, dashHits = 0, floorStuckP1 = false;
-    for(let round = 0; round < 16 && boss.alive && !boss.dying; round++){
-      const p2 = boss.phase === 2;
+    for(let round = 0; round < 40 && boss.alive && !boss.dying; round++){
+      const p2 = boss.phase >= 2;
       until(() => !boss.nestT, 300);          // let her shake the nest first
       if(!p2 && gdir > 0){ setGravity(-1); run(40); }
       if(until(() => boss.state === 'stuck' && boss.inv <= 0 && !cine, 2500) < 0) break;
@@ -104,7 +104,7 @@ const { chromium } = require('playwright');
       if(boss.hp < hp || boss.phase > ph || !boss.alive || boss.dying){ mhits++; if(ceil) ceilHits++; if(p2) dashHits++; }
       if(cine) finishCine();
     }
-    ok(boss.dying > 0 && mhits === 6 && ceilHits >= 3 && dashHits === 3 && !floorStuckP1, `magpie beaten: 3 stomps on the ceiling, then 3 dashes (${mhits} hits, ceiling ${ceilHits}, dash ${dashHits})`);
+    ok(boss.dying > 0 && mhits === 11 && ceilHits >= 3 && dashHits === 8 && !floorStuckP1, `magpie beaten: 3 stomps on the ceiling, then 3 + 5 dashes (${mhits} hits, ceiling ${ceilHits}, dash ${dashHits})`);
     run(70);
     setGravity(1);
     ok(key && key.kind === 'ficelle', 'she drops the ficelle aux olives');

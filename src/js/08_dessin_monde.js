@@ -1542,6 +1542,13 @@ function drawBullet(b){
 
 function drawShot(s){
   const x = ix(s), y = iy(s);
+  if(s.big){
+    softGlow(x + s.w / 2, y + s.h / 2, 22, 16, '255,213,74', 0.55);
+    ctx.fillStyle = '#ffd54a'; rr(x - 2, y - 2, s.w + 4, s.h + 4, 7); ctx.fill();
+    ctx.fillStyle = '#ffffff'; rr(x + 3, y + 2, s.w - 6, s.h - 4, 4); ctx.fill();
+    if(fxTick && frame % 2 === 0) particles.push({x:x + s.w / 2, y:y + s.h / 2, vx:-s.vx * 0.1, vy:(Math.random() - 0.5), life:14, max:14, color:'#ffd54a', grav:0, size:2.6, type:'star'});
+    return;
+  }
   const vert = s.vy !== 0;
   for(let i = 3; i >= 1; i--){
     ctx.fillStyle = `rgba(185,162,255,${0.12 * (4 - i)})`;

@@ -57,7 +57,7 @@ const STEP = 1000 / 60;
 const GRAVITY = 0.55, MAX_FALL = 12, JUMP_V = -10.6, DJ_V = -9.2, SPRING_V = -15;
 const RUN = 3.6, ACCEL_GROUND = 0.35, ACCEL_AIR = 0.2;
 const COYOTE = 6, BUFFER = 7;
-const SHOT_SPEED = 7.5, SHOT_COOLDOWN = 16;
+const SHOT_SPEED = 7.5, SHOT_COOLDOWN = 16, CHARGE_FULL = 40;
 const FLOOR = 340;
 // season 2: wall slide / wall jump, dash, slippery ice
 const WALL_SLIDE = 2.2, WJ_VX = 4.8, WJ_VY = -9.9, WALL_LOCK = 11, WALL_COY = 6;

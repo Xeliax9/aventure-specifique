@@ -380,7 +380,7 @@ function settingsRows(){
     if(SET.creator){ setSetting('creator', false); showToast('Admin déconnecté', 90); SFX.menu(); } else openAdmin();
   }});
   if(bonusVisible()) rows.push({kind:'link', id:'bonus', label:'Bonus secret', icon:'secret', tile:'#c9930e', to:'bonus',
-    value:`${BONUS_CH.filter(isUnlocked).length * 4} défis`, badge:!save.bonusFolderSeen});
+    value:`${BONUS_CH.filter(isUnlocked).length * 2} défis`, badge:!save.bonusFolderSeen});
   return rows;
 }
 function sonRows(){
@@ -442,7 +442,15 @@ function resetProgress(){
   showToast('Progression effacée : on repart de zéro !', 130);
   SFX.crumble(); addShake(6);
 }
-const skinHint = s => s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
+const skinHint = s => s.price ? `${s.price} pièces : clique pour l'acheter (tu en as ${save.bank})` : s.gems ? `Trouve ${s.gems} gemmes 💎 pour la débloquer (tu en as ${gemCount()})` : s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
+function buySkin(s){
+  if(!s.price || skinOpen(s)) return false;
+  if(save.bank < s.price){ showToast(`Il te faut ${s.price} pièces (tu en as ${save.bank}). Ramasse-en dans les niveaux !`, 130); SFX.hurt(); return true; }
+  save.bank -= s.price; save.owned = save.owned || {}; save.owned[s.id] = true; persist();
+  setSetting('skin', s.id); titleHero.hop = 1; titleHero.wobV += 0.6;
+  showToast(`${s.name} achetée ! XELIAX adore sa nouvelle couleur`, 130); SFX.key(); confetti(196, 200, 30);
+  return true;
+}
 function lookPick(d){
   const n = SKINS.length;
   menu.sel.look = (menu.sel.look + d + n) % n;
@@ -454,7 +462,7 @@ function lookClick(j){
   menu.sel.look = j;
   const s = SKINS[j];
   if(skinOpen(s)){ if(s.id !== skinOf().id){ setSetting('skin', s.id); titleHero.hop = 1; titleHero.wobV += 0.5; } SFX.coin(); }
-  else { showToast(skinHint(s), 110); SFX.hurt(); }
+  else if(!buySkin(s)){ showToast(skinHint(s), 110); SFX.hurt(); }
 }
 
 // ---------------------------------------------------------------- credits (and the creator's secret)
@@ -581,7 +589,7 @@ function menuKey(k, rep = false){
     return;
   }
   if(p === 'credits'){ if(ok || up) menu.credFast = true; return; }
-  if(p === 'look'){ if(left || right) lookPick(left ? -1 : 1); else if(ok && !rep) goBack(); return; }
+  if(p === 'look'){ if(left || right) lookPick(left ? -1 : 1); else if(ok && !rep){ const s = SKINS[menu.sel.look]; if(!(s && buySkin(s))) goBack(); } return; }
   if(p === 'controls'){ if(ok && !rep) goBack(); return; }
   const rows = pageRows(p), n = rows.length;
   if(!n) return;
@@ -1159,7 +1167,7 @@ function drawLook(act){
   drawHero(titleHero, px, py - hop, 3.7, focOpen ? {} : {tint:'#171032'});
   if(!focOpen) heading('?', px + 2, py - 150, 30, '#ffd54a');
   SKINS.forEach((s, j) => {
-    const sx = 350 + (j % 4) * 60, sy = 120 + Math.floor(j / 4) * 74, open = skinOpen(s), on = s.id === cur.id, f = j === menu.sel.look;
+    const sx = 330 + (j % 5) * 54, sy = 104 + Math.floor(j / 5) * 64, open = skinOpen(s), on = s.id === cur.id, f = j === menu.sel.look;
     if(f){ ctx.strokeStyle = '#ffd54a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx, sy, 24, 0, TAU); ctx.stroke(); }
     if(on){ ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, 20.5, 0, TAU); ctx.stroke(); }
     const g = ctx.createRadialGradient(sx - 5, sy - 6, 2, sx, sy, 18);
@@ -1168,15 +1176,16 @@ function drawLook(act){
     ctx.strokeStyle = s.deep; ctx.lineWidth = 1.4; ctx.stroke();
     for(const [ex, ey, r] of [[-5, -4, 4.4], [5, -1, 3.6]]){ ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(sx + ex, sy + ey, r, 0, TAU); ctx.fill(); ctx.fillStyle = '#14033f'; ctx.beginPath(); ctx.arc(sx + ex + 1.2, sy + ey + 0.8, r * 0.45, 0, TAU); ctx.fill(); }
     if(!open){ ctx.fillStyle = 'rgba(14,9,34,0.62)'; ctx.beginPath(); ctx.arc(sx, sy, 17.5, 0, TAU); ctx.fill(); padlock(sx, sy, 0.75); }
-    txt(s.name, sx, sy + 36, 11.5, open ? '#efe8ff' : '#9d95c8', 600);
-    if(act) hit(sx - 28, sy - 25, 56, 66, {id:'skin' + j, click:() => lookClick(j), hover:() => { menu.sel.look = j; }});
+    txt(open || !(s.price || s.gems) ? s.name : s.price ? s.price + ' 🪙' : s.gems + ' 💎', sx, sy + 32, 10.5, open ? '#efe8ff' : s.price ? '#ffd54a' : s.gems ? '#9df0ff' : '#9d95c8', 600);
+    if(act) hit(sx - 26, sy - 24, 52, 60, {id:'skin' + j, click:() => lookClick(j), hover:() => { menu.sel.look = j; }});
   });
-  txt(foc.name, 440, 282, 17, '#ffffff', 700);
-  txt(focOpen ? (foc.id === cur.id ? 'La couleur de XELIAX en ce moment' : 'Clique dessus pour la choisir') : skinHint(foc), 440, 300, 11.5, focOpen ? '#c9c1f0' : '#ffd54a', 500);
+  txt(foc.name, 438, 296, 17, '#ffffff', 700);
+  txt(focOpen ? (foc.id === cur.id ? 'La couleur de XELIAX en ce moment' : 'Clique dessus pour la choisir') : skinHint(foc), 438, 314, 11, focOpen ? '#c9c1f0' : '#ffd54a', 500);
+  txt(`🪙 ${save.bank} pièces   ·   💎 ${gemCount()} gemmes`, 438, 74, 12, '#ffe58a', 700);
   if(!TOUCH) promptLine([{key:'◀'}, {key:'▶'}, {text:'changer de couleur'}, {gap:10}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
 }
 const CONTROL_ROWS = [
-  ['Bouger', ['A', 'D'], '◀ ▶'], ['Sauter, double saut', ['W', 'Espace'], '▲'], ['Tirer', ['J'], '●'], ['Dash', ['K', 'Maj'], '»'],
+  ['Bouger', ['A', 'D'], '◀ ▶'], ['Sauter, double saut', ['W', 'Espace'], '▲'], ['Tirer (garder : super tir)', ['J'], '●'], ['Dash', ['K', 'Maj'], '»'],
   ['Parler', ['E'], '●'], ['Pause', ['P', 'Échap'], 'II'], ['Couper le son', ['M'], ''],
 ];
 function drawControls(act){
@@ -1269,7 +1278,7 @@ function drawBonus(act){
     if(s && menu.shakeT > 0) ax += Math.sin(menu.shakeT * 1.7) * menu.shakeT * 0.35;
     drawAppIcon(i, ax, cy - (s ? 3 : 0) + (REDUCED || !s ? 0 : Math.sin(frame * 0.05) * 1.4), 84 * (s ? 1.14 : 1), {sel:s});
     txt(c.name, cx, cy + 68, 14.5, open ? '#ffffff' : '#a49cd0', 600);
-    txt(open ? (c.bonus2 ? '4 défis : gravité, murs et dash' : '4 défis : double saut et tir') : lockText(i), cx, cy + 86, 11.5, open ? '#d6ceff' : '#ff9aa8', 500);
+    txt(open ? `2 défis géants · à battre : ${fmt(c.parTime)}` : lockText(i), cx, cy + 86, 11.5, open ? '#d6ceff' : '#ff9aa8', 500);
     if(open){
       const got = c.bonus2 ? save.crystalFicelle : save.goldFicelle, label = `${c.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée'} : ${got ? 'gagnée !' : 'à gagner'}`;
       ctx.font = `600 11.5px ${FU}`; const lw = ctx.measureText(label).width;
