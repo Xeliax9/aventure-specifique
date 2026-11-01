@@ -282,6 +282,7 @@ function testRoom(ci, ri, demo){
   initAudio();
   newRun(ci);
   const c = CHAPTERS[ci];
+  for(let k = 0; k < ri; k++) for(const n of (c.rooms[k].npcs || [])) if(n.gives === 'wall') hasWall = true;
   for(let k = 0; k < ri; k++) for(const p of (c.rooms[k].powerUps || [])){
     if(p.type === 'doubleJump') hasDJ = true; if(p.type === 'shoot') canShoot = true;
     if(p.type === 'wall') hasWall = true; if(p.type === 'dash'){ hasDash = true; hasDJ = true; }

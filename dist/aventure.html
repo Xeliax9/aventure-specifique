@@ -1118,9 +1118,9 @@ const CHAPTERS = [
           {x:860, y:280, text:'Sous le pilier… et grimpe !'},
           {x:1280, y:160, text:'Laisse-toi glisser sur le bon mur'},
         ],
-        powerUps:[{x:240, y:406, type:'wall'}, {x:1366, y:230, type:'gem'}, {x:800, y:246, type:'life'}],
+        powerUps:[{x:1366, y:230, type:'gem'}, {x:800, y:246, type:'life'}],
         checkpoints:[{x:620, y:280}, {x:1080, y:160}, {x:1460, y:440}],
-        npcs:[{who:'gaston2', x:130, y:440}],
+        npcs:[{who:'gaston2', x:130, y:440, gives:'wall'}],
         coins:[[330, 410], [530, 400], [530, 330], [530, 260], [660, 250], [760, 250], [990, 220], [990, 150], [1100, 130], [1200, 130], [1300, 130], [1365, 300], [1460, 410], [1640, 410], [1740, 350], [1740, 270], [1850, 170]],
         door:{x:1930, y:160},
         noDJ:true, djSteal:true,
@@ -2945,7 +2945,9 @@ function advanceTalk(){
   if(talk.line < D.lines.length){ SFX.menu(); return; }
   if(D.step == null){
     save.talked = save.talked || {}; save.talked[talk.npc.who] = true; persist();
+    const n = talk.npc;
     endTalk();
+    if(n.gives) npcGive(n);
     return;
   }
   const isNew = !save.recipe[D.step];
@@ -2958,6 +2960,16 @@ function advanceTalk(){
     sparkle(n.x + 13, n.y - 30, 14, '#ffe066');
     SFX.key();
   }
+}
+// someone hands XELIAX a power at the end of the talk (Gaston gives the suckers in 2-1)
+function npcGive(n){
+  if(n.gives === 'wall' && hasWall) return;
+  if(n.gives === 'wall') hasWall = true;
+  const cx = player.x + player.w / 2, cy = player.y + player.h / 2, col = POWER_COLORS[n.gives] || '#ffffff';
+  ring(cx, cy, col, 6, 50, 26); sparkle(cx, cy, 16, col); burst(cx, cy, 12, col, 2.4, 30, 0.02, 3, 'star');
+  setFace(anim, 'open', 60); anim.wobV += 0.6;
+  SFX.power();
+  showToast('Gaston t\'a donné les ventouses ! Saute contre un mur', 190);
 }
 function animNpcs(){
   for(const n of npcs){
@@ -3478,6 +3490,7 @@ function updateWorld(){
   for(const s of spikes) if(s.appear !== undefined && s.appear < 1 && !s.pending) s.appear = Math.min(1, s.appear + 0.05);
   // people: the closest one within reach can be talked to
   animNpcs();
+  for(const n of npcs) if(n.gives === 'wall' && !hasWall && player.x > n.x + 110 && !n.told){ n.told = true; showToast('Parle d\'abord à Gaston (touche E) : il a quelque chose pour toi !', 170); }
   nearNpc = null;
   if(!player.dead && !cine){
     let bn = 34;
@@ -10975,6 +10988,7 @@ function testRoom(ci, ri, demo){
   initAudio();
   newRun(ci);
   const c = CHAPTERS[ci];
+  for(let k = 0; k < ri; k++) for(const n of (c.rooms[k].npcs || [])) if(n.gives === 'wall') hasWall = true;
   for(let k = 0; k < ri; k++) for(const p of (c.rooms[k].powerUps || [])){
     if(p.type === 'doubleJump') hasDJ = true; if(p.type === 'shoot') canShoot = true;
     if(p.type === 'wall') hasWall = true; if(p.type === 'dash'){ hasDash = true; hasDJ = true; }

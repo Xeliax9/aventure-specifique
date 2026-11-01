@@ -484,6 +484,7 @@ function updateWorld(){
   for(const s of spikes) if(s.appear !== undefined && s.appear < 1 && !s.pending) s.appear = Math.min(1, s.appear + 0.05);
   // people: the closest one within reach can be talked to
   animNpcs();
+  for(const n of npcs) if(n.gives === 'wall' && !hasWall && player.x > n.x + 110 && !n.told){ n.told = true; showToast('Parle d\'abord à Gaston (touche E) : il a quelque chose pour toi !', 170); }
   nearNpc = null;
   if(!player.dead && !cine){
     let bn = 34;

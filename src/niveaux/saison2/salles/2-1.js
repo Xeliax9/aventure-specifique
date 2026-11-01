@@ -25,9 +25,9 @@
     {x:860, y:280, text:'Sous le pilier… et grimpe !'},
     {x:1280, y:160, text:'Laisse-toi glisser sur le bon mur'},
   ],
-  powerUps:[{x:240, y:406, type:'wall'}, {x:1366, y:230, type:'gem'}, {x:800, y:246, type:'life'}],
+  powerUps:[{x:1366, y:230, type:'gem'}, {x:800, y:246, type:'life'}],
   checkpoints:[{x:620, y:280}, {x:1080, y:160}, {x:1460, y:440}],
-  npcs:[{who:'gaston2', x:130, y:440}],
+  npcs:[{who:'gaston2', x:130, y:440, gives:'wall'}],
   coins:[[330, 410], [530, 400], [530, 330], [530, 260], [660, 250], [760, 250], [990, 220], [990, 150], [1100, 130], [1200, 130], [1300, 130], [1365, 300], [1460, 410], [1640, 410], [1740, 350], [1740, 270], [1850, 170]],
   door:{x:1930, y:160},
 }
