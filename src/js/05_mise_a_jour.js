@@ -217,22 +217,31 @@ function updateDecor(){
 }
 
 const PLANK_SHAKE = 26, PLANK_G = 0.42, PLANK_MAX = 9;
+// lift planks (lift:true) hang from a little parachute: they let go almost at once and drift down slowly, carrying XELIAX
+const LIFT_SHAKE = 10, LIFT_G = 0.1, LIFT_MAX = 2.2;
 function updatePlank(p){
   p.px = p.x; p.py = p.y;
+  // again:true planks drift back home a little after they have landed (so a missed throw can be tried again)
+  if(p.again && p.landT > 0 && ++p.landT > 80){
+    p.landT = 0; p.gone = true; p.rT = 40;
+    burst(p.x + p.w / 2, p.y + p.h / 2, 8, '#ffffff', 1.5, 22, -0.01, 3, 'puff');
+    if(player.standingOn === p){ player.standingOn = null; player.onGround = false; }
+    return;
+  }
   if(p.gone){
-    if(--p.rT <= 0){ p.gone = false; p.x = p.ox; p.y = p.oy; p.px = p.x; p.py = p.y; p.loose = false; p.fT = 0; p.fvy = 0; p.appear = 0; sparkle(p.x + p.w / 2, p.y + p.h / 2, 6, '#fff3c4'); }
+    if(--p.rT <= 0){ p.gone = false; p.x = p.ox; p.y = p.oy; p.px = p.x; p.py = p.y; p.loose = !!p.free; p.fT = 0; p.fvy = 0; p.landT = 0; p.appear = 0; sparkle(p.x + p.w / 2, p.y + p.h / 2, 6, '#fff3c4'); }
     return;
   }
   if(!p.loose){
     if(p.fT > 0){
       if(frame % 5 === 0) crumbs(p.x + Math.random() * p.w, gdir > 0 ? p.y + p.h : p.y, 1, '#9a6234');
-      if(++p.fT > PLANK_SHAKE){ p.loose = true; p.fvy = 0; tone(140, 0.12, 'sawtooth', 0.03, 90); }
+      if(++p.fT > (p.lift ? LIFT_SHAKE : PLANK_SHAKE)){ p.loose = true; p.fvy = 0; tone(p.lift ? 260 : 140, 0.12, p.lift ? 'triangle' : 'sawtooth', 0.03, p.lift ? 200 : 90); }
     }
     return;
   }
   // loose: it falls the way gravity pulls, and lands on whatever is in the way
-  const g = gdir, y0 = p.y;
-  p.fvy = clamp(p.fvy + PLANK_G * g, -PLANK_MAX, PLANK_MAX);
+  const g = gdir, y0 = p.y, top = p.lift ? LIFT_MAX : PLANK_MAX;
+  p.fvy = clamp(p.fvy + (p.lift ? LIFT_G : PLANK_G) * g, -top, top);
   let ny = p.y + p.fvy, hit = null;
   const across = q => p.x + p.w > q.x + 2 && p.x < q.x + q.w - 2;
   if(p.fvy > 0){
@@ -249,6 +258,7 @@ function updatePlank(p){
       SFX.thud(); addShake(Math.min(4, Math.abs(p.fvy) * 0.4));
       for(let i = 0; i < 6; i++) particles.push({x:p.x + Math.random() * p.w, y:g > 0 ? ny + p.h : ny, vx:(Math.random() - 0.5) * 2.4, vy:-g * Math.random() * 1.6, life:22, max:22, color:'#e8d6b0', grav:0.05 * g, size:3, type:'dot'});
     }
+    if(p.again && !p.landT) p.landT = 1;
     p.fvy = 0;
   }
   p.y = ny; p.dy = p.y - y0;
@@ -790,6 +800,7 @@ function updatePlayer(){
   // pits (or the open sky, upside down)
   if(gdir > 0 && player.y > room.h + 30){ killPlayer(); return; }
   if(gdir < 0 && player.y + player.h < -40){ killPlayer(); return; }
+  if(gdir < 0 && player.y > room.h){ killPlayer(); return; }       // upside down, below the bottom of the screen: no sneaking under the floor
 
   // spikes and lava pools
   for(const s of spikes){
@@ -856,6 +867,8 @@ function updatePlayer(){
   for(const e of stompable){
     if(!overlap(player, e)) continue;
     const onTop = G > 0 ? (player.vy > 0 && prevBottom <= e.y + 8) : (player.vy < 0 && prevTop >= e.y + e.h - 8);
+    // a hedgehog (spiky:true) can't be stomped or dashed through: only a falling plank beats it
+    if(e.spiky){ hurt(e.x + e.w/2); if(state !== 'play') return; continue; }
     if(onTop || player.dashT > 0){
       e.alive = false;
       if(onTop){
@@ -887,6 +900,11 @@ function updatePlayer(){
     }
     for(const e of stompable){
       if(e.alive && !s.dead && overlap(s, e)){
+        if(e.spiky){
+          s.dead = true; burst(s.x, s.y, 6, '#ffffff', 2, 15, 0.05, 2.5, 'star'); SFX.ting();
+          if(toast.t <= 0) showToast('Ses piques arrêtent les tirs… une planche ?', 90);
+          continue;
+        }
         e.alive = false; s.dead = true; score += 25;
         killFx(e); SFX.stomp();
       }

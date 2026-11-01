@@ -129,7 +129,7 @@ function drawHUD(){
   if(boss && boss.alive && !boss.fleeing){
     const bw = 236, bx = W / 2 - bw / 2, by = top + hh + 8;
     pill(bx - 10, by - 3, bw + 20, 32);
-    const phaseTag = boss.phase === 2 || boss.mode === 'ascent' ? 'Phase 2' : 'Phase 1';
+    const phaseTag = boss.mode === 'ascent' ? 'Phase 2' : 'Phase ' + (boss.phase || 1);
     txt(boss.name, bx + 2, by + 10, 11.5, '#ffd6e0', 700, 'left');
     txt(phaseTag, bx + bw - 2, by + 10, 10.5, 'rgba(255,214,224,0.75)', 600, 'right');
     rr(bx, by + 15, bw, 8, 4); ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();

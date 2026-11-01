@@ -149,6 +149,7 @@ function bossDefeated(){
   burst(b.x + b.w/2, b.y + b.h/2, 30, '#ffd54a', 5, 50, 0.1, 3, 'star');
   ring(b.x + b.w/2, b.y + b.h/2, '#ffffff', 10, 90, 30);
   if(b.phase === 1 && room.boss.hp2){ enterPhase2(true); return; }
+  if(b.phase === 2 && room.boss.hp3){ enterPhase3(true); return; }
   score += 300;
   if(b.mode === 'arena'){
     b.fleeing = true;
@@ -234,6 +235,17 @@ function enterPhase2(announce){
   startCine('phase2');
 }
 
+// phase 3 (the magpie only, hp3): furious, she chains her dives straight at XELIAX
+function enterPhase3(announce){
+  const b = boss;
+  b.phase = 3;
+  b.hp = b.maxHp = room.boss.hp3;
+  b.inv = 90; b.hitT = 0; b.state = 'rise'; b.chain = 0; b.nestT = 0;
+  if(gdir < 0) setGravity(1);
+  if(announce){ score += 200; burst(b.x + b.w/2, b.y + b.h/2, 60, '#ff3d3d', 7, 60); }
+  startCine('phase3');
+}
+
 // final boss beaten at the bottom of the shaft: barrier drops, lava rises, key waits at the top
 function startEscape(announce){
   key = {x:room.keySpot.x - 17, y:room.keySpot.y - 8, w:34, h:16, got:false, kind:room.finale ? 'ficelle' : 'key'};
@@ -276,13 +288,15 @@ function restartPhase(){
   const ph = currentPhase();
   lives = startLives();
   loadRoom(chIndex, rIndex);          // the boss entrance plays again (it can be skipped by now)
+  if((ph === 2 || ph === 3) && boss.mode === "magpie"){ boss.x = boss.tx = room.boss.x; boss.y = 150; }   // back in the arena, not off-screen
   if(ph === 2){ cine = null; enterPhase2(false); }
+  if(ph === 3){ cine = null; enterPhase2(false); cine = null; enterPhase3(false); }
   if(ph === 'escape'){ cine = null; boss.alive = false; startEscape(false); }
   bannerT = 0;
   player.invuln = 60;
   anim.appear = 0;
   setState('play');
-  showToast(ph === 'escape' ? 'Reprends la fuite !' : ph === 2 ? 'On reprend la phase 2' : 'On reprend le combat', 100);
+  showToast(ph === 'escape' ? 'Reprends la fuite !' : ph === 3 ? 'On reprend la phase 3' : ph === 2 ? 'On reprend la phase 2' : 'On reprend le combat', 100);
 }
 
 // =====================================================================
@@ -573,11 +587,12 @@ function finishCine(){
       else if(b.mode === 'ascent'){ b.y = 880; b.fireT = 100; }
       else if(b.mode === 'gecko'){ b.y = 150; b.x = geckoWallX(b, -1); b.side = -1; b.state = 'crawl'; b.stT = 130; b.fireT = 50; }
       else if(b.mode === 'yeti'){ b.y = FLOOR - b.h; b.state = 'walk'; b.stT = 150; b.fireT = 70; }
-      else if(b.mode === 'magpie'){ b.x = b.tx; b.y = 150; b.state = 'hover'; b.stT = 140; b.fireT = 90; }
+      else if(b.mode === 'magpie'){ b.x = b.tx; b.y = 150; b.state = 'hover'; b.stT = 80; b.fireT = 60; }
     } else {
       b.inv = 30;
       if(b.mode === 'slime'){ b.squash = 0; b.hopT = 40; }
       if(b.mode === 'swoop'){ b.state = 'hover'; b.stT = 140; b.fireT = 50; }
+      if(b.mode === 'magpie'){ b.state = 'rise'; }
     }
   }
   for(const s of spikes) if(s.pending) s.pending = false;

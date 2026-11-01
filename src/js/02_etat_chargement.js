@@ -213,7 +213,7 @@ function loadRoom(ci, ri){
   if(room.noDJ){ if(hasDJ) djTake = 100; hasDJ = false; }
 
   platforms = room.platforms.map((p, i) => ({
-    ...p, h: p.h || (p.fall ? 16 : 14), dx:0, dy:0, cT:0, gone:false, rT:0, appear:1, ox:p.x, oy:p.y, fT:0, fvy:0, loose:false,
+    ...p, h: p.h || (p.fall ? 16 : 14), dx:0, dy:0, cT:0, gone:false, rT:0, appear:1, ox:p.x, oy:p.y, fT:0, fvy:0, loose:!!p.free,
     seed: (ci * 1000 + ri * 100 + i) * 7919,
     move: p.move ? {...p.move, dir:1} : null,
   }));
@@ -281,7 +281,7 @@ function resetPlayer(){
     wallSide:0, wallT:0, wallLock:0, sliding:false, dashT:0, dashReady:true, dashCD:0, dashBuf:0, ghosts:[],
   });
   for(const o of flips){ o.armed = !overlap(player, o); }
-  for(const p of platforms) if(p.fall){ p.x = p.ox; p.y = p.oy; p.fT = 0; p.fvy = 0; p.loose = false; p.gone = false; p.appear = 0; p.px = p.x; p.py = p.y; }
+  for(const p of platforms) if(p.fall){ p.x = p.ox; p.y = p.oy; p.fT = 0; p.fvy = 0; p.loose = !!p.free; p.landT = 0; p.gone = false; p.appear = 0; p.px = p.x; p.py = p.y; }
   anim.gv = gdir;
   player.px = player.x; player.py = player.y;
   anim.pvx = 0; anim.pvy = 0; anim.spin = 0;

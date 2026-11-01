@@ -11,6 +11,6 @@
   signs:[{x:120, y:340, text:'Le foin est trop mou : fais-la plonger vers le plafond !'}, {x:470, y:34, text:'Bords et orbes retournent la gravité', ceil:true}],
   powerUps:[{x:310, y:306, type:'life'}],
   coins:[[150, 312], [490, 312], [320, 60]],
-  boss:{mode:'magpie', name:'La Pie Voleuse', fem:true, hp:3, hp2:3, x:440, y:150, w:48, h:40},
+  boss:{mode:'magpie', name:'La Pie Voleuse', fem:true, hp:3, hp2:3, hp3:5, x:440, y:150, w:48, h:40},
   door:null,
 }
