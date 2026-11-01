@@ -272,6 +272,7 @@ window.addEventListener('keydown', e => {
   if((k === 'k' || k === 'shift') && !e.repeat && state === 'play') input.dashPressed = true;
   if((k === 'e' || k === 's' || k === 'arrowdown') && !e.repeat) interact();
   if((k === 'p' || k === 'escape') && !e.repeat){ if(state === 'talk') endTalk(); else togglePause(); }
+  if(k === 'r' && !e.repeat && isSpeedrun()) srRestart();
   if(k === 'm' && !e.repeat) setMuted(!muted);
   if(k === 'q' && !e.repeat) backToMenu();
   if(k === 'c' && !e.repeat && state === 'over') confirmAction();

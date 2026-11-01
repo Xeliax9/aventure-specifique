@@ -96,6 +96,7 @@ function step(){
     return;
   }
   updatePlayer();
+  srTick();
   if(state === 'play') updateIdle();
   stepHero();
   clearPresses();
@@ -1017,6 +1018,7 @@ function updatePlayer(){
     if(!c.active && overlap(player, box)){
       checkpoints.forEach(o => o.active = false);
       c.active = true;
+      srSplit();
       checkpoint = c.ceil ? {x:c.x, y:c.y + 1, g:-1} : {x:c.x, y:c.y - player.h - 1, g:1};
       sparkle(c.x + 12, c.ceil ? c.y + 30 : c.y - 30, 12, '#7dff9a');
       confetti(c.x + 4, c.ceil ? c.y + 36 : c.y - 36, 16);

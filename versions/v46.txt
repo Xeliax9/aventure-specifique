@@ -1,0 +1,16 @@
+VERSION 46 — Les bonus en mode speedrun
+
+Pour les deux bonus secrets (Les Étoiles et Le Cosmos) :
+- Un gros chrono en haut de l'écran, avec ton record juste en dessous. Son contour
+  change de couleur selon la médaille que tu es en train de viser.
+- Temps intermédiaires : à chaque drapeau et à chaque nouvelle salle, l'écart avec ton
+  record s'affiche (vert = plus rapide, rouge = plus lent).
+- Médailles : or (le temps à battre, qui donne la ficelle dorée / de cristal),
+  argent (+25 %), bronze (+50 %). Elles s'affichent sur l'écran de fin.
+- Fantôme : un XELIAX transparent rejoue ton meilleur essai, pour faire la course
+  contre toi-même.
+- R : recommence tout le défi instantanément (aussi depuis l'écran de fin).
+- Pas de cœurs : un seul coup et tu repars tout de suite du dernier drapeau
+  (le chrono continue). Plus de game over.
+- Beaucoup moins de monstres : une chauve-souris et une ou deux tourelles par salle,
+  au lieu d'en avoir partout.

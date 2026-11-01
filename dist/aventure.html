@@ -753,21 +753,9 @@ const CHAPTERS = [
           {x:1530, y:236, w:520, down:true},
           {x:4070, y:150, w:300, down:true},
         ],
-        turrets:[
-          {x:2690, y:60, dir:'aim', rate:95, hp:3},
-          {x:5460, y:90, dir:'aim', rate:100, hp:3},
-        ],
-        enemies:[
-          {on:8, from:150, to:300, speed:1.6},
-          {on:8, from:330, to:500, speed:1.8},
-          {on:25, from:0, to:120, speed:1.6},
-        ],
-        bats:[
-          {x:510, y:150, ax:80, ay:30, speed:0.05},
-          {x:3190, y:230, ax:30, ay:40, speed:0.06},
-          {x:3505, y:230, ax:30, ay:40, speed:0.06},
-          {x:5784, y:170, ax:110, ay:30, speed:0.05},
-        ],
+        turrets:[{x:2690, y:60, dir:'aim', rate:95, hp:3}],
+        enemies:[{on:8, from:150, to:300, speed:1.6}],
+        bats:[{x:3190, y:230, ax:30, ay:40, speed:0.06}],
         signs:[{x:60, y:340, text:'Défi : finis le plus vite possible !'}, {x:1550, y:340, text:'Plafond piquant : petits sauts et tirs !'}],
         checkpoints:[{x:1550, y:340}, {x:3650, y:270}],
         coins:[[90, 310], [312, 260], [477, 215], [642, 260], [807, 220], [1050, 270], [1225, 170], [1395, 130], [1790, 310], [2205, 270], [2380, 220], [2555, 270], [2735, 190], [3010, 270], [3190, 200], [3345, 270], [3505, 200], [3660, 240], [3860, 260], [4190, 230], [4490, 310], [4662, 270], [4782, 220], [4902, 170], [5022, 120], [5473, 230], [5659, 270], [5855, 220], [6061, 260], [6324, 310]],
@@ -817,21 +805,8 @@ const CHAPTERS = [
           {x:280, y:251, w:56},
           {x:200, y:100, w:180},
         ],
-        turrets:[
-          {x:0, y:2989, dir:'right', rate:115},
-          {x:616, y:2469, dir:'left', rate:115},
-          {x:0, y:1949, dir:'right', rate:115},
-          {x:616, y:1429, dir:'left', rate:115},
-          {x:0, y:909, dir:'right', rate:115},
-          {x:616, y:389, dir:'left', rate:115},
-        ],
-        bats:[
-          {x:320, y:3113, ax:130, ay:25, speed:0.05},
-          {x:320, y:2385, ax:130, ay:25, speed:0.05},
-          {x:320, y:1657, ax:130, ay:25, speed:0.05},
-          {x:320, y:929, ax:130, ay:25, speed:0.05},
-          {x:320, y:201, ax:130, ay:25, speed:0.05},
-        ],
+        turrets:[{x:616, y:2469, dir:'left', rate:115}, {x:0, y:909, dir:'right', rate:115}],
+        bats:[{x:320, y:1657, ax:130, ay:25, speed:0.05}],
         signs:[{x:430, y:3580, text:'La lave monte vite : fonce jusqu\'à la ficelle dorée !'}],
         checkpoints:[{x:270, y:2331}, {x:210, y:1187}],
         coins:[[198, 3445], [388, 3341], [548, 3237], [358, 3133], [158, 3029], [308, 2925], [498, 2821], [588, 2717], [408, 2613], [218, 2509], [88, 2405], [278, 2301], [468, 2197], [198, 2093], [388, 1989], [548, 1885], [358, 1781], [158, 1677], [308, 1573], [498, 1469], [588, 1365], [408, 1261], [218, 1157], [88, 1053], [278, 949], [468, 845], [198, 741], [388, 637], [548, 533], [358, 429], [158, 325], [308, 221]],
@@ -1605,10 +1580,7 @@ const CHAPTERS = [
         enemies:[
           {on:18, from:120, to:300, speed:1.8},
         ],
-        bats:[
-          {x:1460, y:110, ax:60, ay:20, speed:0.05},
-          {x:3350, y:110, ax:60, ay:20, speed:0.05},
-        ],
+        bats:[{x:3350, y:110, ax:60, ay:20, speed:0.05}],
         signs:[{x:60, y:340, text:'Défi cosmique : chaque seconde compte !'}, {x:210, y:340, text:'Pas de saut ici : dash !'}, {x:2860, y:300, text:'Vise l\'orbe, puis encore une !'}, {x:4750, y:300, text:'Vise l\'orbe, puis encore une !'}],
         checkpoints:[{x:700, y:340}, {x:1850, y:340}, {x:3740, y:340}],
         coins:[[250, 312], [852, 260], [852, 170], [852, 100], [1210, 70], [1410, 70], [1670, 70], [2120, 150], [2440, 150], [2570, 70], [2730, 70], [3100, 70], [3300, 70], [3560, 70], [4010, 150], [4330, 150], [4460, 70], [4620, 70], [5372, 250], [5372, 150]],
@@ -1677,14 +1649,8 @@ const CHAPTERS = [
         spikes:[
           {x:260, y:3024, w:70, down:true},
         ],
-        turrets:[
-          {x:20, y:2740, dir:'right', rate:105},
-          {x:592, y:2540, dir:'left', rate:105},
-        ],
-        bats:[
-          {x:420, y:3590, ax:120, ay:60, speed:0.045},
-          {x:250, y:2140, ax:120, ay:60, speed:0.05},
-        ],
+        turrets:[{x:592, y:2540, dir:'left', rate:105}],
+        bats:[{x:250, y:2140, ax:120, ay:60, speed:0.05}],
         signs:[{x:400, y:4360, text:'Dernier défi : grimpe le plus vite possible !'}],
         checkpoints:[{x:60, y:3840}, {x:540, y:3330}, {x:400, y:2440}],
         coins:[[408, 4232], [228, 4132], [88, 4032], [258, 3932], [448, 3832], [160, 3720], [160, 3610], [160, 3500], [160, 3390], [450, 3310], [400, 3050], [200, 3050], [208, 3032], [388, 2932], [528, 2832], [328, 2732], [138, 2632], [288, 2532], [478, 2432], [480, 2330], [480, 2220], [480, 2110], [480, 2000], [95, 1800], [335, 1720], [535, 1640], [358, 1542], [188, 1442], [68, 1342], [228, 1242], [408, 1142], [548, 1042], [358, 942], [188, 842], [68, 742], [228, 642], [408, 542], [548, 442], [358, 342], [188, 242]],
@@ -2106,6 +2072,7 @@ function stepHero(){
 // =====================================================================
 function loadRoom(ci, ri){
   chIndex = ci; rIndex = ri;
+  if(ri > 0 && CHAPTERS[ci].bonus && state === 'play' && timerRunning) srSplit();   // speedrun: a split at each new room
   chapter = CHAPTERS[ci];
   room = chapter.rooms[ri];
   room.w = room.width || W;
@@ -2199,6 +2166,7 @@ function startChapter(ci, advancing){
   hasDash = advancing ? (hasDash || !!g.dash) : !!g.dash;
   lives = advancing ? Math.max(lives, startLives()) : startLives();
   chStartTime = elapsed; chCoins = 0; chGem = false;
+  if(CHAPTERS[ci].bonus){ srReset(); lives = 99; }
   collected = new Set();
   chCoinsTotal = CHAPTERS[ci].rooms.reduce((a, r) => a + (r.coins || []).length, 0);
   loadRoom(ci, 0);
@@ -2241,6 +2209,7 @@ function chapterClear(){
   if(chGem && !chapter.bonus) save.gems[chIndex] = true;
   if(chapter.bonus){
     timerRunning = false;
+    srFinish(t);
     clearInfo.fast = !chapter.parTime || t <= chapter.parTime;
     if(clearInfo.fast){ if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true; }
     clearInfo.bonus2 = !!chapter.bonus2;
@@ -2370,6 +2339,7 @@ function dropBossReward(b){
 // =====================================================================
 function hurt(fromX){
   if(player.invuln > 0 || player.dead || cine) return;
+  if(isSpeedrun()){ srDeath(); return; }          // speedrun: one hit and you're out
   if(idle.phase) idleReset();
   lives--;
   SFX.hurt();
@@ -2387,6 +2357,7 @@ function hurt(fromX){
 // spikes, pits, lava pools: lose a life and respawn at the last checkpoint
 function killPlayer(){
   if(player.dead) return;
+  if(isSpeedrun()){ idleReset(); srDeath(); return; }
   idleReset();
   lives--;
   addShake(7);
@@ -2544,6 +2515,7 @@ function startEscape(announce){
 // XELIAX grabs the ficelle aux olives: a short celebration, then the ending
 function startFinale(){
   finaleT = 1;
+  if(isSpeedrun()) timerRunning = false;
   key.got = true;
   player.invuln = 9999; player.hurtT = 0;
   for(const e of [...enemies, ...bats]) if(e.alive){ e.alive = false; burst(e.x + e.w / 2, e.y + e.h / 2, 8, '#ffffff', 1.6, 26, -0.01, 4, 'puff'); }
@@ -3118,6 +3090,7 @@ function step(){
     return;
   }
   updatePlayer();
+  srTick();
   if(state === 'play') updateIdle();
   stepHero();
   clearPresses();
@@ -4039,6 +4012,7 @@ function updatePlayer(){
     if(!c.active && overlap(player, box)){
       checkpoints.forEach(o => o.active = false);
       c.active = true;
+      srSplit();
       checkpoint = c.ceil ? {x:c.x, y:c.y + 1, g:-1} : {x:c.x, y:c.y - player.h - 1, g:1};
       sparkle(c.x + 12, c.ceil ? c.y + 30 : c.y - 30, 12, '#7dff9a');
       confetti(c.x + 4, c.ceil ? c.y + 36 : c.y - 36, 16);
@@ -7287,6 +7261,7 @@ function drawWorld(){
   drawBoss();
   for(const s of shots) drawShot(s);
   for(const b of bullets) drawBullet(b);
+  drawSrGhost();
   drawPlayer();
   drawSteal();
   if(room.lava) drawRisingLava();
@@ -9232,6 +9207,7 @@ function pill(x, y, w, h){
 }
 
 function drawHUD(){
+  if(isSpeedrun() && state === 'play'){ drawSrHud(); return; }   // speedrun: the big timer, no hearts
   const top = 8, hh = 24;
   const slots = Math.min(8, Math.max(startLives(), lives));
   const heartsW = 14 + slots * 15 + (lives > 8 ? 24 : 0);
@@ -10636,11 +10612,12 @@ function drawChapterClear(){
   panelContent(b);
   drawHero(uiHero, W / 2, b.y + 2 - Math.abs(Math.sin(frame * 0.16)) * 10, 1.8, {});
   heading(clearInfo.bonus ? 'Défi bonus réussi !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, 27, CH_ACCENT[chIndex]);
-  txt(clearInfo.bonus ? (clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
+  txt(clearInfo.bonus ? (!clearInfo.fast ? 'Trop lent pour la ficelle : R pour retenter !' : clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
   const rows = [
     ['Temps', fmt(counted(clearInfo.time, 10)), clearInfo.newBest && stateT > 50 ? 'Record !' : ''],
-    ['Pièces', `${Math.round(counted(clearInfo.coins, 20))} sur ${clearInfo.total}`, clearInfo.coins === clearInfo.total && stateT > 60 ? 'Toutes !' : ''],
-    [clearInfo.bonus ? (clearInfo.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée') : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus || clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
+    clearInfo.bonus ? ['Médaille', stateT > 40 ? (clearInfo.medal ? clearInfo.medal[0].toUpperCase() + clearInfo.medal.slice(1) : 'aucune') : '', clearInfo.medal === 'or' && stateT > 55 ? 'Or !' : '']
+      : ['Pièces', `${Math.round(counted(clearInfo.coins, 20))} sur ${clearInfo.total}`, clearInfo.coins === clearInfo.total && stateT > 60 ? 'Toutes !' : ''],
+    [clearInfo.bonus ? (clearInfo.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée') : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus ? (clearInfo.fast ? 'gagnée' : 'trop lent') : clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
     chapter.season === 2 || chapter.bonus2 ? ['Pouvoirs', stateT > 45 ? ['gravité', hasWall && 'murs', hasDash && 'dash'].filter(Boolean).join(', ') : '', ''] : ['Recette', stateT > 45 ? recipeShort() : '', ''],
     ['Score', String(Math.round(counted(score, 30))), ''],
   ];
@@ -11025,6 +11002,101 @@ function testRows(){
   ];
 }
 // =====================================================================
+//  SPEEDRUN MODE (the bonus challenges): one hit and you're out (no hearts,
+//  back to the last flag at once), a big timer with splits at every flag
+//  (green = faster than your record, red = slower), medals, a ghost of
+//  your best run, and R to start again instantly.
+// =====================================================================
+const SR_GHOST_STEP = 2;           // the ghost keeps one position every 2 frames
+const srun = {f:0, splits:[], ghost:[], pop:null, popT:0, gAnim:null};
+function isSpeedrun(){ return !!(chapter && chapter.bonus); }
+function srData(){ save.speed = save.speed || {}; return save.speed[chIndex] || null; }
+// medals: gold = the time to beat, silver = +25 %, bronze = +50 %
+function srMedal(ci, t){
+  const par = CHAPTERS[ci].parTime;
+  if(t == null || !par) return null;
+  return t <= par ? 'or' : t <= par * 1.25 ? 'argent' : t <= par * 1.5 ? 'bronze' : null;
+}
+const SR_MEDAL_COL = {or:'#ffd54a', argent:'#d8e2f0', bronze:'#e09a5a'};
+
+function srReset(){ srun.f = 0; srun.splits = []; srun.ghost = []; srun.pop = null; srun.popT = 0; srun.gAnim = makeCharAnim(); srun.gAnim.appear = 1; }
+// every frame of the run: the clock, and the ghost recording
+function srTick(){
+  if(!isSpeedrun() || !timerRunning || state !== 'play') return;
+  if(srun.f % SR_GHOST_STEP === 0) srun.ghost.push(rIndex, Math.round(player.x), Math.round(player.y), gdir < 0 ? -1 : 1);
+  srun.f++;
+  if(srun.popT > 0) srun.popT--;
+}
+// a flag reached or a new room: compare with the record
+function srSplit(){
+  if(!isSpeedrun()) return;
+  const t = elapsed - chStartTime, i = srun.splits.length, best = srData();
+  srun.splits.push(t);
+  const ref = best && best.splits ? best.splits[i] : null;
+  srun.pop = {t, d:ref == null ? null : t - ref}; srun.popT = 150;
+}
+// one hit and you're out: straight back to the last flag, the clock keeps running
+function srDeath(){
+  addShake(7); hud.flash = 1; heroPop(); SFX.hurt();
+  player.dead = true; respawnT = 22;
+}
+// R: start the whole challenge again, at once
+function srRestart(){
+  if(!isSpeedrun() || state === 'title') return;
+  if(state === 'pause' || state === 'over' || state === 'play' || state === 'chapter'){
+    startChapter(chIndex, false);
+    elapsed = 0; chStartTime = 0; timerRunning = false; finaleT = 0; steal = null;
+    lives = 99; srReset(); setState('play'); fade = 0; fadeDir = 0; bannerT = 0;
+    anim.appear = 0; SFX.bloop(); showToast('C\'est reparti !', 50);
+  }
+}
+// the run is over: keep the record, its splits and its ghost
+function srFinish(t){
+  const best = srData(), medal = srMedal(chIndex, t);
+  clearInfo.medal = medal; clearInfo.srBest = best ? best.t : null;
+  if(!best || t < best.t){
+    save.speed[chIndex] = {t, splits:srun.splits.slice(), ghost:srun.ghost.slice(), medal};
+    clearInfo.srNew = true;
+  }
+}
+
+// ---- drawing: the ghost of the best run (world coordinates)
+function drawSrGhost(){
+  if(!isSpeedrun() || !timerRunning && srun.f === 0) return;
+  const best = srData();
+  if(!best || !best.ghost) return;
+  const i = Math.floor(srun.f / SR_GHOST_STEP) * 4, g = best.ghost;
+  if(i + 3 >= g.length || g[i] !== rIndex) return;
+  const x = g[i + 1], y = g[i + 2], up = g[i + 3] < 0, px = i >= 4 && g[i - 4] === rIndex ? g[i - 3] : x;
+  stepCharAnim(srun.gAnim, {vx:x - px, vy:0, onGround:true, facing:x >= px ? 1 : -1});
+  ctx.save();
+  const cy = y + player.h / 2;
+  if(up){ ctx.translate(0, cy); ctx.scale(1, -1); ctx.translate(0, -cy); }
+  drawHero(srun.gAnim, x + player.w / 2, y + player.h, 1, {alpha:0.35});
+  ctx.restore();
+}
+// ---- drawing: the big timer, the last split, the medal you're on track for (screen)
+function drawSrHud(){
+  if(!isSpeedrun() || state !== 'play') return;
+  const t = elapsed - chStartTime, best = srData();
+  const medal = srMedal(chIndex, t);
+  ctx.save();
+  rr(W / 2 - 74, 6, 148, 34, 12); ctx.fillStyle = 'rgba(14,9,34,0.82)'; ctx.fill();
+  ctx.strokeStyle = medal ? SR_MEDAL_COL[medal] : '#ff6a6a'; ctx.lineWidth = 2; ctx.stroke();
+  outlined(fmt(t), W / 2, 31, 20, '#ffffff', '#1d1442', 4, FU, 700, 'center');
+  txt(best ? 'record ' + fmt(best.t) : 'pas encore de record', W / 2, 52, 10.5, '#d6ceff', 600, 'center');
+  if(srun.pop && srun.popT > 0){
+    const p = srun.pop, a = Math.min(1, srun.popT / 20);
+    ctx.globalAlpha = a;
+    const s = p.d == null ? 'Drapeau ' + srun.splits.length + ' · ' + fmt(p.t) : (p.d <= 0 ? '−' : '+') + (Math.abs(p.d) / 1000).toFixed(2) + ' s';
+    const col = p.d == null ? '#ffffff' : p.d <= 0 ? '#5dff8a' : '#ff6a6a';
+    outlined(s, W / 2, 74, 16, col, '#1d1442', 4, FU, 700, 'center');
+    ctx.globalAlpha = 1;
+  }
+  txt('R : recommencer', W - 12, H - 10, 10.5, 'rgba(255,255,255,0.55)', 600, 'right');
+  ctx.restore();
+}
+// =====================================================================
 //  CHAPTER DECK: the chapters as a 3D stack of cards (HTML + CSS 3D), laid
 //  over the canvas. menu.scroll (shared with the keyboard and the wheel)
 //  drives it; every frame each card gets its transform from its distance
@@ -11298,6 +11370,7 @@ window.addEventListener('keydown', e => {
   if((k === 'k' || k === 'shift') && !e.repeat && state === 'play') input.dashPressed = true;
   if((k === 'e' || k === 's' || k === 'arrowdown') && !e.repeat) interact();
   if((k === 'p' || k === 'escape') && !e.repeat){ if(state === 'talk') endTalk(); else togglePause(); }
+  if(k === 'r' && !e.repeat && isSpeedrun()) srRestart();
   if(k === 'm' && !e.repeat) setMuted(!muted);
   if(k === 'q' && !e.repeat) backToMenu();
   if(k === 'c' && !e.repeat && state === 'over') confirmAction();
