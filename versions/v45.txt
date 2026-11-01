@@ -1,0 +1,14 @@
+VERSION 45 — Démos des boss animées
+
+La Pie Voleuse
+- Elle reste sonnée 30 % moins longtemps (environ 3 secondes au lieu de 4,5) :
+  il faut tirer vite. Les tirs déjà mis comptent toujours la fois suivante.
+
+Démos « Comment battre… »
+- Chaque étape est maintenant une vraie petite scène animée qui tourne en boucle :
+  le boss bouge vraiment (sauts, plongeons, charges, bonds de mur en mur…), XELIAX
+  saute, dash, tire, grimpe en sauts de mur ; on voit les tirs partir, les impacts,
+  « Touché ! », les boucliers qui cassent, l'acide qui reste au sol, la lave qui monte.
+- Une petite barre sous la scène montre où en est l'animation.
+- Les textes collent au jeu actuel (boss final : petite plateforme au-dessus de la lave,
+  envol, lave rapide ; Pie : dash puis 10 tirs ; Gecko : 5 tirs puis saut de mur…).
