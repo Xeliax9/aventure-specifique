@@ -368,6 +368,15 @@ function drawPopups(){
   }
 }
 
+function drawHotFloor(hf){
+  const y = hf.y, w = hf.x1 - hf.x0, pulse = 0.55 + 0.25 * Math.sin(frame * 0.12);
+  const g = ctx.createLinearGradient(0, y - 18, 0, y + 6);
+  g.addColorStop(0, 'rgba(255,90,40,0)'); g.addColorStop(1, `rgba(255,120,40,${pulse})`);
+  ctx.fillStyle = g; ctx.fillRect(hf.x0, y - 18, w, 24);
+  ctx.fillStyle = `rgba(255,200,90,${pulse})`; ctx.fillRect(hf.x0, y, w, 3);
+  if(fxTick && frame % 4 === 0) particles.push({x:hf.x0 + Math.random() * w, y:y - 2, vx:(Math.random() - 0.5) * 0.4, vy:-0.7 - Math.random(), life:28, max:28, color:Math.random() < 0.5 ? '#ffb347' : '#ff6a3c', grav:-0.01, size:2.4, type:'dot'});
+}
+
 function drawWorld(){
   for(const p of platforms) if(p.move) drawRail(p);
   for(const s of signs) drawSign(s);
@@ -377,6 +386,7 @@ function drawWorld(){
   for(const s of springs) drawSpring(s);
   for(const s of spikes) drawSpikes(s);
   for(const f of fires) drawFire(f);
+  if(room.hotFloor && boss && boss.alive) drawHotFloor(room.hotFloor);
   for(const n of npcs) drawNpc(n, n.x + 13, n.y, 1, !!(talk && talk.npc === n && talk.chars < talk.data.lines[talk.line].length), state === 'title' || player.x + player.w / 2 >= n.x + 13 ? 1 : -1);
   for(const c of coins) if(!c.got) drawCoin(c);
   for(const p of powerUps) if(!p.got) drawPowerUp(p);
