@@ -171,6 +171,7 @@ const { chromium } = require('playwright');
     ok(state === 'win', 'Space: the win screen');
     ok(clearInfo && clearInfo.season === 2 && save.s2Done, 'season 2 marked as finished');
     render(1);
+    run(60); confirmAction(); run(5); ok(state === 'title' && menu.page === 'credits', 'after the win screen, the credits roll (' + state + ' ' + menu.page + ')'); render(1);
     // second time the ending can be skipped
     startEnding(); run(40); input.jumpPressed = true; run(1); ok(END.t >= END_SHOTS.E, 'the ending can be skipped the second time');
     run(200);

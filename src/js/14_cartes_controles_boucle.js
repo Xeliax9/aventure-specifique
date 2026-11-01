@@ -218,7 +218,13 @@ function confirmAction(){
     transition(() => { startChapter(chIndex + 1, true); anim.appear = 0; setState('play'); });
     return true;
   }
-  if(state === 'win'){ toMenu(); return true; }
+  if(state === 'win'){
+    // end of season 2: after the ending, the credits roll
+    const s2 = clearInfo && clearInfo.season === 2;
+    toMenu();
+    if(s2) goPage('credits', 1);
+    return true;
+  }
   if(state === 'talk'){ advanceTalk(); return true; }
   if(state === 'pause'){ setState('play'); return true; }
   return false;

@@ -1,0 +1,5 @@
+VERSION 43 — Les crédits de fin
+
+Fin de la saison 2
+- Après la cinématique de fin et l'écran de victoire, les crédits défilent
+  automatiquement (Échap pour revenir).
