@@ -110,6 +110,7 @@ const { chromium } = require('playwright');
     // ---- final boss rules still hold (shield), escape + finale
     newRun(3); clean(); loadRoom(3,2); setState('play'); finishCine(); lives=99; canShoot=true;
     o.push(`arena hp=${boss.maxHp}`);
+    { let minX = 1e9; for(let i = 0; i < 700; i++){ player.invuln = 99; step(); minX = Math.min(minX, boss.x); } ok(minX < 160, 'phase 1: he changes side (min x ' + Math.round(minX) + ')'); }
     const shootAt = () => shots.push({x:boss.x + 10, y:boss.y + 10, w:10, h:5, vx:0, vy:0});
     shootAt(); step(); const hp1 = boss.hp; shootAt(); step(); const hp2 = boss.hp;
     run(60); shootAt(); step(); const hp3 = boss.hp;
@@ -120,7 +121,11 @@ const { chromium } = require('playwright');
     ok(rIndex === 3 && cine && cine.kind === 'intro', 'ascent room starts with its own entrance');
     run(320);
     ok(cine === null && Math.abs(boss.y - 880) < 60, `ascent intro done, boss at y ${boss.y.toFixed(0)}`);
+    ok(Math.abs(player.x - 309) < 40 && player.y > 950 && room.hotFloor.x0 === 0 && room.hotFloor.lava, 'phase 2: XELIAX starts on the small central ledge, the whole floor is lava (x ' + Math.round(player.x) + ')');
     lives=99; for(let i=0;i<30 && boss.alive;i++){ boss.inv=0; bossDamage(); step(); }
+    { let launched = false; for(let i = 0; i < 200 && !(launched && !launch); i++){ step(); if(launch) launched = true; }
+      run(10); ok(launched && player.onGround && Math.abs(player.y + player.h - 805) < 3, 'escape: the lava throws XELIAX onto a ledge (y ' + Math.round(player.y + player.h) + ')');
+      const lv = lavaY; run(60); ok(lv - lavaY > 35, 'the lava rises fast (' + (lv - lavaY).toFixed(0) + ' px in 1 s)'); }
     run(130); ok(!boss.alive, 'the death scene ends'); ok(key && key.kind === 'ficelle', 'escape: ficelle waits at the top');
     player.x = key.x + 6; player.y = key.y - 10; player.vy = 0; run(3);
     ok(finaleT > 0, 'finale started'); run(520); ok(state === 'play' && finaleT >= finaleEnd() && steal && steal.got, 'the magpie steals the ficelle, then the finale waits for Space'); pressJump(); step(); ok(state === 'win', 'win screen');

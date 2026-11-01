@@ -378,6 +378,7 @@ function drawPopups(){
 }
 
 function drawHotFloor(hf){
+  if(hf.lava) drawLavaPool({x:hf.x0, y:hf.y - 4, w:hf.x1 - hf.x0, lava:true});
   const y = hf.y, w = hf.x1 - hf.x0, pulse = 0.55 + 0.25 * Math.sin(frame * 0.12);
   const g = ctx.createLinearGradient(0, y - 18, 0, y + 6);
   g.addColorStop(0, 'rgba(255,90,40,0)'); g.addColorStop(1, `rgba(255,120,40,${pulse})`);
