@@ -56,6 +56,7 @@ function step(){
     SFX.warn();
   }
   if(cine) updateCine();
+  if(launch){ updateLaunch(); clearPresses(); return; }
   if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)){ timerRunning = true; if(chapter.bonus && chapter.parTime && rIndex === 0 && elapsed - chStartTime < 100) showToast(`Temps à battre : ${fmt(chapter.parTime)} — fonce !`, 200); }
   if(timerRunning && !cine) elapsed += STEP;        // the clock waits during cinematics
   if(phaseT > 0 && --phaseT === 0) transition(() => loadRoom(chIndex, rIndex + 1));
@@ -419,6 +420,25 @@ function updateBats(){
   }
 }
 
+// the final escape: the lava surges and throws XELIAX up onto a ledge, then the race begins
+
+function startLaunch(){
+  const t = room.launchTo;
+  launch = {t:0, dur:46, x0:player.x, y0:player.y, x1:t.x - player.w / 2, y1:t.y - player.h};
+  lavaY = room.hotFloor ? room.hotFloor.y + 4 : lavaY;
+  player.invuln = Math.max(player.invuln, 90); player.vx = player.vy = 0;
+  addShake(10); SFX.thud();
+  burst(player.x + player.w / 2, player.y + player.h, 24, '#ff8a3c', 4, 40, 0.1, 4);
+}
+function updateLaunch(){
+  const L = launch, k = Math.min(1, ++L.t / L.dur);
+  player.x = lerp(L.x0, L.x1, k); player.y = lerp(L.y0, L.y1, k) - Math.sin(k * Math.PI) * 120;
+  player.vx = 0; player.vy = 0; player.onGround = false; anim.spin = k * TAU;
+  if(frame % 2 === 0) particles.push({x:player.x + player.w / 2, y:player.y + player.h, vx:(Math.random() - 0.5), vy:1.5, life:24, max:24, color:'#ffb347', grav:0.05, size:3, type:'dot'});
+  stepHero(); updateCamera();
+  if(k >= 1){ launch = null; anim.spin = 0; player.vy = 0; showToast('La lave monte vite ! Cours, grimpe !', 120); }
+}
+
 function updateWorld(){
   // rising lava
   if(room.lava){
@@ -592,10 +612,24 @@ function updateBoss(){
       const ty = (room.barrierY ? clamp(player.y - 150, room.barrierY + 30, room.barrierY + 170)
                                 : Math.max(20, Math.min(camY + 40, player.y - 150))) + Math.sin(frame * 0.05) * 10;
       b.y += (ty - b.y) * 0.06;
+    } else if(b.cross){
+      // phase 1: he flies across to the other side of the arena
+      const tx = (b.minX + b.maxX) / 2, d = tx - b.x;
+      b.x += Math.sign(d) * Math.min(Math.abs(d), 4.2); b.y += (150 - b.y) * 0.05;
+      if(frame % 3 === 0) burst(b.x + b.w / 2, b.y + b.h / 2, 1, '#ff5c9a', 1, 18, 0, 3, 'puff');
+      if(Math.abs(d) < 2){ b.cross = false; b.fireT = Math.min(b.fireT, 30); }
     } else {
       b.x += b.vx * spd; b.y += b.vy * spd;
       if(b.x < b.minX){ b.x = b.minX; b.vx = Math.abs(b.vx); }
       if(b.x > b.maxX){ b.x = b.maxX; b.vx = -Math.abs(b.vx); }
+      if(b.mode === 'arena'){
+        if(b.sideT === undefined){ b.sideT = 420; b.zone = 1; b.zw = b.maxX - b.minX; b.zr = b.minX; }
+        if(--b.sideT <= 0){
+          b.zone = 1 - b.zone; b.sideT = angry ? 330 : 420;
+          b.minX = b.zone ? b.zr : 10; b.maxX = b.minX + b.zw;
+          b.cross = true; SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il change de côté !', '#ff9ac0');
+        }
+      }
       if(b.y < b.minY){ b.y = b.minY; b.vy = Math.abs(b.vy); }
       if(b.y > b.maxY){ b.y = b.maxY; b.vy = -Math.abs(b.vy); }
     }

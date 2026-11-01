@@ -258,6 +258,7 @@ function enterPhase3(announce){
 function startEscape(announce){
   key = {x:room.keySpot.x - 17, y:room.keySpot.y - 8, w:34, h:16, got:false, kind:room.finale ? 'ficelle' : 'key'};
   lavaDelay = room.lava.delay;
+  if(room.launchTo) startLaunch();
   if(announce){
     sparkle(room.keySpot.x, room.keySpot.y, 14, '#ffe066');
     SFX.bossFlee();

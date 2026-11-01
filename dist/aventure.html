@@ -672,14 +672,15 @@ const CHAPTERS = [
         name:'L\'Ascension',
         label:'Boss, phase 2',
         height:1100, sky:['#1a0505', '#4a120c'], deco:'ascent', tint:'#2a0a08', armed:true, shootUp:true, finale:true,
-        lava:{start:1150, speed:0.42, min:160, delay:90},
+        lava:{start:1150, speed:0.7, min:160, delay:20},
         barrierY:770,
-        hotFloor:{y:1080, x0:96, x1:640},
+        hotFloor:{y:1080, x0:0, x1:640, lava:true},
+        launchTo:{x:365, y:805},
         keySpot:{x:300, y:84},
-        start:{x:40, y:1040},
+        start:{x:309, y:982},
         platforms:[
           {x:0, y:1080, w:640, h:20},
-          {x:120, y:1000, w:90},
+          {x:80, y:985, w:90},
           {x:300, y:925, w:80, move:{axis:'x', min:260, max:420, speed:1.2}},
           {x:480, y:850, w:90},
           {x:330, y:805, w:70},
@@ -692,8 +693,9 @@ const CHAPTERS = [
           {x:150, y:250, w:90, move:{axis:'x', min:120, max:260, speed:1.4}},
           {x:20, y:175, w:90},
           {x:180, y:100, w:240},
-          {x:20, y:930, w:70},
-          {x:560, y:990, w:70},
+          {x:20, y:900, w:70},
+          {x:470, y:985, w:90},
+          {x:290, y:1010, w:60},
         ],
         enemies:[
           {on:3, from:0, to:90, speed:1.3},
@@ -1917,7 +1919,7 @@ let chStartTime = 0, chCoins = 0, chCoinsTotal = 0, chGem = false, clearInfo = n
 let frame = 0, shake = 0, fade = 0, fadeDir = 0, pendingAction = null;
 let bannerT = 0, toast = {text:'', t:0, max:1}, respawnT = 0;
 let camX = 0, camY = 0, prevCamX = 0, prevCamY = 0, camFocusY = 0, lookX = 0, viewX = 0, viewY = 0;
-let lavaY = 1e9, lavaDelay = 0, phaseT = 0;
+let lavaY = 1e9, lavaDelay = 0, phaseT = 0, launch = null;   // launch: the lava throws XELIAX onto a ledge (final escape)
 let collected = new Set();
 let exitT = 0, exitKind = null, finaleT = 0;
 let steal = null;                     // end of season 1: the magpie that snatches the ficelle
@@ -2145,7 +2147,7 @@ function loadRoom(ci, ri){
   if(room.finale && !room.boss) key = {x:room.keySpot.x - 17, y:room.keySpot.y - 8, w:34, h:16, got:false, kind:'ficelle', gold:room.gold || false};
   idleReset();
   if(room.armed) canShoot = true;
-  lavaY = room.lava ? room.lava.start : 1e9;
+  lavaY = room.lava ? room.lava.start : 1e9; launch = null;
   lavaDelay = room.lava ? room.lava.delay : 0;
   phaseT = 0;
   gdir = room.startG || 1;
@@ -2531,6 +2533,7 @@ function enterPhase3(announce){
 function startEscape(announce){
   key = {x:room.keySpot.x - 17, y:room.keySpot.y - 8, w:34, h:16, got:false, kind:room.finale ? 'ficelle' : 'key'};
   lavaDelay = room.lava.delay;
+  if(room.launchTo) startLaunch();
   if(announce){
     sparkle(room.keySpot.x, room.keySpot.y, 14, '#ffe066');
     SFX.bossFlee();
@@ -3075,6 +3078,7 @@ function step(){
     SFX.warn();
   }
   if(cine) updateCine();
+  if(launch){ updateLaunch(); clearPresses(); return; }
   if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)){ timerRunning = true; if(chapter.bonus && chapter.parTime && rIndex === 0 && elapsed - chStartTime < 100) showToast(`Temps à battre : ${fmt(chapter.parTime)} — fonce !`, 200); }
   if(timerRunning && !cine) elapsed += STEP;        // the clock waits during cinematics
   if(phaseT > 0 && --phaseT === 0) transition(() => loadRoom(chIndex, rIndex + 1));
@@ -3438,6 +3442,25 @@ function updateBats(){
   }
 }
 
+// the final escape: the lava surges and throws XELIAX up onto a ledge, then the race begins
+
+function startLaunch(){
+  const t = room.launchTo;
+  launch = {t:0, dur:46, x0:player.x, y0:player.y, x1:t.x - player.w / 2, y1:t.y - player.h};
+  lavaY = room.hotFloor ? room.hotFloor.y + 4 : lavaY;
+  player.invuln = Math.max(player.invuln, 90); player.vx = player.vy = 0;
+  addShake(10); SFX.thud();
+  burst(player.x + player.w / 2, player.y + player.h, 24, '#ff8a3c', 4, 40, 0.1, 4);
+}
+function updateLaunch(){
+  const L = launch, k = Math.min(1, ++L.t / L.dur);
+  player.x = lerp(L.x0, L.x1, k); player.y = lerp(L.y0, L.y1, k) - Math.sin(k * Math.PI) * 120;
+  player.vx = 0; player.vy = 0; player.onGround = false; anim.spin = k * TAU;
+  if(frame % 2 === 0) particles.push({x:player.x + player.w / 2, y:player.y + player.h, vx:(Math.random() - 0.5), vy:1.5, life:24, max:24, color:'#ffb347', grav:0.05, size:3, type:'dot'});
+  stepHero(); updateCamera();
+  if(k >= 1){ launch = null; anim.spin = 0; player.vy = 0; showToast('La lave monte vite ! Cours, grimpe !', 120); }
+}
+
 function updateWorld(){
   // rising lava
   if(room.lava){
@@ -3611,10 +3634,24 @@ function updateBoss(){
       const ty = (room.barrierY ? clamp(player.y - 150, room.barrierY + 30, room.barrierY + 170)
                                 : Math.max(20, Math.min(camY + 40, player.y - 150))) + Math.sin(frame * 0.05) * 10;
       b.y += (ty - b.y) * 0.06;
+    } else if(b.cross){
+      // phase 1: he flies across to the other side of the arena
+      const tx = (b.minX + b.maxX) / 2, d = tx - b.x;
+      b.x += Math.sign(d) * Math.min(Math.abs(d), 4.2); b.y += (150 - b.y) * 0.05;
+      if(frame % 3 === 0) burst(b.x + b.w / 2, b.y + b.h / 2, 1, '#ff5c9a', 1, 18, 0, 3, 'puff');
+      if(Math.abs(d) < 2){ b.cross = false; b.fireT = Math.min(b.fireT, 30); }
     } else {
       b.x += b.vx * spd; b.y += b.vy * spd;
       if(b.x < b.minX){ b.x = b.minX; b.vx = Math.abs(b.vx); }
       if(b.x > b.maxX){ b.x = b.maxX; b.vx = -Math.abs(b.vx); }
+      if(b.mode === 'arena'){
+        if(b.sideT === undefined){ b.sideT = 420; b.zone = 1; b.zw = b.maxX - b.minX; b.zr = b.minX; }
+        if(--b.sideT <= 0){
+          b.zone = 1 - b.zone; b.sideT = angry ? 330 : 420;
+          b.minX = b.zone ? b.zr : 10; b.maxX = b.minX + b.zw;
+          b.cross = true; SFX.warn(); popup(b.x + b.w / 2, b.y - 10, 'Il change de côté !', '#ff9ac0');
+        }
+      }
       if(b.y < b.minY){ b.y = b.minY; b.vy = Math.abs(b.vy); }
       if(b.y > b.maxY){ b.y = b.maxY; b.vy = -Math.abs(b.vy); }
     }
@@ -7220,6 +7257,7 @@ function drawPopups(){
 }
 
 function drawHotFloor(hf){
+  if(hf.lava) drawLavaPool({x:hf.x0, y:hf.y - 4, w:hf.x1 - hf.x0, lava:true});
   const y = hf.y, w = hf.x1 - hf.x0, pulse = 0.55 + 0.25 * Math.sin(frame * 0.12);
   const g = ctx.createLinearGradient(0, y - 18, 0, y + 6);
   g.addColorStop(0, 'rgba(255,90,40,0)'); g.addColorStop(1, `rgba(255,120,40,${pulse})`);

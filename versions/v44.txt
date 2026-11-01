@@ -1,0 +1,13 @@
+VERSION 44 — Le boss final de la saison 1
+
+Phase 1 (Le Seigneur Pourpre)
+- Il ne reste plus seulement à droite : environ toutes les 7 secondes (un peu plus
+  souvent quand il est en colère), il traverse l'arène et va se battre de l'autre côté.
+
+Phase 2 (L'Ascension)
+- XELIAX commence sur une petite plateforme au milieu, avec une plateforme à gauche
+  et une à droite pour se déplacer.
+- Tout le sol est de la lave (avant, seulement une partie du sol brûlait).
+- Quand il est vaincu, la lave déborde et propulse XELIAX en l'air jusqu'à une
+  plateforme : la course commence tout de suite.
+- La lave monte beaucoup plus vite (0,7 au lieu de 0,42) : il faut grimper sans traîner.

@@ -18,7 +18,7 @@ let chStartTime = 0, chCoins = 0, chCoinsTotal = 0, chGem = false, clearInfo = n
 let frame = 0, shake = 0, fade = 0, fadeDir = 0, pendingAction = null;
 let bannerT = 0, toast = {text:'', t:0, max:1}, respawnT = 0;
 let camX = 0, camY = 0, prevCamX = 0, prevCamY = 0, camFocusY = 0, lookX = 0, viewX = 0, viewY = 0;
-let lavaY = 1e9, lavaDelay = 0, phaseT = 0;
+let lavaY = 1e9, lavaDelay = 0, phaseT = 0, launch = null;   // launch: the lava throws XELIAX onto a ledge (final escape)
 let collected = new Set();
 let exitT = 0, exitKind = null, finaleT = 0;
 let steal = null;                     // end of season 1: the magpie that snatches the ficelle
@@ -246,7 +246,7 @@ function loadRoom(ci, ri){
   if(room.finale && !room.boss) key = {x:room.keySpot.x - 17, y:room.keySpot.y - 8, w:34, h:16, got:false, kind:'ficelle', gold:room.gold || false};
   idleReset();
   if(room.armed) canShoot = true;
-  lavaY = room.lava ? room.lava.start : 1e9;
+  lavaY = room.lava ? room.lava.start : 1e9; launch = null;
   lavaDelay = room.lava ? room.lava.delay : 0;
   phaseT = 0;
   gdir = room.startG || 1;
