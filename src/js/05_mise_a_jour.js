@@ -48,7 +48,7 @@ function step(){
   // the final blow freezes the action for a split second
   if(hitStop > 0){ hitStop--; updateCamera(); clearPresses(); return; }
   if(djTake > 0 && --djTake === 0){
-    showToast('Gaston te confisque ton double saut : ici, on grimpe !', 190);
+    showToast('La pie t\'a pris ton double saut : ici, on grimpe !', 190);
     ring(player.x + player.w / 2, player.y + player.h / 2, POWER_COLORS.doubleJump, 6, 46, 26);
     burst(player.x + player.w / 2, player.y + player.h / 2, 10, POWER_COLORS.doubleJump, 2.4, 30, 0.02, 3, 'star');
     SFX.warn();
@@ -217,6 +217,7 @@ function drawFinaleOverlay(cx, cy){
 }
 
 function drawSteal(){
+  drawDJOrb();
   if(!steal || !steal.on) return;
   drawMagpie(steal);
 }
