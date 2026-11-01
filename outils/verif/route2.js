@@ -229,6 +229,7 @@ function sim(geo, st, prog, start, pre){
     // hazards & goals
     if(s.g > 0 && s.y > geo.H + 30) return {dead:true, touched};
     if(s.g < 0 && s.y + C.PH < -40) return {dead:true, touched};
+    if(s.g < 0 && s.y > geo.H) return {dead:true, touched};
     const cell = cellAt(geo, s.x, s.y);
     for(const h of cell.hz) if(ov(s.x, s.y, C.PW, C.PH, h)) return {dead:true, touched};
     const B = geo.boxes;

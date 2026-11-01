@@ -80,12 +80,12 @@ function updateS2Boss(b){
     return;
   }
   if(b.mode === 'magpie'){
-    const top = 34, bottom = FLOOR - b.h;
+    const top = 34, bottom = FLOOR - b.h, p3 = b.phase === 3;
     // after each hit she shakes the nest: in phase 1 everyone falls back onto the hay, in phase 2 the world turns over
     if(b.nestT > 0){
       if(b.nestT === 50) popup(b.x + b.w / 2, b.y - 10, 'Le nid tremble !', '#ffe58a');
       if(--b.nestT === 0){
-        const want = p2 ? -gdir : 1;
+        const want = b.phase >= 2 ? -gdir : 1;
         addShake(9); SFX.thud();
         if(want !== gdir){ setGravity(want); showToast(p2 ? 'Elle retourne le nid !' : 'Elle secoue le nid : tout le monde retombe !', 110); }
       }
@@ -102,25 +102,38 @@ function updateS2Boss(b){
         bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a) * 2.6, vy:Math.sin(a) * 2.6, kind:'trinket', rot:0});
         SFX.bossShot();
       }
-      if(p2 && --b.fireT <= 0){
-        b.fireT = 70;
+      if(b.phase >= 2 && --b.fireT <= 0){
+        b.fireT = p3 ? 85 : 70;
         const cx = b.x + b.w / 2, cy = b.y + b.h / 2, a = Math.atan2(player.y + player.h / 2 - cy, player.x + player.w / 2 - cx);
-        for(const s of [-0.3, 0, 0.3]) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
+        for(const s of (p3 ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3])) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
         SFX.bossShot();
       }
       if(--b.stT <= 0){
-        b.state = 'aim'; b.stT = p2 ? 34 : 46; SFX.warn();
+        b.state = 'aim'; b.stT = p3 ? 30 : p2 ? 34 : 42; SFX.warn();
         b.tx = clamp(player.x + player.w / 2 - b.w / 2, 30, W - 30 - b.w);
+        // phase 3: two dives straight at XELIAX, wherever he is, then a last one at the other side, where she gets stuck
+        if(p3){ b.chain = 2; b.ty = clamp(player.y + player.h / 2 - b.h / 2, top, bottom); }
+        else
         // phase 1: she dives at the side you're standing on (only the ceiling holds her);
         // phase 2: she's wary and dives at the OTHER side, so you have to flip over (orbs, edges) and dash into her
-        b.ty = p2 ? (gdir > 0 ? top : bottom) : (gdir > 0 ? bottom : top);
+        b.ty = b.phase === 2 ? (gdir > 0 ? top : bottom) : (gdir > 0 ? bottom : top);
       }
     } else if(b.state === 'aim'){
       b.y += (b.ty > 150 ? -0.6 : 0.6);
-      if(--b.stT <= 0){ b.state = 'dive'; const d = Math.hypot(b.tx - b.x, b.ty - b.y) || 1; b.vx = (b.tx - b.x) / d * (p2 ? 10 : 8.5); b.vy = (b.ty - b.y) / d * (p2 ? 10 : 8.5); SFX.bossFlee(); }
+      if(--b.stT <= 0){ b.state = 'dive'; const d = Math.hypot(b.tx - b.x, b.ty - b.y) || 1; const sp = p3 ? 10.5 : p2 ? 10 : 8.5; b.vx = (b.tx - b.x) / d * sp; b.vy = (b.ty - b.y) / d * sp; SFX.bossFlee(); }
     } else if(b.state === 'dive'){
       b.x += b.vx; b.y += b.vy;
-      if((b.vy > 0 && b.y >= b.ty) || (b.vy < 0 && b.y <= b.ty)){
+      if((b.tx - b.x) * b.vx + (b.ty - b.y) * b.vy <= 0){
+        if(p3 && b.chain > 0){
+          // she brakes in mid-air, turns round and aims again
+          b.x = clamp(b.tx, 30, W - 30 - b.w); b.y = b.ty; b.chain--;
+          b.state = 'aim'; b.stT = 26; SFX.warn();
+          b.tx = clamp(player.x + player.w / 2 - b.w / 2, 30, W - 30 - b.w);
+          b.ty = b.chain > 0 ? clamp(player.y + player.h / 2 - b.h / 2, top, bottom) : (gdir > 0 ? top : bottom);
+          b.face = b.tx > b.x ? 1 : -1;
+          burst(b.x + b.w / 2, b.y + b.h / 2, 8, '#ffffff', 2, 20, 0, 3, 'puff');
+          return;
+        }
         b.x = clamp(b.x, 30, W - 30 - b.w); b.y = b.ty;
         if(!p2 && b.ty > 150){
           // phase 1: the hay is far too soft, she bounces straight back up
@@ -131,12 +144,12 @@ function updateS2Boss(b){
           if(!b.toldHay){ b.toldHay = true; showToast('Le foin est trop mou : fais-la plonger vers le plafond !', 160); }
           return;
         }
-        b.state = 'stuck'; b.ceil = b.ty < 150; b.stT = p2 ? 170 : 135;
-        if(p2 && !b.toldFlip){ b.toldFlip = true; showToast('Elle se cache de l\'autre côté : retourne-toi et dash !', 170); }
+        b.state = 'stuck'; b.ceil = b.ty < 150; b.stT = p3 ? 150 : p2 ? 170 : 135;
+        if(b.phase === 2 && !b.toldFlip){ b.toldFlip = true; showToast('Elle se cache de l\'autre côté : retourne-toi et dash !', 170); }
         addShake(10); SFX.thud();
         const sy = b.ceil ? top - 4 : FLOOR;
         burst(b.x + b.w / 2, sy, 12, '#e8d8ff', 3, 30, b.ceil ? -0.1 : 0.1, 3, 'puff');
-        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 8, p2 ? 'Coincée ! Dash !' : 'Coincée ! Saute-lui dessus !', '#ffe58a');
+        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 8, b.phase === 2 ? 'Coincée ! Dash !' : 'Coincée ! Saute-lui dessus !', '#ffe58a');
         if(p2 && !b.ceil){
           bullets.push({x:b.x - 12, y:FLOOR - 14, w:16, h:14, vx:-3.4, vy:0, kind:'wave'});
           bullets.push({x:b.x + b.w - 4, y:FLOOR - 14, w:16, h:14, vx:3.4, vy:0, kind:'wave'});
@@ -150,7 +163,7 @@ function updateS2Boss(b){
       if(--b.stT <= 0){ b.state = 'rise'; }
     } else if(b.state === 'rise'){
       b.y += (150 - b.y) * 0.08;
-      if(Math.abs(b.y - 150) < 4){ b.state = 'hover'; b.stT = p2 ? 110 : 160; b.fireT = 50; }
+      if(Math.abs(b.y - 150) < 4){ b.state = 'hover'; b.stT = p3 ? 60 : p2 ? 75 : 95; b.fireT = 45; }
     }
   }
 }
@@ -171,7 +184,7 @@ function spitAcid(b, n){
 
 // when can it be hit, and when is it harmless
 // the magpie can be stomped only in phase 1 (stuck in the ceiling); in phase 2 her trinket armour only gives way to a dash
-function bossWeak(b){ return (b.mode === 'gecko' && (b.state === 'stun' || b.state === 'stuck')) || (b.mode === 'magpie' && b.state === 'stuck' && b.phase === 1); }
+function bossWeak(b){ return (b.mode === 'gecko' && (b.state === 'stun' || b.state === 'stuck')) || (b.mode === 'magpie' && b.state === 'stuck' && b.phase !== 2); }
 function bossDashWeak(b){ return bossWeak(b) || (b.mode === 'yeti' && b.state === 'dizzy') || (b.mode === 'magpie' && b.state === 'stuck'); }
 function bossHarmless(b){ return bossDashWeak(b) || (S2_BOSS.has(b.mode) && b.inv > 0); }
 function bossHitReact(b){
@@ -325,7 +338,8 @@ function drawYeti(b){
 function drawMagpie(b){
   const x = ix(b) + (b.state === 'stuck' ? (b.shakeX || 0) : 0), y = iy(b), cx = x + b.w / 2, cy = y + b.h / 2;
   const p2 = b.phase === 2, hit = b.hitT > 0 || (b.inv > 0 && Math.floor(b.inv / 4) % 2 === 0);
-  const black = hit ? '#ffffff' : '#1a1430', blue = hit ? '#ffffff' : p2 ? '#b8306a' : '#2f5ad8';
+  const p3 = b.phase === 3, black = hit ? '#ffffff' : '#1a1430', blue = hit ? '#ffffff' : p3 ? '#e0242a' : p2 ? '#b8306a' : '#2f5ad8';
+  if(p3){ softGlow(cx, cy, 44, 34, '255,60,60', 0.25 + 0.1 * Math.sin(frame * 0.2)); if(frame % 5 === 0) particles.push({x:cx + (Math.random() - 0.5) * 36, y:cy + (Math.random() - 0.5) * 24, vx:(Math.random() - 0.5) * 1.2, vy:-0.8, life:26, max:26, color:Math.random() < 0.5 ? '#ff3d3d' : '#ffb03d', grav:-0.02, size:2.6, type:'dot'}); }
   const stuck = b.state === 'stuck', dive = b.state === 'dive', aim = b.state === 'aim';
   if(aim){
     // a dotted line to where she's about to dive

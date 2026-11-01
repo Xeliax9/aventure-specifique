@@ -762,6 +762,27 @@ function drawCrumble(p, x, y, w, h){
 }
 
 function drawPlank(p, x, y, w, h){
+  // lift plank: a striped parachute on the side it drifts away from (above it, or below it upside down)
+  if(p.lift){
+    const up = -gdir, cx = x + w / 2, sway = Math.sin(frame * 0.06 + p.ox * 0.01) * (p.loose ? 3 : 1);
+    const ky = (up < 0 ? y : y + h) + up * 50, r = Math.min(34, w * 0.42);
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(const ex of [x + 5, x + w - 5]){ ctx.moveTo(ex, up < 0 ? y : y + h); ctx.lineTo(cx + sway + (ex < cx ? -r : r), ky); }
+    ctx.stroke();
+    ctx.save(); ctx.translate(cx + sway, ky);
+    ctx.beginPath();
+    if(up < 0) ctx.arc(0, 0, r, Math.PI, TAU); else ctx.arc(0, 0, r, 0, Math.PI);
+    ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = rgba(POWER_COLORS.gravity, 0.9);
+    for(let k = -2; k <= 2; k += 2) ctx.fillRect(k * r / 5 - r / 10, -r, r / 5, 2 * r);
+    ctx.restore();
+    ctx.strokeStyle = '#6b3d7a'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    if(up < 0) ctx.arc(cx + sway, ky, r, Math.PI, TAU); else ctx.arc(cx + sway, ky, r, 0, Math.PI);
+    ctx.closePath(); ctx.stroke();
+  }
   const g = ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, '#c98a52'); g.addColorStop(1, '#8a5530');
   rr(x, y, w, h, 4); ctx.fillStyle = g; ctx.fill();
@@ -1364,7 +1385,17 @@ function drawEnemyBody(e){
   ctx.beginPath(); ctx.ellipse(cx + 6 - step * 2, base - 1.6, 3.6, 2.1, 0, 0, TAU); ctx.fill();
   const rx = 12 * (1 + step * 0.04), ry = 9.2 * (1 - step * 0.04), cy = base - 11.5 - bounce;
   ctx.fillStyle = dark;
-  for(let i = -1; i <= 1; i++){ ctx.beginPath(); ctx.moveTo(cx + i * 6 - 3, cy - ry + 2); ctx.lineTo(cx + i * 6 + e.dir * 1.5, cy - ry - 4.5); ctx.lineTo(cx + i * 6 + 3, cy - ry + 2); ctx.closePath(); ctx.fill(); }
+  if(e.spiky){
+    // hedgehog: a fan of long white spines all over its back
+    ctx.strokeStyle = dark; ctx.lineWidth = 1;
+    for(let i = -3; i <= 3; i++){
+      const a = -Math.PI / 2 + i * 0.36, bx = cx + Math.cos(a) * rx * 0.8, by = cy + Math.sin(a) * ry * 0.8;
+      ctx.beginPath(); ctx.moveTo(bx - Math.sin(a) * 3, by + Math.cos(a) * 3);
+      ctx.lineTo(cx + Math.cos(a) * (rx + 8), cy + Math.sin(a) * (ry + 8));
+      ctx.lineTo(bx + Math.sin(a) * 3, by - Math.cos(a) * 3); ctx.closePath();
+      ctx.fillStyle = '#f4f0ff'; ctx.fill(); ctx.stroke();
+    }
+  } else for(let i = -1; i <= 1; i++){ ctx.beginPath(); ctx.moveTo(cx + i * 6 - 3, cy - ry + 2); ctx.lineTo(cx + i * 6 + e.dir * 1.5, cy - ry - 4.5); ctx.lineTo(cx + i * 6 + 3, cy - ry + 2); ctx.closePath(); ctx.fill(); }
   const g = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
   g.addColorStop(0, shade(col, 0.25)); g.addColorStop(1, col);
   ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); ctx.fillStyle = g; ctx.fill();

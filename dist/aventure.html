@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
 <style>
-/* Layout: a one-screen arcade stage. The 16:9 canvas sits centred, with a key legend under it on desktop and a touch pad on phones. */
+/* Layout: the 16:9 canvas fills the window; on phones the touch pad is laid over the bottom of the screen. */
 :root{
   --bg:#ebe5ff;
   --bg-glow:#d6caff;
@@ -42,35 +42,31 @@
   --pad-soft:#2a2158; --pad-soft-ink:#dcd5ff; --pad-soft-deep:#150e34;
   color-scheme:dark;
 }
-html,body{height:100%}
+html,body{height:100%; margin:0}
+/* Plein écran : le jeu (16:9) remplit la fenêtre, sans cadre ; des bandes sombres comblent le reste si la fenêtre n'est pas en 16:9. */
 body{
   box-sizing:border-box;
-  background-color:var(--bg);
-  background-image:radial-gradient(120% 90% at 50% 0%, var(--bg-glow), var(--bg) 62%);
+  background:#07041a;
   color:var(--ink);
   font-family:var(--font-ui);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-  padding-block:12px;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));
-  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex; align-items:center; justify-content:center;
+  padding:0;
   overflow:hidden;
   -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
 }
 #game{
   display:block;
-  width:min(100%, 1120px, calc((100vh - 140px) * 16 / 9));
-  width:min(100%, 1120px, calc((100dvh - 140px) * 16 / 9));
-  max-width:100%;
+  width:min(100vw, 100vh * 16 / 9);
+  width:min(100vw, 100dvh * 16 / 9);
   aspect-ratio:16/9;
   height:auto;
-  border-radius:18px;
   touch-action:none;
   background:var(--hero-deep);
-  box-shadow:0 0 0 3px var(--hero), 0 22px 50px -14px var(--shadow);
   outline:none;
 }
-#game:focus-visible{ box-shadow:0 0 0 3px var(--hero), 0 0 0 7px var(--bg-glow), 0 22px 50px -14px var(--shadow); }
+/* les touches sont dans Paramètres > Commandes */
 .legend{
+  display:none !important;
   margin:0; display:flex; flex-wrap:wrap; justify-content:center; gap:6px 18px;
   font-size:15px; font-weight:500; color:var(--ink-soft);
 }
@@ -81,7 +77,7 @@ kbd{
   border:1px solid var(--key-edge); border-bottom-width:3px; border-radius:7px;
   padding:0 7px; min-width:12px; text-align:center;
 }
-#pad{ display:none; width:min(100%, 960px); align-items:center; justify-content:space-between; gap:10px; }
+#pad{ display:none; position:fixed; left:0; right:0; bottom:0; z-index:4; width:100%; opacity:.6; pointer-events:none; align-items:center; justify-content:space-between; gap:10px; }
 #pad .cluster{ display:flex; gap:14px; align-items:center; }
 #pad button{
   font-family:var(--font-display); font-size:22px; line-height:1;
@@ -103,12 +99,11 @@ kbd{
 #pad button:focus-visible{ outline:3px solid var(--bg-glow); outline-offset:3px; }
 @media (hover:none), (pointer:coarse){
   #pad{ display:flex; }
-  .legend{ display:none; }
-  #game{ width:min(100%, 1120px, calc((100dvh - 150px) * 16 / 9)); }
+  #pad button{ pointer-events:auto; }
 }
 /* Chapter select: a 3D stack of cards (like the recent-apps switcher of a phone), laid over the canvas.
    Everything inside .stage is in game units (640 x 360) and scaled to the canvas size. */
-#chapters{position:fixed; left:0; top:0; width:0; height:0; overflow:hidden; border-radius:18px; z-index:2;
+#chapters{position:fixed; left:0; top:0; width:0; height:0; overflow:hidden; z-index:2;
   opacity:0; pointer-events:none; transition:opacity .28s ease; touch-action:none; -webkit-user-select:none; user-select:none;}
 #chapters.on{opacity:1; pointer-events:auto;}
 #chapters .stage{position:absolute; left:0; top:0; width:640px; height:360px; transform-origin:0 0; font-family:var(--font-ui); color:#fff;}
@@ -156,7 +151,7 @@ kbd{
 #chapters .play.locked::after{display:none;}
 #chapters .hint{position:absolute; left:0; right:0; bottom:7px; text-align:center; font-size:10.5px; color:#c9c1f0; pointer-events:none;}
 /* admin login: a small password box over the game */
-#admin{position:fixed; z-index:3; display:none; align-items:center; justify-content:center; background:rgba(10,6,28,.72); border-radius:18px; font-family:var(--font-ui);}
+#admin{position:fixed; z-index:3; display:none; align-items:center; justify-content:center; background:rgba(10,6,28,.72); font-family:var(--font-ui);}
 #admin.on{display:flex;}
 #admin .box{width:min(86%, 330px); padding:18px 20px; border-radius:16px; background:#1a1140; color:#fff; box-shadow:0 20px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.14);}
 #admin h3{margin:0 0 4px; font:400 22px var(--font-display);}
@@ -906,95 +901,94 @@ const CHAPTERS = [
       },
       {
         name:'Le Chemin des Nuages',
-        width:2800,
+        width:2900,
         start:{x:40, y:280},
         platforms:[
           {x:0, y:320, w:420, h:40, solid:true},
-          {x:230, y:220, w:110, h:20},
-          {x:560, y:320, w:340, h:40, solid:true},
-          {x:950, y:260, w:110, move:{axis:'x', min:940, max:1060, speed:1.1}},
-          {x:1180, y:320, w:160, h:40, solid:true},
-          {x:1260, y:0, w:700, h:40, solid:true},
-          {x:1340, y:320, w:560, h:40, solid:true},
-          {x:1380, y:150, w:100, h:20},
-          {x:1900, y:320, w:300, h:40, solid:true},
-          {x:2260, y:270, w:70, crumble:true},
-          {x:2390, y:240, w:70, crumble:true},
-          {x:2520, y:320, w:280, h:40, solid:true},
+          {x:470, y:60, w:180, h:20},
+          {x:750, y:280, w:130, h:20},
+          {x:930, y:0, w:930, h:40, solid:true},
+          {x:1560, y:320, w:370, h:40, solid:true},
+          {x:1690, y:262, w:18, h:58, solid:true},
+          {x:1780, y:262, w:18, h:58, solid:true},
+          {x:1930, y:320, w:320, h:40, solid:true},
+          {x:2310, y:270, w:70, crumble:true},
+          {x:2440, y:240, w:70, crumble:true},
+          {x:2570, y:320, w:330, h:40, solid:true},
         ],
-        flips:[{x:1300, y:226}, {x:1870, y:134}],
-        springs:[{x:1240, y:320}],
-        spikes:[
-          {x:720, y:320, w:40},
-          {x:1340, y:320, w:560},
-          {x:1580, y:40, w:60, down:true},
+        flips:[
+          {x:480, y:222},
+          {x:730, y:172},
+          {x:940, y:205},
+          {x:1715, y:150},
         ],
+        spikes:[{x:1560, y:320, w:130}, {x:1798, y:320, w:132}],
         enemies:[
-          {on:0, from:240, to:400, speed:1},
-          {on:2, from:200, to:320, speed:1.2},
-          {on:5, from:140, to:300, speed:1.2, ceil:true},
-          {on:5, from:420, to:560, speed:1.3, ceil:true},
-          {on:8, from:60, to:280, speed:1.2},
-          {on:11, from:100, to:240, speed:1.2},
+          {on:0, from:200, to:400, speed:1},
+          {on:3, from:200, to:380, speed:1.2, ceil:true},
+          {on:3, from:460, to:640, speed:1.3, ceil:true},
+          {on:7, from:130, to:300, speed:1.2},
+          {on:10, from:100, to:240, speed:1.2},
         ],
         bats:[
-          {x:490, y:200, ax:50, ay:25, speed:0.04},
-          {x:1000, y:150, ax:80, ay:25, speed:0.04},
-          {x:1620, y:190, ax:120, ay:20, speed:0.035},
-          {x:2330, y:150, ax:70, ay:25, speed:0.045},
+          {x:820, y:140, ax:40, ay:20, speed:0.04},
+          {x:1420, y:95, ax:90, ay:15, speed:0.035},
+          {x:2380, y:150, ax:70, ay:25, speed:0.045},
         ],
         signs:[
-          {x:120, y:320, text:'En route vers le nid de la pie !'},
-          {x:1200, y:320, text:'Le sol pique ? Passe par le plafond !'},
-          {x:1940, y:320, text:'Les nuages s\'effritent : ne traîne pas'},
+          {x:120, y:320, text:'Saute dans l\'orbe au bon moment : vise le nuage !'},
+          {x:1010, y:40, text:'Plonge dans l\'orbe… et tombe entre les poteaux', ceil:true},
+          {x:2050, y:320, text:'Les nuages s\'effritent : ne traîne pas'},
         ],
-        powerUps:[{x:1430, y:110, type:'gem'}, {x:1260, y:200, type:'life'}],
-        checkpoints:[{x:600, y:320}, {x:1200, y:320}, {x:1940, y:320}],
-        coins:[[150, 290], [285, 190], [380, 290], [490, 260], [620, 290], [740, 270], [860, 290], [1000, 220], [1110, 260], [1300, 160], [1360, 80], [1460, 80], [1560, 80], [1700, 80], [1800, 80], [1870, 200], [1960, 290], [2100, 290], [2295, 240], [2425, 210], [2600, 290], [2700, 290]],
-        door:{x:2740, y:280},
+        powerUps:[{x:810, y:130, type:'gem'}, {x:1734, y:270, type:'life'}],
+        checkpoints:[{x:800, y:280}, {x:1000, y:40, ceil:true}, {x:1990, y:320}],
+        coins:[[150, 290], [270, 290], [380, 280], [430, 230], [480, 170], [500, 120], [545, 100], [620, 100], [700, 130], [760, 220], [780, 250], [850, 250], [905, 230], [940, 160], [960, 100], [1100, 80], [1250, 80], [1420, 140], [1600, 80], [1715, 200], [1744, 290], [1860, 220], [2100, 290], [2345, 240], [2475, 210], [2650, 290], [2750, 290]],
+        door:{x:2840, y:280},
       },
       {
         name:'Les Planches',
-        width:2800,
+        width:3000,
         start:{x:40, y:280},
         platforms:[
           {x:0, y:320, w:300, h:40, solid:true},
-          {x:340, y:250, w:80, fall:true},
-          {x:470, y:220, w:80, fall:true},
-          {x:600, y:250, w:80, fall:true},
-          {x:730, y:220, w:80, fall:true},
-          {x:860, y:320, w:240, h:40, solid:true},
-          {x:1100, y:320, w:520, h:40, solid:true},
-          {x:1120, y:200, w:90, fall:true},
-          {x:1240, y:200, w:90, fall:true},
-          {x:1360, y:200, w:90, fall:true},
-          {x:1480, y:200, w:90, fall:true},
-          {x:1620, y:320, w:240, h:40, solid:true},
-          {x:1860, y:0, w:640, h:40, solid:true},
-          {x:2500, y:320, w:300, h:40, solid:true},
+          {x:300, y:320, w:260, h:40, solid:true},
+          {x:330, y:0, w:230, h:190, solid:true},
+          {x:320, y:236, w:110, fall:true},
+          {x:445, y:236, w:110, fall:true},
+          {x:560, y:320, w:890, h:40, solid:true},
+          {x:820, y:200, w:150, h:76, solid:true},
+          {x:1070, y:0, w:150, h:276, solid:true},
+          {x:972, y:200, w:96, fall:true, again:true},
+          {x:700, y:240, w:80, h:20},
+          {x:1450, y:200, w:120, h:160, solid:true},
+          {x:1340, y:240, w:80, h:20},
+          {x:1640, y:200, w:140, fall:true, lift:true},
+          {x:1900, y:0, w:60, h:270, solid:true},
+          {x:1900, y:320, w:560, h:40, solid:true},
+          {x:1960, y:0, w:840, h:40, solid:true},
+          {x:2150, y:304, w:100, fall:true, free:true},
+          {x:2255, y:304, w:100, fall:true, free:true},
+          {x:2360, y:304, w:100, fall:true, free:true},
+          {x:2780, y:320, w:220, h:40, solid:true},
         ],
-        flips:[{x:1820, y:226}, {x:2460, y:134}], spikes:[{x:1100, y:320, w:520}, {x:2100, y:40, w:60, down:true}],
+        flips:[{x:2010, y:290}, {x:2800, y:0, w:16, h:360, set:1}], spikes:[{x:300, y:320, w:260}, {x:2150, y:40, w:310, down:true}],
         enemies:[
-          {on:5, from:120, to:220, speed:1.2},
-          {on:11, from:20, to:200, speed:1.1},
-          {on:12, from:80, to:240, speed:1.2, ceil:true},
-          {on:12, from:340, to:520, speed:1.3, ceil:true},
-          {on:13, from:60, to:220, speed:1.2},
+          {on:0, from:60, to:250, speed:1},
+          {on:5, from:270, to:640, speed:1.1, spiky:true},
+          {on:15, from:520, to:800, speed:1.3, ceil:true},
+          {on:19, from:60, to:150, speed:1.2},
         ],
-        bats:[
-          {x:575, y:140, ax:90, ay:25, speed:0.04},
-          {x:1350, y:110, ax:150, ay:20, speed:0.035},
-          {x:2280, y:200, ax:120, ay:30, speed:0.04},
-        ],
+        bats:[{x:1250, y:110, ax:60, ay:25, speed:0.04}, {x:2620, y:150, ax:90, ay:30, speed:0.04}],
         signs:[
-          {x:150, y:320, text:'Les planches tombent : saute de l\'une à l\'autre !'},
-          {x:960, y:320, text:'Elles tombent sur les piques… et font un pont'},
-          {x:1700, y:320, text:'Plus de sol : passe par le plafond !'},
+          {x:150, y:320, text:'Les planches tombent… et restent : fais-toi un pont !'},
+          {x:640, y:320, text:'Le hérisson pique ! Fais-lui tomber la planche dessus'},
+          {x:1290, y:320, text:'La planche à parachute descend doucement : saute au bon moment'},
+          {x:1960, y:320, text:'L\'orbe retourne aussi les planches !'},
         ],
-        powerUps:[{x:1300, y:120, type:'gem'}],
-        checkpoints:[{x:900, y:320}, {x:1660, y:320}, {x:1960, y:40, ceil:true}],
-        coins:[[200, 290], [380, 220], [510, 190], [640, 220], [770, 190], [960, 290], [1060, 290], [1165, 170], [1285, 170], [1405, 170], [1525, 170], [1700, 290], [1820, 170], [1900, 80], [2000, 80], [2200, 80], [2350, 80], [2460, 200], [2600, 290], [2700, 290]],
-        door:{x:2740, y:280},
+        powerUps:[{x:1700, y:100, type:'gem'}, {x:1150, y:295, type:'life'}],
+        checkpoints:[{x:600, y:320}, {x:1240, y:320}, {x:1930, y:320}, {x:2830, y:320}],
+        coins:[[150, 290], [375, 200], [500, 200], [620, 290], [740, 210], [895, 170], [1020, 170], [1020, 230], [1300, 290], [1380, 210], [1510, 170], [1710, 170], [1710, 250], [1840, 300], [1960, 290], [2010, 220], [2080, 80], [2200, 90], [2305, 90], [2410, 90], [2560, 80], [2700, 80], [2850, 290], [2910, 290]],
+        door:{x:2940, y:280},
       },
       {
         name:'La Tempête Rose',
@@ -1006,16 +1000,19 @@ const CHAPTERS = [
           {x:620, y:170, w:110, h:20},
           {x:810, y:320, w:200, h:40, solid:true},
           {x:1010, y:0, w:920, h:40, solid:true},
-          {x:1010, y:320, w:920, h:40, solid:true},
-          {x:2000, y:240, w:90, move:{axis:'y', min:150, max:280, speed:1.2}},
-          {x:2180, y:200, w:90, move:{axis:'y', min:110, max:280, speed:1.4}},
-          {x:2360, y:320, w:540, h:40, solid:true},
+          {x:1010, y:320, w:980, h:40, solid:true},
+          {x:2000, y:0, w:310, h:40, solid:true},
+          {x:2070, y:40, w:18, h:58, solid:true, hang:true},
+          {x:2160, y:40, w:18, h:58, solid:true, hang:true},
+          {x:2350, y:320, w:550, h:40, solid:true},
         ],
         flips:[
           {x:1200, y:0, w:16, h:360, set:-1},
           {x:1440, y:0, w:16, h:360, set:1},
           {x:1680, y:0, w:16, h:360, set:-1},
           {x:1900, y:0, w:16, h:360, set:1},
+          {x:2050, y:222},
+          {x:2312, y:165},
         ],
         springs:[{x:300, y:320}],
         spikes:[
@@ -1023,27 +1020,30 @@ const CHAPTERS = [
           {x:1460, y:40, w:210, down:true},
           {x:1700, y:320, w:190},
           {x:2500, y:320, w:50},
+          {x:2000, y:40, w:70, down:true},
+          {x:2178, y:40, w:132, down:true},
         ],
         enemies:[
           {on:0, from:120, to:260, speed:1.1},
           {on:3, from:40, to:160, speed:1.2},
           {on:4, from:240, to:420, speed:1.2, ceil:true},
           {on:5, from:460, to:660, speed:1.3},
-          {on:8, from:240, to:480, speed:1.3},
+          {on:9, from:240, to:460, speed:1.3},
         ],
         bats:[
           {x:530, y:120, ax:60, ay:30, speed:0.04},
           {x:1560, y:180, ax:60, ay:40, speed:0.045},
-          {x:2140, y:120, ax:40, ay:40, speed:0.045},
+          {x:2450, y:200, ax:60, ay:30, speed:0.045},
         ],
         signs:[
           {x:150, y:320, text:'Le ressort t\'envoie dans les nuages'},
           {x:1080, y:320, text:'Les rideaux roses : en haut, en bas !'},
+          {x:1940, y:320, text:'Saute dans l\'orbe et vise entre les poteaux du plafond'},
           {x:2400, y:320, text:'Bravo, la pie n\'est plus loin !'},
         ],
-        powerUps:[{x:675, y:60, type:'gem'}, {x:2225, y:60, type:'life'}],
+        powerUps:[{x:675, y:60, type:'gem'}, {x:2114, y:48, type:'life'}],
         checkpoints:[{x:850, y:320}, {x:1050, y:320}, {x:2400, y:320}],
-        coins:[[150, 290], [300, 200], [485, 220], [675, 140], [760, 220], [900, 290], [1100, 290], [1200, 200], [1300, 80], [1400, 80], [1440, 200], [1540, 290], [1640, 290], [1680, 200], [1780, 80], [1860, 80], [1900, 200], [2045, 180], [2225, 150], [2450, 290], [2650, 290], [2800, 290]],
+        coins:[[150, 290], [300, 200], [485, 220], [675, 140], [760, 220], [900, 290], [1100, 290], [1200, 200], [1300, 80], [1400, 80], [1440, 200], [1540, 290], [1640, 290], [1680, 200], [1780, 80], [1860, 80], [2010, 180], [2124, 100], [2220, 140], [2290, 170], [2350, 260], [2450, 290], [2650, 290], [2800, 290]],
         door:{x:2840, y:280},
       },
     ],
@@ -1424,7 +1424,7 @@ const CHAPTERS = [
         signs:[{x:120, y:340, text:'Le foin est trop mou : fais-la plonger vers le plafond !'}, {x:470, y:34, text:'Bords et orbes retournent la gravité', ceil:true}],
         powerUps:[{x:310, y:306, type:'life'}],
         coins:[[150, 312], [490, 312], [320, 60]],
-        boss:{mode:'magpie', name:'La Pie Voleuse', fem:true, hp:3, hp2:3, x:440, y:150, w:48, h:40},
+        boss:{mode:'magpie', name:'La Pie Voleuse', fem:true, hp:3, hp2:3, hp3:5, x:440, y:150, w:48, h:40},
         door:null,
         ending2:true,
       },
@@ -2006,7 +2006,7 @@ function loadRoom(ci, ri){
   if(room.noDJ){ if(hasDJ) djTake = 100; hasDJ = false; }
 
   platforms = room.platforms.map((p, i) => ({
-    ...p, h: p.h || (p.fall ? 16 : 14), dx:0, dy:0, cT:0, gone:false, rT:0, appear:1, ox:p.x, oy:p.y, fT:0, fvy:0, loose:false,
+    ...p, h: p.h || (p.fall ? 16 : 14), dx:0, dy:0, cT:0, gone:false, rT:0, appear:1, ox:p.x, oy:p.y, fT:0, fvy:0, loose:!!p.free,
     seed: (ci * 1000 + ri * 100 + i) * 7919,
     move: p.move ? {...p.move, dir:1} : null,
   }));
@@ -2074,7 +2074,7 @@ function resetPlayer(){
     wallSide:0, wallT:0, wallLock:0, sliding:false, dashT:0, dashReady:true, dashCD:0, dashBuf:0, ghosts:[],
   });
   for(const o of flips){ o.armed = !overlap(player, o); }
-  for(const p of platforms) if(p.fall){ p.x = p.ox; p.y = p.oy; p.fT = 0; p.fvy = 0; p.loose = false; p.gone = false; p.appear = 0; p.px = p.x; p.py = p.y; }
+  for(const p of platforms) if(p.fall){ p.x = p.ox; p.y = p.oy; p.fT = 0; p.fvy = 0; p.loose = !!p.free; p.landT = 0; p.gone = false; p.appear = 0; p.px = p.x; p.py = p.y; }
   anim.gv = gdir;
   player.px = player.x; player.py = player.y;
   anim.pvx = 0; anim.pvy = 0; anim.spin = 0;
@@ -2312,6 +2312,7 @@ function bossDefeated(){
   burst(b.x + b.w/2, b.y + b.h/2, 30, '#ffd54a', 5, 50, 0.1, 3, 'star');
   ring(b.x + b.w/2, b.y + b.h/2, '#ffffff', 10, 90, 30);
   if(b.phase === 1 && room.boss.hp2){ enterPhase2(true); return; }
+  if(b.phase === 2 && room.boss.hp3){ enterPhase3(true); return; }
   score += 300;
   if(b.mode === 'arena'){
     b.fleeing = true;
@@ -2397,6 +2398,17 @@ function enterPhase2(announce){
   startCine('phase2');
 }
 
+// phase 3 (the magpie only, hp3): furious, she chains her dives straight at XELIAX
+function enterPhase3(announce){
+  const b = boss;
+  b.phase = 3;
+  b.hp = b.maxHp = room.boss.hp3;
+  b.inv = 90; b.hitT = 0; b.state = 'rise'; b.chain = 0; b.nestT = 0;
+  if(gdir < 0) setGravity(1);
+  if(announce){ score += 200; burst(b.x + b.w/2, b.y + b.h/2, 60, '#ff3d3d', 7, 60); }
+  startCine('phase3');
+}
+
 // final boss beaten at the bottom of the shaft: barrier drops, lava rises, key waits at the top
 function startEscape(announce){
   key = {x:room.keySpot.x - 17, y:room.keySpot.y - 8, w:34, h:16, got:false, kind:room.finale ? 'ficelle' : 'key'};
@@ -2439,13 +2451,15 @@ function restartPhase(){
   const ph = currentPhase();
   lives = startLives();
   loadRoom(chIndex, rIndex);          // the boss entrance plays again (it can be skipped by now)
+  if((ph === 2 || ph === 3) && boss.mode === "magpie"){ boss.x = boss.tx = room.boss.x; boss.y = 150; }   // back in the arena, not off-screen
   if(ph === 2){ cine = null; enterPhase2(false); }
+  if(ph === 3){ cine = null; enterPhase2(false); cine = null; enterPhase3(false); }
   if(ph === 'escape'){ cine = null; boss.alive = false; startEscape(false); }
   bannerT = 0;
   player.invuln = 60;
   anim.appear = 0;
   setState('play');
-  showToast(ph === 'escape' ? 'Reprends la fuite !' : ph === 2 ? 'On reprend la phase 2' : 'On reprend le combat', 100);
+  showToast(ph === 'escape' ? 'Reprends la fuite !' : ph === 3 ? 'On reprend la phase 3' : ph === 2 ? 'On reprend la phase 2' : 'On reprend le combat', 100);
 }
 
 // =====================================================================
@@ -2736,11 +2750,12 @@ function finishCine(){
       else if(b.mode === 'ascent'){ b.y = 880; b.fireT = 100; }
       else if(b.mode === 'gecko'){ b.y = 150; b.x = geckoWallX(b, -1); b.side = -1; b.state = 'crawl'; b.stT = 130; b.fireT = 50; }
       else if(b.mode === 'yeti'){ b.y = FLOOR - b.h; b.state = 'walk'; b.stT = 150; b.fireT = 70; }
-      else if(b.mode === 'magpie'){ b.x = b.tx; b.y = 150; b.state = 'hover'; b.stT = 140; b.fireT = 90; }
+      else if(b.mode === 'magpie'){ b.x = b.tx; b.y = 150; b.state = 'hover'; b.stT = 80; b.fireT = 60; }
     } else {
       b.inv = 30;
       if(b.mode === 'slime'){ b.squash = 0; b.hopT = 40; }
       if(b.mode === 'swoop'){ b.state = 'hover'; b.stT = 140; b.fireT = 50; }
+      if(b.mode === 'magpie'){ b.state = 'rise'; }
     }
   }
   for(const s of spikes) if(s.pending) s.pending = false;
@@ -3047,22 +3062,31 @@ function updateDecor(){
 }
 
 const PLANK_SHAKE = 26, PLANK_G = 0.42, PLANK_MAX = 9;
+// lift planks (lift:true) hang from a little parachute: they let go almost at once and drift down slowly, carrying XELIAX
+const LIFT_SHAKE = 10, LIFT_G = 0.1, LIFT_MAX = 2.2;
 function updatePlank(p){
   p.px = p.x; p.py = p.y;
+  // again:true planks drift back home a little after they have landed (so a missed throw can be tried again)
+  if(p.again && p.landT > 0 && ++p.landT > 80){
+    p.landT = 0; p.gone = true; p.rT = 40;
+    burst(p.x + p.w / 2, p.y + p.h / 2, 8, '#ffffff', 1.5, 22, -0.01, 3, 'puff');
+    if(player.standingOn === p){ player.standingOn = null; player.onGround = false; }
+    return;
+  }
   if(p.gone){
-    if(--p.rT <= 0){ p.gone = false; p.x = p.ox; p.y = p.oy; p.px = p.x; p.py = p.y; p.loose = false; p.fT = 0; p.fvy = 0; p.appear = 0; sparkle(p.x + p.w / 2, p.y + p.h / 2, 6, '#fff3c4'); }
+    if(--p.rT <= 0){ p.gone = false; p.x = p.ox; p.y = p.oy; p.px = p.x; p.py = p.y; p.loose = !!p.free; p.fT = 0; p.fvy = 0; p.landT = 0; p.appear = 0; sparkle(p.x + p.w / 2, p.y + p.h / 2, 6, '#fff3c4'); }
     return;
   }
   if(!p.loose){
     if(p.fT > 0){
       if(frame % 5 === 0) crumbs(p.x + Math.random() * p.w, gdir > 0 ? p.y + p.h : p.y, 1, '#9a6234');
-      if(++p.fT > PLANK_SHAKE){ p.loose = true; p.fvy = 0; tone(140, 0.12, 'sawtooth', 0.03, 90); }
+      if(++p.fT > (p.lift ? LIFT_SHAKE : PLANK_SHAKE)){ p.loose = true; p.fvy = 0; tone(p.lift ? 260 : 140, 0.12, p.lift ? 'triangle' : 'sawtooth', 0.03, p.lift ? 200 : 90); }
     }
     return;
   }
   // loose: it falls the way gravity pulls, and lands on whatever is in the way
-  const g = gdir, y0 = p.y;
-  p.fvy = clamp(p.fvy + PLANK_G * g, -PLANK_MAX, PLANK_MAX);
+  const g = gdir, y0 = p.y, top = p.lift ? LIFT_MAX : PLANK_MAX;
+  p.fvy = clamp(p.fvy + (p.lift ? LIFT_G : PLANK_G) * g, -top, top);
   let ny = p.y + p.fvy, hit = null;
   const across = q => p.x + p.w > q.x + 2 && p.x < q.x + q.w - 2;
   if(p.fvy > 0){
@@ -3079,6 +3103,7 @@ function updatePlank(p){
       SFX.thud(); addShake(Math.min(4, Math.abs(p.fvy) * 0.4));
       for(let i = 0; i < 6; i++) particles.push({x:p.x + Math.random() * p.w, y:g > 0 ? ny + p.h : ny, vx:(Math.random() - 0.5) * 2.4, vy:-g * Math.random() * 1.6, life:22, max:22, color:'#e8d6b0', grav:0.05 * g, size:3, type:'dot'});
     }
+    if(p.again && !p.landT) p.landT = 1;
     p.fvy = 0;
   }
   p.y = ny; p.dy = p.y - y0;
@@ -3620,6 +3645,7 @@ function updatePlayer(){
   // pits (or the open sky, upside down)
   if(gdir > 0 && player.y > room.h + 30){ killPlayer(); return; }
   if(gdir < 0 && player.y + player.h < -40){ killPlayer(); return; }
+  if(gdir < 0 && player.y > room.h){ killPlayer(); return; }       // upside down, below the bottom of the screen: no sneaking under the floor
 
   // spikes and lava pools
   for(const s of spikes){
@@ -3686,6 +3712,8 @@ function updatePlayer(){
   for(const e of stompable){
     if(!overlap(player, e)) continue;
     const onTop = G > 0 ? (player.vy > 0 && prevBottom <= e.y + 8) : (player.vy < 0 && prevTop >= e.y + e.h - 8);
+    // a hedgehog (spiky:true) can't be stomped or dashed through: only a falling plank beats it
+    if(e.spiky){ hurt(e.x + e.w/2); if(state !== 'play') return; continue; }
     if(onTop || player.dashT > 0){
       e.alive = false;
       if(onTop){
@@ -3717,6 +3745,11 @@ function updatePlayer(){
     }
     for(const e of stompable){
       if(e.alive && !s.dead && overlap(s, e)){
+        if(e.spiky){
+          s.dead = true; burst(s.x, s.y, 6, '#ffffff', 2, 15, 0.05, 2.5, 'star'); SFX.ting();
+          if(toast.t <= 0) showToast('Ses piques arrêtent les tirs… une planche ?', 90);
+          continue;
+        }
         e.alive = false; s.dead = true; score += 25;
         killFx(e); SFX.stomp();
       }
@@ -3968,12 +4001,12 @@ function updateS2Boss(b){
     return;
   }
   if(b.mode === 'magpie'){
-    const top = 34, bottom = FLOOR - b.h;
+    const top = 34, bottom = FLOOR - b.h, p3 = b.phase === 3;
     // after each hit she shakes the nest: in phase 1 everyone falls back onto the hay, in phase 2 the world turns over
     if(b.nestT > 0){
       if(b.nestT === 50) popup(b.x + b.w / 2, b.y - 10, 'Le nid tremble !', '#ffe58a');
       if(--b.nestT === 0){
-        const want = p2 ? -gdir : 1;
+        const want = b.phase >= 2 ? -gdir : 1;
         addShake(9); SFX.thud();
         if(want !== gdir){ setGravity(want); showToast(p2 ? 'Elle retourne le nid !' : 'Elle secoue le nid : tout le monde retombe !', 110); }
       }
@@ -3990,25 +4023,38 @@ function updateS2Boss(b){
         bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a) * 2.6, vy:Math.sin(a) * 2.6, kind:'trinket', rot:0});
         SFX.bossShot();
       }
-      if(p2 && --b.fireT <= 0){
-        b.fireT = 70;
+      if(b.phase >= 2 && --b.fireT <= 0){
+        b.fireT = p3 ? 85 : 70;
         const cx = b.x + b.w / 2, cy = b.y + b.h / 2, a = Math.atan2(player.y + player.h / 2 - cy, player.x + player.w / 2 - cx);
-        for(const s of [-0.3, 0, 0.3]) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
+        for(const s of (p3 ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3])) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
         SFX.bossShot();
       }
       if(--b.stT <= 0){
-        b.state = 'aim'; b.stT = p2 ? 34 : 46; SFX.warn();
+        b.state = 'aim'; b.stT = p3 ? 30 : p2 ? 34 : 42; SFX.warn();
         b.tx = clamp(player.x + player.w / 2 - b.w / 2, 30, W - 30 - b.w);
+        // phase 3: two dives straight at XELIAX, wherever he is, then a last one at the other side, where she gets stuck
+        if(p3){ b.chain = 2; b.ty = clamp(player.y + player.h / 2 - b.h / 2, top, bottom); }
+        else
         // phase 1: she dives at the side you're standing on (only the ceiling holds her);
         // phase 2: she's wary and dives at the OTHER side, so you have to flip over (orbs, edges) and dash into her
-        b.ty = p2 ? (gdir > 0 ? top : bottom) : (gdir > 0 ? bottom : top);
+        b.ty = b.phase === 2 ? (gdir > 0 ? top : bottom) : (gdir > 0 ? bottom : top);
       }
     } else if(b.state === 'aim'){
       b.y += (b.ty > 150 ? -0.6 : 0.6);
-      if(--b.stT <= 0){ b.state = 'dive'; const d = Math.hypot(b.tx - b.x, b.ty - b.y) || 1; b.vx = (b.tx - b.x) / d * (p2 ? 10 : 8.5); b.vy = (b.ty - b.y) / d * (p2 ? 10 : 8.5); SFX.bossFlee(); }
+      if(--b.stT <= 0){ b.state = 'dive'; const d = Math.hypot(b.tx - b.x, b.ty - b.y) || 1; const sp = p3 ? 10.5 : p2 ? 10 : 8.5; b.vx = (b.tx - b.x) / d * sp; b.vy = (b.ty - b.y) / d * sp; SFX.bossFlee(); }
     } else if(b.state === 'dive'){
       b.x += b.vx; b.y += b.vy;
-      if((b.vy > 0 && b.y >= b.ty) || (b.vy < 0 && b.y <= b.ty)){
+      if((b.tx - b.x) * b.vx + (b.ty - b.y) * b.vy <= 0){
+        if(p3 && b.chain > 0){
+          // she brakes in mid-air, turns round and aims again
+          b.x = clamp(b.tx, 30, W - 30 - b.w); b.y = b.ty; b.chain--;
+          b.state = 'aim'; b.stT = 26; SFX.warn();
+          b.tx = clamp(player.x + player.w / 2 - b.w / 2, 30, W - 30 - b.w);
+          b.ty = b.chain > 0 ? clamp(player.y + player.h / 2 - b.h / 2, top, bottom) : (gdir > 0 ? top : bottom);
+          b.face = b.tx > b.x ? 1 : -1;
+          burst(b.x + b.w / 2, b.y + b.h / 2, 8, '#ffffff', 2, 20, 0, 3, 'puff');
+          return;
+        }
         b.x = clamp(b.x, 30, W - 30 - b.w); b.y = b.ty;
         if(!p2 && b.ty > 150){
           // phase 1: the hay is far too soft, she bounces straight back up
@@ -4019,12 +4065,12 @@ function updateS2Boss(b){
           if(!b.toldHay){ b.toldHay = true; showToast('Le foin est trop mou : fais-la plonger vers le plafond !', 160); }
           return;
         }
-        b.state = 'stuck'; b.ceil = b.ty < 150; b.stT = p2 ? 170 : 135;
-        if(p2 && !b.toldFlip){ b.toldFlip = true; showToast('Elle se cache de l\'autre côté : retourne-toi et dash !', 170); }
+        b.state = 'stuck'; b.ceil = b.ty < 150; b.stT = p3 ? 150 : p2 ? 170 : 135;
+        if(b.phase === 2 && !b.toldFlip){ b.toldFlip = true; showToast('Elle se cache de l\'autre côté : retourne-toi et dash !', 170); }
         addShake(10); SFX.thud();
         const sy = b.ceil ? top - 4 : FLOOR;
         burst(b.x + b.w / 2, sy, 12, '#e8d8ff', 3, 30, b.ceil ? -0.1 : 0.1, 3, 'puff');
-        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 8, p2 ? 'Coincée ! Dash !' : 'Coincée ! Saute-lui dessus !', '#ffe58a');
+        popup(b.x + b.w / 2, b.ceil ? b.y + b.h + 18 : b.y - 8, b.phase === 2 ? 'Coincée ! Dash !' : 'Coincée ! Saute-lui dessus !', '#ffe58a');
         if(p2 && !b.ceil){
           bullets.push({x:b.x - 12, y:FLOOR - 14, w:16, h:14, vx:-3.4, vy:0, kind:'wave'});
           bullets.push({x:b.x + b.w - 4, y:FLOOR - 14, w:16, h:14, vx:3.4, vy:0, kind:'wave'});
@@ -4038,7 +4084,7 @@ function updateS2Boss(b){
       if(--b.stT <= 0){ b.state = 'rise'; }
     } else if(b.state === 'rise'){
       b.y += (150 - b.y) * 0.08;
-      if(Math.abs(b.y - 150) < 4){ b.state = 'hover'; b.stT = p2 ? 110 : 160; b.fireT = 50; }
+      if(Math.abs(b.y - 150) < 4){ b.state = 'hover'; b.stT = p3 ? 60 : p2 ? 75 : 95; b.fireT = 45; }
     }
   }
 }
@@ -4059,7 +4105,7 @@ function spitAcid(b, n){
 
 // when can it be hit, and when is it harmless
 // the magpie can be stomped only in phase 1 (stuck in the ceiling); in phase 2 her trinket armour only gives way to a dash
-function bossWeak(b){ return (b.mode === 'gecko' && (b.state === 'stun' || b.state === 'stuck')) || (b.mode === 'magpie' && b.state === 'stuck' && b.phase === 1); }
+function bossWeak(b){ return (b.mode === 'gecko' && (b.state === 'stun' || b.state === 'stuck')) || (b.mode === 'magpie' && b.state === 'stuck' && b.phase !== 2); }
 function bossDashWeak(b){ return bossWeak(b) || (b.mode === 'yeti' && b.state === 'dizzy') || (b.mode === 'magpie' && b.state === 'stuck'); }
 function bossHarmless(b){ return bossDashWeak(b) || (S2_BOSS.has(b.mode) && b.inv > 0); }
 function bossHitReact(b){
@@ -4213,7 +4259,8 @@ function drawYeti(b){
 function drawMagpie(b){
   const x = ix(b) + (b.state === 'stuck' ? (b.shakeX || 0) : 0), y = iy(b), cx = x + b.w / 2, cy = y + b.h / 2;
   const p2 = b.phase === 2, hit = b.hitT > 0 || (b.inv > 0 && Math.floor(b.inv / 4) % 2 === 0);
-  const black = hit ? '#ffffff' : '#1a1430', blue = hit ? '#ffffff' : p2 ? '#b8306a' : '#2f5ad8';
+  const p3 = b.phase === 3, black = hit ? '#ffffff' : '#1a1430', blue = hit ? '#ffffff' : p3 ? '#e0242a' : p2 ? '#b8306a' : '#2f5ad8';
+  if(p3){ softGlow(cx, cy, 44, 34, '255,60,60', 0.25 + 0.1 * Math.sin(frame * 0.2)); if(frame % 5 === 0) particles.push({x:cx + (Math.random() - 0.5) * 36, y:cy + (Math.random() - 0.5) * 24, vx:(Math.random() - 0.5) * 1.2, vy:-0.8, life:26, max:26, color:Math.random() < 0.5 ? '#ff3d3d' : '#ffb03d', grav:-0.02, size:2.6, type:'dot'}); }
   const stuck = b.state === 'stuck', dive = b.state === 'dive', aim = b.state === 'aim';
   if(aim){
     // a dotted line to where she's about to dive
@@ -5446,6 +5493,27 @@ function drawCrumble(p, x, y, w, h){
 }
 
 function drawPlank(p, x, y, w, h){
+  // lift plank: a striped parachute on the side it drifts away from (above it, or below it upside down)
+  if(p.lift){
+    const up = -gdir, cx = x + w / 2, sway = Math.sin(frame * 0.06 + p.ox * 0.01) * (p.loose ? 3 : 1);
+    const ky = (up < 0 ? y : y + h) + up * 50, r = Math.min(34, w * 0.42);
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(const ex of [x + 5, x + w - 5]){ ctx.moveTo(ex, up < 0 ? y : y + h); ctx.lineTo(cx + sway + (ex < cx ? -r : r), ky); }
+    ctx.stroke();
+    ctx.save(); ctx.translate(cx + sway, ky);
+    ctx.beginPath();
+    if(up < 0) ctx.arc(0, 0, r, Math.PI, TAU); else ctx.arc(0, 0, r, 0, Math.PI);
+    ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = rgba(POWER_COLORS.gravity, 0.9);
+    for(let k = -2; k <= 2; k += 2) ctx.fillRect(k * r / 5 - r / 10, -r, r / 5, 2 * r);
+    ctx.restore();
+    ctx.strokeStyle = '#6b3d7a'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    if(up < 0) ctx.arc(cx + sway, ky, r, Math.PI, TAU); else ctx.arc(cx + sway, ky, r, 0, Math.PI);
+    ctx.closePath(); ctx.stroke();
+  }
   const g = ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, '#c98a52'); g.addColorStop(1, '#8a5530');
   rr(x, y, w, h, 4); ctx.fillStyle = g; ctx.fill();
@@ -6048,7 +6116,17 @@ function drawEnemyBody(e){
   ctx.beginPath(); ctx.ellipse(cx + 6 - step * 2, base - 1.6, 3.6, 2.1, 0, 0, TAU); ctx.fill();
   const rx = 12 * (1 + step * 0.04), ry = 9.2 * (1 - step * 0.04), cy = base - 11.5 - bounce;
   ctx.fillStyle = dark;
-  for(let i = -1; i <= 1; i++){ ctx.beginPath(); ctx.moveTo(cx + i * 6 - 3, cy - ry + 2); ctx.lineTo(cx + i * 6 + e.dir * 1.5, cy - ry - 4.5); ctx.lineTo(cx + i * 6 + 3, cy - ry + 2); ctx.closePath(); ctx.fill(); }
+  if(e.spiky){
+    // hedgehog: a fan of long white spines all over its back
+    ctx.strokeStyle = dark; ctx.lineWidth = 1;
+    for(let i = -3; i <= 3; i++){
+      const a = -Math.PI / 2 + i * 0.36, bx = cx + Math.cos(a) * rx * 0.8, by = cy + Math.sin(a) * ry * 0.8;
+      ctx.beginPath(); ctx.moveTo(bx - Math.sin(a) * 3, by + Math.cos(a) * 3);
+      ctx.lineTo(cx + Math.cos(a) * (rx + 8), cy + Math.sin(a) * (ry + 8));
+      ctx.lineTo(bx + Math.sin(a) * 3, by - Math.cos(a) * 3); ctx.closePath();
+      ctx.fillStyle = '#f4f0ff'; ctx.fill(); ctx.stroke();
+    }
+  } else for(let i = -1; i <= 1; i++){ ctx.beginPath(); ctx.moveTo(cx + i * 6 - 3, cy - ry + 2); ctx.lineTo(cx + i * 6 + e.dir * 1.5, cy - ry - 4.5); ctx.lineTo(cx + i * 6 + 3, cy - ry + 2); ctx.closePath(); ctx.fill(); }
   const g = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
   g.addColorStop(0, shade(col, 0.25)); g.addColorStop(1, col);
   ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); ctx.fillStyle = g; ctx.fill();
@@ -6938,9 +7016,10 @@ function drawCine(){
       heading(boss.name, W / 2, cy + 14 + (1 - rise) * 8, 34, '#ffffff');
       txt(BOSS_EPITHET[boss.mode] || '', W / 2, cy + 32, 13, '#e9e2ff', 500);
     } else {
-      txt('Phase 2', W / 2, cy - 18, 12.5, '#ff8aa0', 600);
-      heading(`${boss.name} est ${boss.fem ? 'furieuse' : 'furieux'} !`, W / 2, cy + 12 + (1 - rise) * 8, 28, '#ffffff');
-      if(boss.mode === 'magpie') txt('Armure de babioles : seul un dash peut la toucher !', W / 2, cy + 31, 13, '#ffd27a', 500);
+      txt(c.kind === 'phase3' ? 'Phase 3 — dernière phase' : 'Phase 2', W / 2, cy - 18, 12.5, '#ff8aa0', 600);
+      heading(c.kind === 'phase3' ? `${boss.name} est hors d’elle !` : `${boss.name} est ${boss.fem ? 'furieuse' : 'furieux'} !`, W / 2, cy + 12 + (1 - rise) * 8, 28, '#ffffff');
+      if(c.kind === 'phase3') txt('Elle enchaîne les plongeons : saute-lui dessus ou dash quand elle est coincée !', W / 2, cy + 31, 12, '#ffd27a', 500);
+      else if(boss.mode === 'magpie') txt('Armure de babioles : seul un dash peut la toucher !', W / 2, cy + 31, 13, '#ffd27a', 500);
       else if(room.phase2Spikes) txt('Attention : des pics vont sortir du sol', W / 2, cy + 31, 13, '#ffd27a', 500);
     }
     ctx.restore();
@@ -8611,7 +8690,7 @@ function drawHUD(){
   if(boss && boss.alive && !boss.fleeing){
     const bw = 236, bx = W / 2 - bw / 2, by = top + hh + 8;
     pill(bx - 10, by - 3, bw + 20, 32);
-    const phaseTag = boss.phase === 2 || boss.mode === 'ascent' ? 'Phase 2' : 'Phase 1';
+    const phaseTag = boss.mode === 'ascent' ? 'Phase 2' : 'Phase ' + (boss.phase || 1);
     txt(boss.name, bx + 2, by + 10, 11.5, '#ffd6e0', 700, 'left');
     txt(phaseTag, bx + bw - 2, by + 10, 10.5, 'rgba(255,214,224,0.75)', 600, 'right');
     rr(bx, by + 15, bw, 8, 4); ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();

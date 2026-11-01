@@ -1,5 +1,5 @@
 
-/* Layout: a one-screen arcade stage. The 16:9 canvas sits centred, with a key legend under it on desktop and a touch pad on phones. */
+/* Layout: the 16:9 canvas fills the window; on phones the touch pad is laid over the bottom of the screen. */
 :root{
   --bg:#ebe5ff;
   --bg-glow:#d6caff;
@@ -37,35 +37,31 @@
   --pad-soft:#2a2158; --pad-soft-ink:#dcd5ff; --pad-soft-deep:#150e34;
   color-scheme:dark;
 }
-html,body{height:100%}
+html,body{height:100%; margin:0}
+/* Plein écran : le jeu (16:9) remplit la fenêtre, sans cadre ; des bandes sombres comblent le reste si la fenêtre n'est pas en 16:9. */
 body{
   box-sizing:border-box;
-  background-color:var(--bg);
-  background-image:radial-gradient(120% 90% at 50% 0%, var(--bg-glow), var(--bg) 62%);
+  background:#07041a;
   color:var(--ink);
   font-family:var(--font-ui);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-  padding-block:12px;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));
-  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex; align-items:center; justify-content:center;
+  padding:0;
   overflow:hidden;
   -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
 }
 #game{
   display:block;
-  width:min(100%, 1120px, calc((100vh - 140px) * 16 / 9));
-  width:min(100%, 1120px, calc((100dvh - 140px) * 16 / 9));
-  max-width:100%;
+  width:min(100vw, 100vh * 16 / 9);
+  width:min(100vw, 100dvh * 16 / 9);
   aspect-ratio:16/9;
   height:auto;
-  border-radius:18px;
   touch-action:none;
   background:var(--hero-deep);
-  box-shadow:0 0 0 3px var(--hero), 0 22px 50px -14px var(--shadow);
   outline:none;
 }
-#game:focus-visible{ box-shadow:0 0 0 3px var(--hero), 0 0 0 7px var(--bg-glow), 0 22px 50px -14px var(--shadow); }
+/* les touches sont dans Paramètres > Commandes */
 .legend{
+  display:none !important;
   margin:0; display:flex; flex-wrap:wrap; justify-content:center; gap:6px 18px;
   font-size:15px; font-weight:500; color:var(--ink-soft);
 }
@@ -76,7 +72,7 @@ kbd{
   border:1px solid var(--key-edge); border-bottom-width:3px; border-radius:7px;
   padding:0 7px; min-width:12px; text-align:center;
 }
-#pad{ display:none; width:min(100%, 960px); align-items:center; justify-content:space-between; gap:10px; }
+#pad{ display:none; position:fixed; left:0; right:0; bottom:0; z-index:4; width:100%; opacity:.6; pointer-events:none; align-items:center; justify-content:space-between; gap:10px; }
 #pad .cluster{ display:flex; gap:14px; align-items:center; }
 #pad button{
   font-family:var(--font-display); font-size:22px; line-height:1;
@@ -98,12 +94,11 @@ kbd{
 #pad button:focus-visible{ outline:3px solid var(--bg-glow); outline-offset:3px; }
 @media (hover:none), (pointer:coarse){
   #pad{ display:flex; }
-  .legend{ display:none; }
-  #game{ width:min(100%, 1120px, calc((100dvh - 150px) * 16 / 9)); }
+  #pad button{ pointer-events:auto; }
 }
 /* Chapter select: a 3D stack of cards (like the recent-apps switcher of a phone), laid over the canvas.
    Everything inside .stage is in game units (640 x 360) and scaled to the canvas size. */
-#chapters{position:fixed; left:0; top:0; width:0; height:0; overflow:hidden; border-radius:18px; z-index:2;
+#chapters{position:fixed; left:0; top:0; width:0; height:0; overflow:hidden; z-index:2;
   opacity:0; pointer-events:none; transition:opacity .28s ease; touch-action:none; -webkit-user-select:none; user-select:none;}
 #chapters.on{opacity:1; pointer-events:auto;}
 #chapters .stage{position:absolute; left:0; top:0; width:640px; height:360px; transform-origin:0 0; font-family:var(--font-ui); color:#fff;}
@@ -151,7 +146,7 @@ kbd{
 #chapters .play.locked::after{display:none;}
 #chapters .hint{position:absolute; left:0; right:0; bottom:7px; text-align:center; font-size:10.5px; color:#c9c1f0; pointer-events:none;}
 /* admin login: a small password box over the game */
-#admin{position:fixed; z-index:3; display:none; align-items:center; justify-content:center; background:rgba(10,6,28,.72); border-radius:18px; font-family:var(--font-ui);}
+#admin{position:fixed; z-index:3; display:none; align-items:center; justify-content:center; background:rgba(10,6,28,.72); font-family:var(--font-ui);}
 #admin.on{display:flex;}
 #admin .box{width:min(86%, 330px); padding:18px 20px; border-radius:16px; background:#1a1140; color:#fff; box-shadow:0 20px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.14);}
 #admin h3{margin:0 0 4px; font:400 22px var(--font-display);}

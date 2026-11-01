@@ -331,9 +331,10 @@ function drawCine(){
       heading(boss.name, W / 2, cy + 14 + (1 - rise) * 8, 34, '#ffffff');
       txt(BOSS_EPITHET[boss.mode] || '', W / 2, cy + 32, 13, '#e9e2ff', 500);
     } else {
-      txt('Phase 2', W / 2, cy - 18, 12.5, '#ff8aa0', 600);
-      heading(`${boss.name} est ${boss.fem ? 'furieuse' : 'furieux'} !`, W / 2, cy + 12 + (1 - rise) * 8, 28, '#ffffff');
-      if(boss.mode === 'magpie') txt('Armure de babioles : seul un dash peut la toucher !', W / 2, cy + 31, 13, '#ffd27a', 500);
+      txt(c.kind === 'phase3' ? 'Phase 3 — dernière phase' : 'Phase 2', W / 2, cy - 18, 12.5, '#ff8aa0', 600);
+      heading(c.kind === 'phase3' ? `${boss.name} est hors d’elle !` : `${boss.name} est ${boss.fem ? 'furieuse' : 'furieux'} !`, W / 2, cy + 12 + (1 - rise) * 8, 28, '#ffffff');
+      if(c.kind === 'phase3') txt('Elle enchaîne les plongeons : saute-lui dessus ou dash quand elle est coincée !', W / 2, cy + 31, 12, '#ffd27a', 500);
+      else if(boss.mode === 'magpie') txt('Armure de babioles : seul un dash peut la toucher !', W / 2, cy + 31, 13, '#ffd27a', 500);
       else if(room.phase2Spikes) txt('Attention : des pics vont sortir du sol', W / 2, cy + 31, 13, '#ffd27a', 500);
     }
     ctx.restore();
