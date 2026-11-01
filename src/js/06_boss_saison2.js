@@ -14,7 +14,7 @@ function setupS2Boss(b){
 const YETI_SHIELD = 3;
 // the magpie: dash into her when she is stuck to slam her against the side, then 10 shots take one life
 // (the count is kept if she comes round before the end)
-const MAGPIE_SHOTS = 10, MAGPIE_DAZE = 270;
+const MAGPIE_SHOTS = 10, MAGPIE_DAZE = 190;   // dazed about 3 s (30 % shorter than before)
 const GECKO_RUN_EVERY = 900, GECKO_ACID = 300, GECKO_STUCK_Y = 40;   // 15 s between runs, acid stays 5 s, stuck near the top of the wall
 function updateS2Boss(b){
   const p2 = b.phase === 2;
