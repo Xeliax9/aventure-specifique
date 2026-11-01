@@ -3,12 +3,12 @@
 //  Feed him, tickle him, poke his eyes: he reacts to everything.
 // =====================================================================
 const FOODS = [
-  {id:'ficelle',   name:'Ficelle',   fill:1,   crumb:'#d9a05a'},
+  {id:'ficelle',   name:'Ficelle',   fill:1,   crumb:'#d9a05a', price:350},
   {id:'pain',      name:'Baguette',  fill:1,   crumb:'#e2b06a'},
-  {id:'croissant', name:'Croissant', fill:1,   crumb:'#f0c070'},
-  {id:'olive',     name:'Olive',     fill:0.5, crumb:'#6f8f2a'},
-  {id:'piment',    name:'Piment',    fill:0.5, crumb:'#e5352f'},
-  {id:'brocoli',   name:'Brocoli',   fill:0,   crumb:'#4f9a3a'},
+  {id:'croissant', name:'Croissant', fill:1,   crumb:'#f0c070', price:150},
+  {id:'olive',     name:'Olive',     fill:0.5, crumb:'#6f8f2a', price:80},
+  {id:'piment',    name:'Piment',    fill:0.5, crumb:'#e5352f', price:200},
+  {id:'brocoli',   name:'Brocoli',   fill:0,   crumb:'#4f9a3a', price:50},
   {id:'eau',       name:'Eau',       fill:0,   crumb:'#7fd0ff'},
   {id:'tel',       name:'Téléphone', fill:0,   crumb:'#e5352f', phone:true},
 ];
@@ -247,10 +247,18 @@ function petWake(text){
   tone(300, 0.12, 'triangle', 0.05, 900);
 }
 
+// food has to be bought with the coins from the levels (the baguette, the water and the phone are free)
+const foodOpen = f => SET.creator || !f.price || !!(save.food || {})[f.id];
+function buyFood(f){
+  if(save.bank < f.price){ petSay('Il faut ' + f.price + ' pièces pour ça… tu en as ' + save.bank + '.', 120); SFX.hurt(); return; }
+  save.bank -= f.price; save.food = save.food || {}; save.food[f.id] = true; persist();
+  petSay(f.name + ' achetée ! Miam, j\'ai hâte !', 120); SFX.key();
+}
 function petGive(i){
   if(pet.leaving) return;
   pet.sel = i;
   const f = FOODS[i];
+  if(!foodOpen(f)){ buyFood(f); return; }
   if(petInteract()) return;
   if(f.phone){ petPhone(); return; }
   if(pet.phone && pet.phone.stage === 'incoming'){ petSay(line('callFirst'), 60); return; }
@@ -1191,6 +1199,9 @@ function drawPet(){
   rr(bxx, 12, bw, 28, 14); ctx.fillStyle = 'rgba(90,42,16,0.85)'; ctx.fill();
   keycap(backKey, bxx + 8, 31);
   txt('Retour', bxx + 8 + bkw + 9, 30.5, 12.5, '#ffffff', 600, 'left');
+  // your coins (to buy food)
+  rr(W - 118, 12, 104, 28, 14); ctx.fillStyle = 'rgba(90,42,16,0.85)'; ctx.fill();
+  txt('🪙 ' + save.bank, W - 66, 30.5, 13, '#ffe58a', 700);
   // the food tray
   for(let i = 0; i < FOODS.length; i++){
     const x = trayX(i), sel = i === pet.sel && !TOUCH;
@@ -1198,10 +1209,20 @@ function drawPet(){
     rr(x, TRAY.y + lift, TRAY.w, TRAY.h, 12);
     ctx.fillStyle = sel ? '#fff7e6' : 'rgba(255,244,224,0.88)'; ctx.fill();
     ctx.strokeStyle = sel ? '#5a2a10' : 'rgba(90,42,16,0.45)'; ctx.lineWidth = sel ? 2 : 1.2; ctx.stroke();
+    const locked = !foodOpen(FOODS[i]);
+    if(locked) ctx.globalAlpha = 0.35;
     drawFood(FOODS[i].id, x + TRAY.w / 2, TRAY.y + 22 + lift, 1, 0);
-    ctx.font = `600 10.5px ${FU}`;
-    const nw = ctx.measureText(FOODS[i].name).width, fs = nw > TRAY.w - 8 ? 10.5 * (TRAY.w - 8) / nw : 10.5;
-    txt(FOODS[i].name, x + TRAY.w / 2, TRAY.y + 48 + lift, fs, '#5a2a10', 600);
+    ctx.globalAlpha = 1;
+    if(locked){
+      // a little padlock and the price
+      ctx.fillStyle = '#5a2a10'; rr(x + TRAY.w / 2 - 7, TRAY.y + 20 + lift, 14, 11, 2); ctx.fill();
+      ctx.strokeStyle = '#5a2a10'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x + TRAY.w / 2, TRAY.y + 20 + lift, 4.5, Math.PI, 0); ctx.stroke();
+      txt(FOODS[i].price + ' 🪙', x + TRAY.w / 2, TRAY.y + 48 + lift, 10.5, '#b07a00', 700);
+    } else {
+      ctx.font = `600 10.5px ${FU}`;
+      const nw = ctx.measureText(FOODS[i].name).width, fs = nw > TRAY.w - 8 ? 10.5 * (TRAY.w - 8) / nw : 10.5;
+      txt(FOODS[i].name, x + TRAY.w / 2, TRAY.y + 48 + lift, fs, '#5a2a10', 600);
+    }
     if(FOODS[i].phone && pet.phone && pet.phone.stage === 'incoming' && pet.phone.t % 45 < 26){
       const cx = x + TRAY.w / 2, cy = TRAY.y + 22 + lift;
       ctx.strokeStyle = '#e5352f'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';

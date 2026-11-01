@@ -1,0 +1,68 @@
+VERSION 42 — Plus de raccourcis (Gorges et Glacier)
+
+2-2 Le Canyon
+- Les poteaux montent maintenant jusqu'en dehors de l'écran (avec un plafond tout en haut) :
+  on ne peut plus passer par-dessus, il faut passer dessous.
+- Nouvelle fin : trois poteaux au-dessus d'un sol plein de piques. On descend sous le
+  premier, on remonte par-dessus le deuxième (il part du sol), on redescend sous le
+  troisième, puis on remonte jusqu'à la porte. Tout en sauts de mur.
+
+2-3 La Faille
+- Les piques des poteaux étaient du mauvais côté. Elles sont maintenant côté milieu :
+  on grimpe dans le couloir étroit entre le poteau et le mur à piques, en sautant
+  contre le même poteau. Les pièces ont été déplacées dans ces couloirs.
+
+3-2 Les Stalactites
+- À la fin, on pouvait grimper contre le côté gauche du grand mur (près du pilier) et
+  éviter le grand puits « saut de mur, puis dash », la tourelle et la chauve-souris.
+- Ce côté du mur est maintenant glissant (on ne peut plus s'y accrocher) : il faut passer
+  par le grand puits de droite. L'autre côté du mur se grimpe toujours.
+
+3-3 La Crevasse
+- En haut de la crevasse, on pouvait passer à gauche des piques du plafond et monter
+  directement, sans faire le dash au ras du sol, sans casser la vitre et sans rebondir
+  de bloc en bloc.
+- Un gros bloc de roche ferme maintenant tout le côté gauche : il faut faire le parcours
+  prévu.
+
+Le Gecko Géant (2-4), phase 2
+- Il descend au sol toutes les 15 secondes pile. Avant, il prévient : il tremble,
+  ses yeux deviennent rouges et il siffle.
+- L'acide qu'il laisse reste 5 secondes sur tout le sol, puis disparaît d'un coup.
+- Pour le sonner, il faut lui tirer dessus 5 fois quand il est sur un mur (un super tir
+  compte pour 3). Des petits points au-dessus de lui montrent où tu en es.
+- Sonné, il glisse tout en haut du mur : grimpe le mur en sauts de mur et saute-lui dessus.
+- Animations refaites : il respire, cligne des yeux, sort la langue, sa queue fouette
+  quand il court, il transpire quand il est sonné.
+- Quand tu le bats, il laisse tomber le dash : prends-le pour ouvrir la porte.
+  (Le dash n'est plus posé au début de 3-1.)
+
+La Pie Voleuse (4-3)
+- Elle lance beaucoup plus d'objets (3 à la fois, parfois 5).
+- Lui sauter dessus ne fait plus rien.
+- Quand elle est coincée (plafond ou sol), fonce-lui dedans avec le dash : elle est
+  poussée jusqu'au bord du nid et s'y écrase, sonnée.
+- Sonnée, il faut lui tirer dessus : 10 tirs = 1 point de vie (un super tir compte
+  pour 3). Si elle se réveille avant, les tirs déjà mis comptent encore la fois suivante.
+
+Gemmes
+- Une seule gemme par monde de la saison 2 (avant, il y en avait presque une par salle) :
+  monde 1 en 1-6, monde 2 en 2-1, monde 3 dans une salle secrète, monde 4 en 4-1.
+- 3-2 : une salle secrète en haut à droite, au-dessus du grand puits, fermée par un mur
+  de glace. Casse-le au dash depuis la plateforme de la porte : la gemme est dedans.
+
+Démos des boss
+- La première fois que tu rencontres un boss, une bulle explique en plusieurs étapes
+  comment le battre (le boss dans la bonne pose, XELIAX, et le geste à faire).
+  Saut ou clic pour passer à l'étape suivante.
+
+Mode admin
+- Nouvelle page « Tester une salle ou un boss » dans les Paramètres (admin connecté) :
+  choisis un chapitre et une salle et lance-la directement, ou choisis un boss pour le
+  combattre, avec ou sans sa démo.
+
+Boutique
+- Les couleurs coûtent plus cher : 150, 250, 400, 600 et 900 pièces.
+- Dans le coin de XELIAX, la nourriture est maintenant à acheter avec tes pièces :
+  olive 80, brocoli 50, croissant 150, piment 200, ficelle 350. La baguette, l'eau
+  et le téléphone restent gratuits. On n'achète chaque aliment qu'une fois.

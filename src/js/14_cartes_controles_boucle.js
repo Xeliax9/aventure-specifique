@@ -193,6 +193,7 @@ function render(alpha){
   if(state === 'win') drawWin();
   drawTalk();
   drawToast();
+  drawBossDemo();
   drawFlyers();
   drawIris();
 }
@@ -202,6 +203,7 @@ function render(alpha){
 // =====================================================================
 function confirmAction(){
   if(fadeDir !== 0) return true;
+  if(bossDemo && state === 'play'){ input.demoNext = true; return true; }
   if(state === 'title'){ menuKey('enter'); return true; }
   if(state === 'over'){
     // boss rooms: retry the current phase; anywhere else: back to the start of the chapter

@@ -26,7 +26,7 @@
     {x:420, y:1000, text:'Les branches fragiles cassent : grimpe vite !'},
     {x:420, y:520, text:'L\'orbe t\'envoie dans le feuillage'},
   ],
-  powerUps:[{x:470, y:966, type:'life'}, {x:720, y:300, type:'gem'}],
+  powerUps:[{x:470, y:966, type:'life'}],
   checkpoints:[{x:420, y:1400}, {x:400, y:1000}, {x:300, y:520}, {x:700, y:264, ceil:true}],
   coins:[[200, 1370], [420, 1370], [700, 1300], [700, 1180], [700, 1060], [560, 970], [240, 870], [100, 770], [100, 680], [100, 590], [210, 490], [400, 490], [520, 490], [600, 380], [650, 290], [450, 290], [360, 200], [300, 90], [180, 90], [100, 90]],
   door:{x:70, y:40, ceil:true},

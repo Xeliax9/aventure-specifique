@@ -8,6 +8,7 @@ const { chromium } = require('playwright');
     const ok = (c, msg) => o.push((c ? 'PASS ' : 'FAIL ') + msg);
     const clean = () => { fade=0; fadeDir=0; pendingAction=null; };
     input.left = input.right = false;
+    save.demoSeen = {slime:1, swoop:1, arena:1, ascent:1, gecko:1, yeti:1, magpie:1};
     // ---- random play in every room (no exceptions allowed)
     for(let ci=0;ci<CHAPTERS.length;ci++) for(let ri=0;ri<CHAPTERS[ci].rooms.length;ri++){
       newRun(ci); clean(); loadRoom(ci,ri); lives=999; setState('play');

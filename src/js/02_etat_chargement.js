@@ -261,6 +261,7 @@ function loadRoom(ci, ri){
   bannerT = ri === 0 ? 240 : 150;
   if(room.shootUp && !room.boss) showToast('Tes tirs partent vers le haut !', 170);
   if(boss) startCine('intro');   // every boss makes an entrance before the fight starts
+  if(boss && state === 'play') maybeBossDemo(false);   // the first time: how to beat it
   if(djScene){ bannerT = 0; startCine('dj'); }    // the magpie snatches the double jump and drops it into the gorge
 }
 

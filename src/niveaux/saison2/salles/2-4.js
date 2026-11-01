@@ -14,5 +14,6 @@
   coins:[[185, 206], [455, 206]],
   boss:{mode:'gecko', name:'Le Gecko Géant', hp:3, hp2:5, x:40, y:150, w:40, h:40},
   needsBoss:true,
+  bossReward:'dash',
   door:{x:520, y:300},
 }

@@ -249,15 +249,15 @@ function promptLine(items, y, color='#ffffff'){
 // =====================================================================
 const MAIN_CH = CHAPTERS.map((c, i) => i).filter(i => !CHAPTERS[i].bonus);
 const BONUS_CH = CHAPTERS.map((c, i) => i).filter(i => CHAPTERS[i].bonus);
-const PHONE_PAGES = new Set(['chapters', 'settings', 'son', 'jeu', 'look', 'controls', 'bonus']);
-const PAGE_PARENT = {chapters:'home', settings:'home', son:'settings', jeu:'settings', look:'settings', controls:'settings', bonus:'settings'};
-const PAGE_DIM = {home:0, settings:0.5, son:0.56, jeu:0.56, look:0.44, controls:0.58, credits:0.62, bonus:0.4};
-const PAGE_NAME = {home:'Accueil', chapters:'Chapitres', settings:'Paramètres', son:'Son', jeu:'Jeu', look:'Couleur de XELIAX', controls:'Commandes', credits:'Crédits', bonus:'Bonus secret'};
+const PHONE_PAGES = new Set(['chapters', 'settings', 'son', 'jeu', 'look', 'controls', 'bonus', 'test']);
+const PAGE_PARENT = {chapters:'home', settings:'home', son:'settings', jeu:'settings', look:'settings', controls:'settings', bonus:'settings', test:'settings'};
+const PAGE_DIM = {home:0, settings:0.5, son:0.56, jeu:0.56, look:0.44, controls:0.58, credits:0.62, bonus:0.4, test:0.56};
+const PAGE_NAME = {home:'Accueil', chapters:'Chapitres', settings:'Paramètres', son:'Son', jeu:'Jeu', look:'Couleur de XELIAX', controls:'Commandes', credits:'Crédits', bonus:'Bonus secret', test:'Tester (admin)'};
 const TAGLINE = ['Là où tout commence', 'Le Roi Gluant t\'attend sous terre', 'Grimpe jusqu\'au Gardien', 'La ficelle est tout en haut',
   'Le défi des étoiles', 'La gravité s\'inverse !', 'Glisse et saute sur les murs', 'Le dash, enfin !', 'Rattrape la pie voleuse', 'Le défi des pouvoirs'];
 const menu = {
   page:'home', from:null, t:1, dir:1,
-  sel:{home:0, settings:0, son:0, jeu:0, look:0, bonus:0},
+  sel:{home:0, settings:0, son:0, jeu:0, look:0, bonus:0, test:0},
   scroll:0, drag:null, down:null, hits:[], wheel:0, wheelT:-99, bgFlash:0, nudge:0, shakeT:0,
   introT:0, mx:470, my:200, pointerT:999, knobs:{}, fx:[],
   bubble:null, bubbleT:80, saidHi:false, fly:null, flyT:420,
@@ -275,6 +275,7 @@ const LIVES_NAME = {3:'3 (difficile)', 5:'5 (normal)', 7:'7 (facile)', 9:'9 (tr�
 const PAGE_FOOT = {
   settings:() => 'L\'aventure spécifique, un jeu de xeliax9',
   son:() => 'Le son démarre dès que tu appuies sur une touche.',
+  test:() => 'Gauche / droite pour choisir, Entrée pour lancer.',
   jeu:() => SET.creatorFound ? 'Le mode créateur ouvre tout, sans toucher à ta vraie progression.' : 'Les vies et le chrono comptent dès la prochaine partie.',
 };
 
@@ -379,6 +380,7 @@ function settingsRows(){
   rows.push({kind:'action', id:'admin', icon:'keys', tile:'#55507a', label:SET.creator ? 'Admin connecté : se déconnecter' : 'Connexion admin', act:() => {
     if(SET.creator){ setSetting('creator', false); showToast('Admin déconnecté', 90); SFX.menu(); } else openAdmin();
   }});
+  if(SET.creator) rows.push({kind:'link', id:'test', label:'Tester une salle ou un boss', icon:'game', tile:'#ffb020', to:'test'});
   if(bonusVisible()) rows.push({kind:'link', id:'bonus', label:'Bonus secret', icon:'secret', tile:'#c9930e', to:'bonus',
     value:`${BONUS_CH.filter(isUnlocked).length * 2} défis`, badge:!save.bonusFolderSeen});
   return rows;
@@ -403,7 +405,7 @@ function jeuRows(){
   rows.push({kind:'action', id:'reset', danger:true, label:menu.resetT > 0 ? 'Sûr ? Appuie encore pour tout effacer' : 'Effacer la progression', act:resetProgress});
   return rows;
 }
-function pageRows(p){ return p === 'settings' ? settingsRows() : p === 'son' ? sonRows() : p === 'jeu' ? jeuRows() : []; }
+function pageRows(p){ return p === 'settings' ? settingsRows() : p === 'son' ? sonRows() : p === 'jeu' ? jeuRows() : p === 'test' ? testRows() : []; }
 function rowActivate(r){
   if(!r) return;
   if(r.kind === 'link') goPage(r.to, 1);
@@ -607,7 +609,7 @@ function menuWheel(d){
   const s = Math.sign(menu.wheel); menu.wheel = 0; menu.wheelT = frame;
   if(menu.page === 'chapters') menuMove(s);
   else if(menu.page === 'bonus' || menu.page === 'look') menuKey(s > 0 ? 'arrowright' : 'arrowleft');
-  else if(menu.page === 'settings' || menu.page === 'son' || menu.page === 'jeu') menuKey(s > 0 ? 'arrowdown' : 'arrowup');
+  else if(menu.page === 'settings' || menu.page === 'son' || menu.page === 'jeu' || menu.page === 'test') menuKey(s > 0 ? 'arrowdown' : 'arrowup');
 }
 function hit(x, y, w, h, o){ menu.hits.push({x, y, w, h, ...o}); }
 function hitAt(x, y){

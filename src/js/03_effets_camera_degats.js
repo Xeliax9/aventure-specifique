@@ -80,7 +80,14 @@ function updateCamera(){
 }
 
 function doorLocked(){
-  return (room.needsKey && !hasKey) || (room.needsBoss && boss && boss.alive);
+  return (room.needsKey && !hasKey) || (room.needsBoss && boss && boss.alive) || bossRewardLeft();
+}
+// the power a boss drops when beaten (the gecko drops the dash): the door waits until XELIAX takes it
+function bossRewardLeft(){ return !!(room.bossReward && powerUps.some(p => p.id === 'boss-reward' && !p.got)); }
+function dropBossReward(b){
+  const cx = clamp(b.x + b.w / 2, 80, W - 80);
+  powerUps.push({x:cx - 10, y:FLOOR - 60, type:room.bossReward, id:'boss-reward', w:20, h:20, got:false});
+  ring(cx, FLOOR - 50, '#ffffff', 10, 70, 30); sparkle(cx, FLOOR - 50, 18, '#ffe066');
 }
 
 // =====================================================================
@@ -208,7 +215,8 @@ function finishBoss(b){
   if(b.mode === 'ascent') startEscape(true);
   else {
     SFX.key();
-    showToast(b.name + (b.fem ? ' est vaincue' : ' est vaincu') + ' ! Porte ouverte', 150);
+    if(room.bossReward){ dropBossReward(b); showToast(b.name + (b.fem ? ' est vaincue' : ' est vaincu') + ' ! ' + (b.fem ? 'Elle' : 'Il') + ' a laissé tomber un pouvoir : prends-le !', 190); }
+    else showToast(b.name + (b.fem ? ' est vaincue' : ' est vaincu') + ' ! Porte ouverte', 150);
     spikes = spikes.filter(s => !(room.phase2Spikes || []).some(z => z.x === s.x && z.y === s.y));
   }
 }
@@ -224,7 +232,7 @@ function enterPhase2(announce){
   if(b.mode === 'swoop'){ b.state = 'rise'; for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true}); }
   if(S2_BOSS.has(b.mode)){
     for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true});
-    if(b.mode === 'gecko'){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 120; b.leaps = 0; }
+    if(b.mode === 'gecko'){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 120; b.leaps = 0; b.runT = 480; b.shots = 0; }
     if(b.mode === 'yeti'){ b.state = 'walk'; b.stT = 140; b.y = FLOOR - b.h; }
     if(b.mode === 'magpie'){ b.state = 'rise'; }
   }
