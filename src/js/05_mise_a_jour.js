@@ -216,6 +216,44 @@ function updateDecor(){
   updateBats();
 }
 
+// the final boss's special attacks (season 1, last phase): 50 frames of charging (he glows and trembles), then the attack
+function updateAscentSpecial(b){
+  const s = b.special, t = ++s.t, cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  const angry = b.hp <= b.enrage;
+  b.y += (room.barrierY + 70 - b.y) * 0.05;
+  b.x += (W / 2 - b.w / 2 - b.x) * 0.04;
+  if(t < 50){
+    b.hitT = t % 10 < 5 ? 2 : 0;
+    if(t % 3 === 0) particles.push({x:cx + (Math.random() - 0.5) * 70, y:cy + (Math.random() - 0.5) * 70, vx:0, vy:0, tx:cx, ty:cy, life:20, max:20, color:'#ff5c9a', grav:0, size:3, type:'dot', drag:0.9});
+    if(t === 49){ ring(cx, cy, '#ff5c9a', 8, 80, 24); SFX.bossFlee(); }
+    return;
+  }
+  b.hitT = 0;
+  const fire = (x, y, a, v) => bullets.push({x:x - 5, y:y - 5, w:10, h:10, vx:Math.cos(a) * v, vy:Math.sin(a) * v, kind:'boss'});
+  if(s.kind === 'pluie'){
+    // fireballs fall from the top of the screen, a gap always left somewhere
+    if(t % (angry ? 9 : 12) === 0 && t < 230){
+      const x = 20 + Math.random() * (W - 40);
+      bullets.push({x:x - 5, y:camY - 20, w:10, h:10, vx:0, vy:2.6, kind:'boss'});
+    }
+    if(t % 30 === 0 && t < 230) SFX.bossShot();
+  } else if(s.kind === 'anneau'){
+    if(t === 50 || t === 100 || t === 150 || (angry && t === 200)){
+      const n = 14, off = (t / 50) % 2 ? Math.PI / n : 0;
+      for(let i = 0; i < n; i++) fire(cx, cy, off + i * TAU / n, 2.3);
+      SFX.bossShot(); ring(cx, cy, '#ff8a3c', 6, 60, 18);
+    }
+  } else if(s.kind === 'spirale'){
+    if(t % 6 === 0 && t < 230){
+      const a = t * 0.11;
+      fire(cx, cy, a, 2.4); fire(cx, cy, a + Math.PI, 2.4);
+      if(angry) fire(cx, cy, a + Math.PI / 2, 2.4);
+      if(t % 18 === 0) SFX.bossShot();
+    }
+  }
+  if(t >= 260){ b.special = null; b.fireT = 60; }
+}
+
 const PLANK_SHAKE = 26, PLANK_G = 0.42, PLANK_MAX = 9;
 // lift planks (lift:true) hang from a little parachute: they let go almost at once and drift down slowly, carrying XELIAX
 const LIFT_SHAKE = 10, LIFT_G = 0.1, LIFT_MAX = 2.2;
@@ -450,6 +488,19 @@ function updateBoss(){
 
   if(b.mode === 'arena' || b.mode === 'ascent'){
     const spd = angry ? (b.mode === 'arena' ? 1 : 1.45) : 1;
+    if(b.mode === 'ascent' && room.barrierY){
+      // every 10 seconds he stops in mid-air and unleashes a different attack: rain of fire, rings, spiral
+      if(b.special){ updateAscentSpecial(b); return; }
+      if(b.spT === undefined) b.spT = 600;
+      if(--b.spT <= 0){
+        const kinds = ['pluie', 'anneau', 'spirale'];
+        b.special = {kind:kinds[(b.spN = (b.spN || 0) + 1) % 3], t:0};
+        b.spT = angry ? 480 : 600;
+        SFX.warn(); addShake(5);
+        showToast({pluie:'Pluie de feu ! Regarde en haut', anneau:'Anneaux de feu ! Trouve le trou', spirale:'Spirale de feu ! Tourne avec elle'}[b.special.kind], 110);
+        return;
+      }
+    }
     if(b.mode === 'ascent'){
       b.x += b.vx * spd * 1.15;
       if(b.x < 20){ b.x = 20; b.vx = Math.abs(b.vx); }
@@ -810,6 +861,16 @@ function updatePlayer(){
              : s.down ? {x:s.x + 3, y:s.y, w:s.w - 6, h:8}
              : {x:s.x + 3, y:s.y - 8, w:s.w - 6, h:8};
     if(overlap(player, hb)){ killPlayer(); return; }
+  }
+
+  // the burning floor of the last fight: stay on the ledges
+  const hf = room.hotFloor;
+  if(hf && boss && boss.alive && !boss.dying && !cine && player.onGround && player.y + player.h >= hf.y - 1
+     && player.x + player.w / 2 > hf.x0 && player.x + player.w / 2 < hf.x1){
+    if(player.invuln <= 0){ hurt(player.x + player.w / 2 + player.facing); if(state !== 'play') return; }
+    player.vy = -11.5; player.noCut = true; player.usedDJ = false; player.onGround = false;
+    burst(player.x + player.w / 2, hf.y, 10, '#ff8a3c', 3, 25);
+    if(!fireTold){ fireTold = true; showToast('Le sol brûle ! Reste sur les plateformes', 130); }
   }
 
   // rising lava bounces you back up

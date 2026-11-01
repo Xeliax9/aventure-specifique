@@ -403,6 +403,7 @@ const CHAPTERS = [
         height:1100, sky:['#1a0505', '#4a120c'], deco:'ascent', tint:'#2a0a08', armed:true, shootUp:true, finale:true,
         lava:{start:1150, speed:0.42, min:160, delay:90},
         barrierY:770,
+        hotFloor:{y:1080, x0:96, x1:640},
         keySpot:{x:300, y:84},
         start:{x:40, y:1040},
         platforms:[
@@ -420,6 +421,8 @@ const CHAPTERS = [
           {x:150, y:250, w:90, move:{axis:'x', min:120, max:260, speed:1.4}},
           {x:20, y:175, w:90},
           {x:180, y:100, w:240},
+          {x:20, y:930, w:70},
+          {x:560, y:990, w:70},
         ],
         enemies:[
           {on:3, from:0, to:90, speed:1.3},

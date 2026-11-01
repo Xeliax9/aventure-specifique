@@ -674,6 +674,7 @@ const CHAPTERS = [
         height:1100, sky:['#1a0505', '#4a120c'], deco:'ascent', tint:'#2a0a08', armed:true, shootUp:true, finale:true,
         lava:{start:1150, speed:0.42, min:160, delay:90},
         barrierY:770,
+        hotFloor:{y:1080, x0:96, x1:640},
         keySpot:{x:300, y:84},
         start:{x:40, y:1040},
         platforms:[
@@ -691,6 +692,8 @@ const CHAPTERS = [
           {x:150, y:250, w:90, move:{axis:'x', min:120, max:260, speed:1.4}},
           {x:20, y:175, w:90},
           {x:180, y:100, w:240},
+          {x:20, y:930, w:70},
+          {x:560, y:990, w:70},
         ],
         enemies:[
           {on:3, from:0, to:90, speed:1.3},
@@ -1300,6 +1303,42 @@ const CHAPTERS = [
         checkpoints:[{x:450, y:940}, {x:700, y:940}],
         coins:[[100, 1470], [290, 1440], [290, 1320], [290, 1200], [290, 1080], [380, 920], [520, 910], [560, 900], [700, 800], [730, 720], [640, 640], [570, 580], [660, 500], [730, 440], [640, 360], [570, 300], [560, 220], [600, 130], [680, 130]],
         door:{x:740, y:120},
+      },
+      {
+        name:'La Tour de Glace',
+        width:640, height:1700,
+        start:{x:300, y:1620},
+        platforms:[
+          {x:0, y:1660, w:640, h:40},
+          {x:0, y:1300, w:40, h:360, solid:true},
+          {x:600, y:1190, w:40, h:470, solid:true, slick:true},
+          {x:0, y:740, w:40, h:560, solid:true, slick:true},
+          {x:600, y:850, w:40, h:340, solid:true},
+          {x:0, y:400, w:40, h:340, solid:true},
+          {x:0, y:-40, w:40, h:440, solid:true, slick:true},
+          {x:600, y:-40, w:40, h:890, solid:true, slick:true},
+          {x:40, y:-40, w:560, h:40, solid:true},
+          {x:40, y:1300, w:120},
+          {x:270, y:1240, w:90, crumble:true},
+          {x:470, y:1190, w:130},
+          {x:380, y:950, w:60, h:120, solid:true},
+          {x:470, y:850, w:130},
+          {x:250, y:790, w:90},
+          {x:40, y:730, w:110},
+          {x:40, y:400, w:100},
+          {x:290, y:340, w:90, crumble:true},
+          {x:470, y:270, w:130, h:24, solid:true},
+        ],
+        spikes:[
+          {x:600, y:1520, h:140, side:'left'},
+          {x:420, y:1660, w:180},
+          {x:440, y:950, h:120, side:'right'},
+        ],
+        turrets:[{x:40, y:1080, dir:'right', rate:110}], enemies:[{on:0, from:60, to:380, speed:1}], bats:[{x:330, y:540, ax:120, ay:40, speed:0.035}], signs:[{x:200, y:1660, text:'Saut de mur, puis dash vers le même mur : tu montes !'}, {x:520, y:1190, text:'Le canon tire tout droit : attends ton tour'}],
+        powerUps:[{x:520, y:780, type:'life'}],
+        checkpoints:[{x:90, y:1300}, {x:530, y:850}, {x:90, y:730}],
+        coins:[[120, 1630], [60, 1540], [60, 1440], [60, 1350], [315, 1210], [540, 1160], [580, 1080], [580, 980], [540, 820], [295, 760], [90, 700], [60, 620], [60, 520], [60, 440], [335, 310], [500, 240]],
+        door:{x:540, y:230},
       },
       {
         name:'Le Yéti des Glaces',
@@ -3061,6 +3100,44 @@ function updateDecor(){
   updateBats();
 }
 
+// the final boss's special attacks (season 1, last phase): 50 frames of charging (he glows and trembles), then the attack
+function updateAscentSpecial(b){
+  const s = b.special, t = ++s.t, cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  const angry = b.hp <= b.enrage;
+  b.y += (room.barrierY + 70 - b.y) * 0.05;
+  b.x += (W / 2 - b.w / 2 - b.x) * 0.04;
+  if(t < 50){
+    b.hitT = t % 10 < 5 ? 2 : 0;
+    if(t % 3 === 0) particles.push({x:cx + (Math.random() - 0.5) * 70, y:cy + (Math.random() - 0.5) * 70, vx:0, vy:0, tx:cx, ty:cy, life:20, max:20, color:'#ff5c9a', grav:0, size:3, type:'dot', drag:0.9});
+    if(t === 49){ ring(cx, cy, '#ff5c9a', 8, 80, 24); SFX.bossFlee(); }
+    return;
+  }
+  b.hitT = 0;
+  const fire = (x, y, a, v) => bullets.push({x:x - 5, y:y - 5, w:10, h:10, vx:Math.cos(a) * v, vy:Math.sin(a) * v, kind:'boss'});
+  if(s.kind === 'pluie'){
+    // fireballs fall from the top of the screen, a gap always left somewhere
+    if(t % (angry ? 9 : 12) === 0 && t < 230){
+      const x = 20 + Math.random() * (W - 40);
+      bullets.push({x:x - 5, y:camY - 20, w:10, h:10, vx:0, vy:2.6, kind:'boss'});
+    }
+    if(t % 30 === 0 && t < 230) SFX.bossShot();
+  } else if(s.kind === 'anneau'){
+    if(t === 50 || t === 100 || t === 150 || (angry && t === 200)){
+      const n = 14, off = (t / 50) % 2 ? Math.PI / n : 0;
+      for(let i = 0; i < n; i++) fire(cx, cy, off + i * TAU / n, 2.3);
+      SFX.bossShot(); ring(cx, cy, '#ff8a3c', 6, 60, 18);
+    }
+  } else if(s.kind === 'spirale'){
+    if(t % 6 === 0 && t < 230){
+      const a = t * 0.11;
+      fire(cx, cy, a, 2.4); fire(cx, cy, a + Math.PI, 2.4);
+      if(angry) fire(cx, cy, a + Math.PI / 2, 2.4);
+      if(t % 18 === 0) SFX.bossShot();
+    }
+  }
+  if(t >= 260){ b.special = null; b.fireT = 60; }
+}
+
 const PLANK_SHAKE = 26, PLANK_G = 0.42, PLANK_MAX = 9;
 // lift planks (lift:true) hang from a little parachute: they let go almost at once and drift down slowly, carrying XELIAX
 const LIFT_SHAKE = 10, LIFT_G = 0.1, LIFT_MAX = 2.2;
@@ -3295,6 +3372,19 @@ function updateBoss(){
 
   if(b.mode === 'arena' || b.mode === 'ascent'){
     const spd = angry ? (b.mode === 'arena' ? 1 : 1.45) : 1;
+    if(b.mode === 'ascent' && room.barrierY){
+      // every 10 seconds he stops in mid-air and unleashes a different attack: rain of fire, rings, spiral
+      if(b.special){ updateAscentSpecial(b); return; }
+      if(b.spT === undefined) b.spT = 600;
+      if(--b.spT <= 0){
+        const kinds = ['pluie', 'anneau', 'spirale'];
+        b.special = {kind:kinds[(b.spN = (b.spN || 0) + 1) % 3], t:0};
+        b.spT = angry ? 480 : 600;
+        SFX.warn(); addShake(5);
+        showToast({pluie:'Pluie de feu ! Regarde en haut', anneau:'Anneaux de feu ! Trouve le trou', spirale:'Spirale de feu ! Tourne avec elle'}[b.special.kind], 110);
+        return;
+      }
+    }
     if(b.mode === 'ascent'){
       b.x += b.vx * spd * 1.15;
       if(b.x < 20){ b.x = 20; b.vx = Math.abs(b.vx); }
@@ -3655,6 +3745,16 @@ function updatePlayer(){
              : s.down ? {x:s.x + 3, y:s.y, w:s.w - 6, h:8}
              : {x:s.x + 3, y:s.y - 8, w:s.w - 6, h:8};
     if(overlap(player, hb)){ killPlayer(); return; }
+  }
+
+  // the burning floor of the last fight: stay on the ledges
+  const hf = room.hotFloor;
+  if(hf && boss && boss.alive && !boss.dying && !cine && player.onGround && player.y + player.h >= hf.y - 1
+     && player.x + player.w / 2 > hf.x0 && player.x + player.w / 2 < hf.x1){
+    if(player.invuln <= 0){ hurt(player.x + player.w / 2 + player.facing); if(state !== 'play') return; }
+    player.vy = -11.5; player.noCut = true; player.usedDJ = false; player.onGround = false;
+    burst(player.x + player.w / 2, hf.y, 10, '#ff8a3c', 3, 25);
+    if(!fireTold){ fireTold = true; showToast('Le sol brûle ! Reste sur les plateformes', 130); }
   }
 
   // rising lava bounces you back up
@@ -6653,6 +6753,15 @@ function drawPopups(){
   }
 }
 
+function drawHotFloor(hf){
+  const y = hf.y, w = hf.x1 - hf.x0, pulse = 0.55 + 0.25 * Math.sin(frame * 0.12);
+  const g = ctx.createLinearGradient(0, y - 18, 0, y + 6);
+  g.addColorStop(0, 'rgba(255,90,40,0)'); g.addColorStop(1, `rgba(255,120,40,${pulse})`);
+  ctx.fillStyle = g; ctx.fillRect(hf.x0, y - 18, w, 24);
+  ctx.fillStyle = `rgba(255,200,90,${pulse})`; ctx.fillRect(hf.x0, y, w, 3);
+  if(fxTick && frame % 4 === 0) particles.push({x:hf.x0 + Math.random() * w, y:y - 2, vx:(Math.random() - 0.5) * 0.4, vy:-0.7 - Math.random(), life:28, max:28, color:Math.random() < 0.5 ? '#ffb347' : '#ff6a3c', grav:-0.01, size:2.4, type:'dot'});
+}
+
 function drawWorld(){
   for(const p of platforms) if(p.move) drawRail(p);
   for(const s of signs) drawSign(s);
@@ -6662,6 +6771,7 @@ function drawWorld(){
   for(const s of springs) drawSpring(s);
   for(const s of spikes) drawSpikes(s);
   for(const f of fires) drawFire(f);
+  if(room.hotFloor && boss && boss.alive) drawHotFloor(room.hotFloor);
   for(const n of npcs) drawNpc(n, n.x + 13, n.y, 1, !!(talk && talk.npc === n && talk.chars < talk.data.lines[talk.line].length), state === 'title' || player.x + player.w / 2 >= n.x + 13 ? 1 : -1);
   for(const c of coins) if(!c.got) drawCoin(c);
   for(const p of powerUps) if(!p.got) drawPowerUp(p);
