@@ -1,21 +1,51 @@
 # L'aventure spécifique
 
+Un jeu de plateforme en français, fait maison : aide **XELIAX** à retrouver la ficelle aux olives !
+Sauts, double saut, tir, boss… et bien d'autres surprises.
+
+## 🎮 Jouer à la démo
+**👉 https://xeliax9.github.io/aventure-specifique/**
+
+Directement dans le navigateur, sur ordinateur ou sur téléphone, sans rien installer.
+La démo contient les **chapitres 1 et 2** ; la suite arrive bientôt.
+Ta progression est gardée dans ton navigateur.
+
+| Action | Clavier | Téléphone |
+|---|---|---|
+| Bouger | A / D ou ◀ ▶ | ◀ ▶ |
+| Sauter, double saut | W, Espace ou ▲ | ▲ |
+| Tirer (garder : super tir) | J | ● |
+| Parler | E ou ▼ | ● |
+| Pause | P ou Échap | II |
+
+Les touches se changent dans **Paramètres → Commandes** (pratique en AZERTY).
+
+## 💬 Donner ton avis
+Un bug, une idée, un niveau trop dur ? [Ouvre une issue](https://github.com/Xeliax9/aventure-specifique/issues/new)
+(compte GitHub gratuit), ou clique sur « Donne ton avis » à la fin de la démo. Merci !
+
+Les nouveautés de chaque version sont dans les [Releases](https://github.com/Xeliax9/aventure-specifique/releases)
+(la version s'affiche en bas à gauche du menu).
+
+---
+
+## 🛠️ Pour les développeurs
+
 Le jeu est découpé en petits fichiers dans `src/`. Le script `outils/build.js` les rassemble en **un seul fichier**,
 `dist/aventure.html`, qu'on ouvre dans un navigateur pour jouer (aucune connexion nécessaire).
 
-## Jouer
-En ligne : https://xeliax9.github.io/aventure-specifique/ (publié automatiquement à chaque tag).
-
-En local : lance `node outils/build.js`, puis ouvre `dist/aventure.html` dans ton navigateur
-(le dossier `dist/` n'est pas versionné, il est généré par le build).
-
-## Modifier puis reconstruire
+### Construire
 ```
-node outils/build.js
+node outils/build.js           # le jeu complet -> dist/aventure.html
+node outils/build.js --demo    # la démo (celle du site)
 ```
-(Il faut [Node.js](https://nodejs.org). Le fichier `dist/aventure.html` est réécrit.)
+(Il faut [Node.js](https://nodejs.org). Le dossier `dist/` n'est pas versionné, il est généré par le build.)
 
-## Où est quoi
+### Publier
+Le site est publié automatiquement (GitHub Actions) à chaque tag `v0.9.NN` poussé :
+`git tag -a v0.9.NN -m "…" && git push origin v0.9.NN`. Le numéro NN suit `versions/vNN.txt`.
+
+### Où est quoi
 | Dossier / fichier | Contenu |
 |---|---|
 | `src/page.html`, `src/style.css` | la page (boutons tactiles, mise en page) |
@@ -27,6 +57,7 @@ node outils/build.js
 | `src/niveaux/saison2.js` | généré automatiquement depuis les salles : ne pas modifier à la main |
 | `src/niveaux/bonus.js` | les chapitres bonus |
 | `src/js/01_…` à `14_…` | couleurs et sons, chargement, effets, dialogues, mise à jour du jeu, boss, dessins, menus, contrôles |
+| `versions/vNN.txt` | ce qui a changé à chaque version, expliqué simplement |
 | `outils/tests/` | tests automatiques (`npm install` une fois, puis `npm test`) |
 | `outils/verif/route2.js` | vérifie qu'une salle de la saison 2 est faisable : `npm run route` |
 | `outils/robot/` | un robot qui joue un parcours dans le vrai moteur |
