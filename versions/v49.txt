@@ -1,0 +1,6 @@
+VERSION 49 (v1.0.49) — Petites corrections d'affichage
+
+- Menus (Paramètres, Commandes…) : le petit trait jaune de la ligne choisie n'est plus
+  rogné par le coin arrondi du cadre (première et dernière ligne).
+- Fin de la saison 1 : la bulle « Espace continuer » est remontée ; elle n'est plus
+  coupée par la bande noire du bas de l'écran.

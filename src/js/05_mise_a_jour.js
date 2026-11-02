@@ -231,9 +231,10 @@ function drawFinalePrompt(){
   if(state !== 'play' || finaleT < finaleEnd() || fadeDir !== 0) return;
   const a = Math.min(1, (finaleT - finaleEnd() + 1) / 14) * (REDUCED ? 1 : 0.88 + 0.12 * Math.sin(frame * 0.12));
   ctx.save(); ctx.globalAlpha = a;
-  rr(W / 2 - 86, H - 50, 172, 28, 14); ctx.fillStyle = 'rgba(13,8,32,0.86)'; ctx.fill();
+  // au-dessus de la bande noire de cinématique du bas (22 px), pour ne plus être coupée
+  rr(W / 2 - 86, H - 62, 172, 28, 14); ctx.fillStyle = 'rgba(13,8,32,0.86)'; ctx.fill();
   ctx.strokeStyle = 'rgba(255,224,102,' + (0.45 + 0.35 * Math.sin(frame * 0.12)) + ')'; ctx.lineWidth = 1.5; ctx.stroke();
-  promptLine(TOUCH ? [{key:'▲'}, {text:'continuer'}] : [{key:'Espace'}, {text:'continuer'}], H - 36);
+  promptLine(TOUCH ? [{key:'▲'}, {text:'continuer'}] : [{key:'Espace'}, {text:'continuer'}], H - 48);
   ctx.restore();
 }
 

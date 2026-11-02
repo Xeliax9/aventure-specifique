@@ -43,12 +43,13 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v48, 2 novembre 2026)
+## État (v49 = v1.0.49, 2 novembre 2026)
 - Menu : la saison 2 n'apparaît qu'après la fin de la saison 1 (`s2Visible`, `refreshMainCh`) ; plus de barre de téléphone.
 - v48 (retours GitHub de hugomslv) : touches dessinées cliquables dans les menus (`PROMPT_KEY`) ; touches au choix
   (page Commandes, `SET.keys`, `gameKey`) ; option saut automatique (`SET.autoJump`) ; cartes de chapitres nettes (`zoom`) ;
   numéro de version `v1.0.NN` en bas à gauche (`VERSION`, mis par le build d'après `versions/`) ; tag GitHub `v1.0.NN`.
 - `perso/` (ignoré par git) : notes pour l'utilisateur, dont `perso/A_TESTER.md` (liste de choses à tester).
+- `capture pour correction/` (ignoré par git) : captures d’écran que l’utilisateur dépose pour signaler un défaut.
 - S2 monde 1 : 1-1 Tête en bas, 1-2 Chemin des Nuages, 1-3 Les Planches (validée et adorée), 1-4 Les Parachutes,
   1-5 Le Pont Retourné (nouvelles, à faire valider), 1-6 La Tempête Rose (ex-1-4, validée).
 - S2 monde 2 : validé (un cœur par salle). v42 : 2-2 poteaux infranchissables par le haut + fin bas-haut-bas-haut ; 2-3 piques côté milieu, on grimpe entre poteau et mur. Cinématique en 2-1 : la pie vole le double saut (`djSteal`), Gaston le rend en 2-3.

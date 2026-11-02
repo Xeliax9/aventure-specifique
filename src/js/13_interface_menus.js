@@ -1150,7 +1150,7 @@ function drawListPage(p, act){
     if(j === fs){
       ctx.save(); rr(x, y, w, h, 14); ctx.clip();
       ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x, ry, w, rh);
-      ctx.fillStyle = '#ffd54a'; ctx.fillRect(x, ry + 7, 3, rh - 14);
+      rr(x + 5, ry + 7, 3, rh - 14, 1.5); ctx.fillStyle = '#ffd54a'; ctx.fill();   // trait jaune décollé du bord : plus rogné par le coin arrondi
       ctx.restore();
     }
     drawRow(r, x, ry, w, rh);
@@ -1226,7 +1226,7 @@ function drawControls(act){
     if(j === fs){
       ctx.save(); rr(x, y, w, h, 14); ctx.clip();
       ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x, ry, w, rh);
-      ctx.fillStyle = '#ffd54a'; ctx.fillRect(x, ry + 6, 3, rh - 12);
+      rr(x + 5, ry + 6, 3, rh - 12, 1.5); ctx.fillStyle = '#ffd54a'; ctx.fill();
       ctx.restore();
     }
     if(act) hit(x, ry, w, rh, {id:'key:' + j, click:() => controlsActivate(j), hover:() => { if(!menu.bindWait) menu.sel.controls = j; }});
