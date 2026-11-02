@@ -1,0 +1,5 @@
+VERSION 51 (v0.9.51) — Nouveau mot de passe admin
+
+- Le mot de passe admin change (l'ancien était lisible dans les anciennes versions sur GitHub).
+  Comme avant, seule son empreinte est dans le code : on ne peut pas le relire.
+- Rien d'autre ne change dans le jeu.
