@@ -63,7 +63,12 @@ function buildDeck(){
   deck.built = true;
 }
 // ---- admin login (debugging): the right password turns the creator mode on, which opens everything
-const ADMIN_PASS = 'P@ss1234';
+// seule l'empreinte SHA-256 du mot de passe est dans le code (le jeu est public sur GitHub) : on ne peut pas le relire
+const ADMIN_HASH = '1f86c446121a0219e5eae8c531981ee550b0844384f1603bc0c9eb625b2c3d91';
+async function sha256hex(t){
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
 const adminEl = document.getElementById('admin'), adminInput = adminEl.querySelector('input'), adminErr = adminEl.querySelector('.err');
 let adminOpen = false;
 function openAdmin(){
@@ -74,8 +79,10 @@ function openAdmin(){
 }
 function closeAdmin(){ adminEl.classList.remove('on'); adminOpen = false; canvas.focus({preventScroll:true}); }
 // no <form>: a sandboxed page may block form submission, so Enter and the button call this directly
-function adminTry(){
-  if(adminInput.value === ADMIN_PASS){
+async function adminTry(){
+  let good = false;
+  try{ good = await sha256hex(adminInput.value) === ADMIN_HASH; }catch(e){}
+  if(good){
     SET.creatorFound = true; setSetting('creator', true);
     closeAdmin(); showToast('Admin connecté : tout est débloqué', 140); SFX.power();
   } else { adminErr.textContent = 'Mot de passe incorrect'; adminInput.select(); SFX.hurt(); }
@@ -260,6 +267,7 @@ window.addEventListener('keydown', e => {
   if(state === 'title' && menu.bindWait){ e.preventDefault(); if(!e.repeat) bindKey(e.key); return; }   // page Commandes : on attend la nouvelle touche
   let k = e.key.toLowerCase();
   if(state === 'play' || state === 'talk') k = gameKey(k);   // touches choisies par le joueur
+  if(k === 'a' && state === 'chapter' && feedbackBtn){ if(!e.repeat) openFeedback(); return; }   // fin de la démo : donner son avis
   if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
   initAudio();
   if(state === 'pet'){
@@ -365,6 +373,8 @@ canvas.addEventListener('pointerdown', ev => {
   if(state === 'pet'){ if(fadeDir === 0) petPointer(x, y); return; }
   if(state === 'ending'){ input.jumpPressed = true; return; }
   if(state === 'title'){ try{ canvas.setPointerCapture(ev.pointerId); }catch(e){} menuPointerDown(x, y); return; }
+  const fb = feedbackBtn;   // fin de la démo : bouton « Donne ton avis »
+  if(state === 'chapter' && fb && x >= fb.x && x <= fb.x + fb.w && y >= fb.y && y <= fb.y + fb.h){ openFeedback(); return; }
   if(state === 'over' || state === 'chapter' || state === 'win' || state === 'pause' || state === 'talk') confirmAction();
   else if(state === 'play'){
     if(idle.phase === 'ko'){ idleWake(); return; }

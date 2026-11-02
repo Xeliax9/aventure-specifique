@@ -1,0 +1,17 @@
+VERSION 50 (v0.9.50) — Mot de passe admin caché, nouveau numéro
+
+Numéro de version
+- La démo passe en 0.9 : « 1.0 » voudra dire « jeu complet sorti ».
+  En bas à gauche : « v0.9.50 · démo » en ligne, « v0.9.50 » sur ton PC.
+  Le dernier chiffre reste le numéro de version (50, 51, 52…).
+
+Mot de passe admin
+- Il n'est plus écrit dans le code du jeu (que tout le monde peut lire sur GitHub) :
+  seule son empreinte y est, impossible à relire. Le mot de passe ne change pas.
+
+Fin de la démo
+- Après le chapitre 2, sous « Chapitre 2 terminé », un bouton « 💬 Donne ton avis »
+  (clic ou touche A) ouvre la page GitHub des retours, avec un petit modèle à remplir
+  (ce qui m'a plu / ce qui ne va pas / idées). Il faut un compte GitHub (gratuit).
+- Vérifié : la démo ne passe jamais au chapitre 3 (Espace, clic ou flèche → menu,
+  « Fin de la démo »).
