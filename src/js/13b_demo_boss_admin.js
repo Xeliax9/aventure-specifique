@@ -20,7 +20,7 @@ const BOSS_DEMO = {
       boss:[[0,100,112],[180,100,112]],
       hero:[[0,30,160],[20,40,160],[42,90,60],[58,132,112],[76,160,40],[100,200,160],[180,200,160]],
       fx:[['hit',58,132,112,'Touché !']]},
-    {t:'Phase 2 : il saute plus vite et plus loin. Attends qu\'il retombe, puis saute-lui dessus.', move:'Saute dessus', dur:200, base:{ph:2},
+    {t:'Phase 2 (5 coups) : il saute plus vite. Tous les 2 coups, il tremble puis te saute dessus 3 fois : bouge, puis saute-lui dessus.', move:'Saute dessus', dur:200, base:{ph:2},
       boss:[[0,30,112],[18,70,40],[36,110,112],[54,150,40],[72,170,112],[200,170,112]],
       hero:[[0,20,160],[95,30,160],[112,120,40],[124,202,112],[142,150,30],[170,70,160],[200,70,160]],
       fx:[['hit',124,202,112,'Touché !']]},

@@ -1,5 +1,28 @@
-VERSION 51 (v0.9.51) — Nouveau mot de passe admin
+VERSION 51 (v0.9.51) — Le Roi Gluant se réveille, XELIAX plus patient
 
-- Le mot de passe admin change (l'ancien était lisible dans les anciennes versions sur GitHub).
+Le Roi Gluant (fin du chapitre 2)
+- Phase 2 : 5 coups à lui mettre (au lieu de 3).
+- Phase 2 : tous les 2 coups (après le 2e et le 4e), il riposte avec une attaque spéciale : il tremble une demi-seconde
+  (avec un son d'alerte), puis te saute dessus 3 fois d'affilée (chaque saut vise
+  l'endroit où tu es : bouge pour l'esquiver). Après le 3e saut, il fait une petite
+  pause : c'est le moment de lui sauter dessus.
+- Les petits slimes rouges ne sortent plus qu'après ses GRANDS sauts.
+- Quand tu le touches : ses petits slimes disparaissent, tu es poussé un peu sur le
+  côté libre (jamais contre un mur ; pour ne pas enchaîner les coups), et il est protégé 2 secondes (il clignote :
+  lui sauter dessus te fait juste rebondir).
+- L'arène n'a plus de plateformes en l'air (elles ne servaient pas) : le cœur et
+  les pièces sont à hauteur d'un saut.
+- La démo « Comment battre le Roi Gluant » explique la nouvelle attaque.
+
+XELIAX quand on ne touche à rien
+- Il se met à parler au bout de 30 secondes (avant : 10 s).
+- Il tente son salto au bout de 1 minute (avant : 20 s).
+
+Pas de spoilers de la saison 2
+- Tant que la saison 2 n'est pas débloquée (donc dans la démo) :
+  la pie ne traverse plus le ciel de l'accueil, et XELIAX ne dit plus
+  « La pie n'a qu'à bien se tenir ! » ni « …des orbes, des murs… ».
+
+Mot de passe admin
+- Nouveau mot de passe (l'ancien était lisible dans les anciennes versions sur GitHub).
   Comme avant, seule son empreinte est dans le code : on ne peut pas le relire.
-- Rien d'autre ne change dans le jeu.

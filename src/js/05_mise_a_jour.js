@@ -650,11 +650,24 @@ function updateBoss(){
   }
 
   if(b.mode === 'slime'){
-    if(b.onGround){
+    // v51, phase 2 : tous les 2 coups reçus, attaque spéciale = 3 sauts d'affilée qui visent XELIAX,
+    // annoncée par un tremblement + un son (une demi-seconde) pour qu'on la voie venir (voir le coup sur la tête)
+    if(b.phase === 2 && b.burstNext && b.onGround && !b.burst && !b.warnT){ b.burstNext = false; b.warnT = 30; SFX.warn(); }
+    if(b.onGround && b.warnT > 0){
+      b.squash = Math.sin(b.warnT * 1.3) * 0.18;
+      if(--b.warnT === 0){ b.burst = 3; b.hopT = 1; }
+    } else if(b.onGround){
       b.squash += (0 - b.squash) * 0.2;
       if(--b.hopT <= 0){
         const dir = Math.sign((player.x + player.w/2) - (b.x + b.w/2)) || 1;
-        if(b.phase === 2){
+        if(b.burst > 0){
+          // saut de l'attaque spéciale : il vise l'endroit où est XELIAX au moment de sauter (bouger = esquiver)
+          b.big = false;
+          b.vy = -8.5;
+          b.vx = clamp((player.x + player.w/2 - b.w/2 - b.x) / (2 * 8.5 / 0.5), -4.5, 4.5);
+          b.burst--;
+          b.inBurst = true;
+        } else if(b.phase === 2){
           // phase 2: every other jump is aimed to land right on the player
           b.big = b.hops % 2 === 0;
           b.vy = b.big ? -12 : -7;
@@ -677,12 +690,13 @@ function updateBoss(){
       if(b.y + b.h >= FLOOR){
         b.y = FLOOR - b.h; b.onGround = true; b.vx = b.vy = 0;
         b.hopT = b.phase === 2 ? (angry ? 26 : 38) : (angry ? 32 : 55);
+        if(b.inBurst){ b.inBurst = false; b.hopT = b.burst > 0 ? 10 : 50; }   // sauts spéciaux enchaînés, puis une pause pour le toucher
         b.squash = 0.35;
         addShake(b.big ? 9 : 4);
         dust(b.x + b.w/2, FLOOR, 12);
         SFX.thud();
-        // phase 2: spits out little slimes (max 3 at once)
-        if(b.phase === 2 && b.hops % 2 === 0 && enemies.filter(e => e.alive).length < 3){
+        // phase 2: spits out little slimes (max 3 at once) — v51 : seulement en retombant d'un GRAND saut
+        if(b.phase === 2 && b.big && enemies.filter(e => e.alive).length < 3){
           enemies.push({on:0, from:0, to:room.w, speed:1.5, off:clamp(b.x + b.w/2 - 12, 0, room.w - 24),
             dir:Math.random() < .5 ? -1 : 1, w:24, h:18, x:0, y:0, alive:true, t:0});
           burst(b.x + b.w/2, FLOOR - 10, 12, '#b45be3', 2.5, 25, 0.15, 3, 'goo');
@@ -776,6 +790,7 @@ function updatePlayer(){
   }
 
   let dir = finaleT > 0 || knocked ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  if(player.pushT > 0){ player.pushT--; dir = Math.sign(player.vx); }   // poussé sur le côté après un coup sur le Roi Gluant
   if(cine){
     // during a cinematic XELIAX only walks out of danger, then faces the boss
     dir = 0;
@@ -1192,8 +1207,22 @@ function updatePlayer(){
     const fromAbove = player.vy > 0 && prevBottom <= boss.y + 16;
     if((boss.mode === 'slime' || sw) && fromAbove){
       if(boss.inv <= 0 && (!sw || boss.state === 'stunned' || boss.state === 'sweep')){
+        const phaseBefore = boss.phase;
         bossDamage();
+        // v51 : en phase 2, tous les 2 coups (2e et 4e), il riposte avec l'attaque des 3 sauts
+        if(boss.mode === 'slime' && phaseBefore === 2 && boss.phase === 2 && boss.alive && !boss.dying && !cine
+           && (boss.maxHp - boss.hp) % 2 === 0){
+          boss.burst = 0; boss.warnT = 0; boss.inBurst = false; boss.burstNext = true;   // part dès qu'il touche le sol
+        }
         if(sw && boss.alive && !boss.dying && !cine) boss.state = 'rise';
+        if(boss.mode === 'slime'){
+          // v51 : Roi Gluant touché → ses petits slimes disparaissent, et XELIAX est poussé un peu sur le côté
+          // (pour ne pas enchaîner les coups) ; le boss est protégé 2 s (voir bossDamage)
+          for(const e of enemies) if(e.alive){ e.alive = false; killFx(e); }
+          let side = Math.sign(player.x + player.w/2 - (boss.x + boss.w/2)) || (Math.random() < 0.5 ? -1 : 1);
+          if((side < 0 && player.x < 80) || (side > 0 && player.x + player.w > room.w - 80)) side = -side;   // pas contre un mur : vers le côté libre
+          player.vx = side * 4.2; player.pushT = 16;
+        }
       }
       player.y = boss.y - player.h;
       player.vy = -11; player.noCut = true; player.usedDJ = false;

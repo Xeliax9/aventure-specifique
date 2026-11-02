@@ -135,7 +135,7 @@ function bossDamage(){
   const b = boss;
   if(b.dying) return;              // already beaten: the death scene is playing
   b.hp--; b.hitT = 12;
-  b.inv = (b.mode === 'arena' || b.mode === 'ascent') ? 60 : 50;   // the final boss can only be hit once per second
+  b.inv = (b.mode === 'arena' || b.mode === 'ascent') ? 60 : b.mode === 'slime' ? 120 : 50;   // the final boss can only be hit once per second ; v51 : Roi Gluant protégé 2 s
   addShake(6);
   SFX.bossHit();
   burst(b.x + b.w/2, b.y + b.h/2, 14, '#ffffff', 3, 24, 0.1, 3, 'star');
@@ -229,7 +229,7 @@ function enterPhase2(announce){
   b.phase = 2;
   b.hp = b.maxHp = room.boss.hp2;
   b.inv = 90; b.hitT = 0;
-  if(b.mode === 'slime'){ b.onGround = true; b.y = FLOOR - b.h; b.vx = b.vy = 0; b.hopT = 70; b.hops = 0; }
+  if(b.mode === 'slime'){ b.onGround = true; b.y = FLOOR - b.h; b.vx = b.vy = 0; b.hopT = 70; b.hops = 0; b.burstNext = false; b.burst = 0; b.warnT = 0; b.inBurst = false; }
   // the phase-2 spikes are only announced here: they come out during the cinematic, never under XELIAX
   if(b.mode === 'swoop'){ b.state = 'rise'; for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true}); }
   if(S2_BOSS.has(b.mode)){
@@ -314,11 +314,11 @@ function restartPhase(){
 }
 
 // =====================================================================
-//  IDLE: leave XELIAX alone for 10 s and he starts wondering about things;
-//  at 20 s he tries a backflip, lands on his head and needs 3 presses
+//  IDLE: leave XELIAX alone for 30 s and he starts wondering about things;
+//  at 1 min he tries a backflip, lands on his head and needs 3 presses
 //  of the jump key to get back up.
 // =====================================================================
-const IDLE_THINK = 600, IDLE_FLIP = 1200;
+const IDLE_THINK = 1800, IDLE_FLIP = 3600;   // v51 : parle au bout de 30 s, salto au bout de 1 min (avant : 10 s et 20 s)
 const IDLE_Q = [
   'Pourquoi les olives n\'ont pas de jambes ?',
   'Et si la ficelle était au fromage ?',

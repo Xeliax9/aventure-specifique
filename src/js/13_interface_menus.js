@@ -340,12 +340,15 @@ function openPetFromHome(){
   homeHero.hop = 1; homeHero.wobV += 0.8; setFace(homeHero, 'open', 30);
   SFX.bloop(); transition(openPet);
 }
-const HOME_LINES = ['Prêt pour l\'aventure ?', 'J\'ai une faim… d\'olives.', 'Clique sur moi, pour voir !', 'La pie n\'a qu\'à bien se tenir !',
-  'Coucou xeliax9 !', 'Allez, encore une partie !', 'Tu as fouillé les paramètres ?', 'Des ressorts, des orbes, des murs… j\'adore !'];
+const HOME_LINES = ['Prêt pour l\'aventure ?', 'J\'ai une faim… d\'olives.', 'Clique sur moi, pour voir !',
+  'Coucou xeliax9 !', 'Allez, encore une partie !', 'Tu as fouillé les paramètres ?'];
+// phrases qui dévoilent la saison 2 (la pie, les orbes, les murs) : seulement une fois la saison 2 débloquée
+const HOME_LINES_S2 = ['La pie n\'a qu\'à bien se tenir !', 'Des ressorts, des orbes, des murs… j\'adore !'];
 function homeLine(){
   if(!menu.saidHi){ menu.saidHi = true; return 'Salut ! On joue ?'; }
   if(bonusVisible() && !save.bonusFolderSeen && Math.random() < 0.6) return 'Psst… les paramètres cachent un secret !';
   const pool = HOME_LINES.slice();
+  if(s2Visible()) pool.push(...HOME_LINES_S2);
   if(SET.skin !== 'indigo') pool.push('Tu aimes ma nouvelle couleur ?');
   if(save.s2Done) pool.push('Ma ficelle est bien rangée. Personne n\'y touche !');
   return pick(pool);
@@ -574,7 +577,8 @@ function updateMenu(){
   else if(p === 'home' && --menu.bubbleT <= 0){ const t = frTypo(homeLine()); menu.bubble = {text:t, t:230, max:230}; menu.bubbleT = 520 + Math.random() * 380; }
   // now and then the magpie crosses the sky
   if(menu.fly){ menu.fly.x += menu.fly.vx; menu.fly.t++; if(menu.fly.x < -100) menu.fly = null; }
-  else if(--menu.flyT <= 0){ menu.fly = {x:W + 70, y:44 + Math.random() * 46, vx:-1.6 - Math.random() * 0.6, t:0}; menu.flyT = 1100 + Math.random() * 900; }
+  // la pie ne traverse le ciel de l'accueil qu'une fois la saison 2 débloquée (sinon : spoiler)
+  else if(--menu.flyT <= 0){ if(s2Visible()) menu.fly = {x:W + 70, y:44 + Math.random() * 46, vx:-1.6 - Math.random() * 0.6, t:0}; menu.flyT = 1100 + Math.random() * 900; }
   for(const f of menu.fx){ f.x += f.vx; f.y += f.vy; f.vy += f.g; f.vx *= 0.98; f.rot += f.vr; f.life--; }
   menu.fx = menu.fx.filter(f => f.life > 0);
 }
