@@ -195,14 +195,12 @@ const CHAPTERS = [
         start:{x:30, y:300},
         platforms:[
           {x:0, y:340, w:640, h:20},
-          {x:60, y:240, w:90},
-          {x:490, y:240, w:90},
-          {x:270, y:170, w:100},
+          // v51 : plus de plateformes en l'air (elles ne servaient pas) ; cœur et pièces à hauteur d'un saut
         ],
         signs:[{x:80, y:340, text:'Saute-lui sur la tête !'}],
-        powerUps:[{x:310, y:146, type:'life'}],
-        coins:[[105, 210], [535, 210]],
-        boss:{mode:'slime', name:'Le Roi Gluant', hp:3, hp2:3, x:420, y:292, w:64, h:48},
+        powerUps:[{x:310, y:255, type:'life'}],
+        coins:[[105, 265], [535, 265]],
+        boss:{mode:'slime', name:'Le Roi Gluant', hp:3, hp2:5, x:420, y:292, w:64, h:48},
         needsBoss:true,
         door:{x:600, y:300},
       },

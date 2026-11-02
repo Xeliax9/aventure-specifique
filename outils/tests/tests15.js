@@ -28,12 +28,12 @@ const { chromium } = require('playwright');
     input.jumpPressed = true; input.jumpHeld = true; run(70); input.jumpHeld = false; run(20);
     ok(player.standingOn !== platforms[2], 'a single jump does not reach the ledge (the double jump is needed)');
 
-    // ---- idle: questions at 10 s, backflip at 20 s, 3 presses to get up
+    // ---- idle: questions at 30 s, backflip at 1 min (v51), 3 presses to get up
     go(0, 0); release(); player.x = 100; player.y = 300; run(30);
     const lives0 = lives;
-    run(600); ok(idle.phase === 'think', `after 10 s XELIAX wonders (${IDLE_Q[idle.q]})`);
+    run(IDLE_THINK - 90); ok(idle.phase === '', 'still quiet just before 30 s'); run(90); ok(idle.phase === 'think', `after 30 s XELIAX wonders (${IDLE_Q[idle.q]})`);
     render(1);
-    run(600); ok(idle.phase === 'flip' || idle.phase === 'ko', 'after 20 s he tries a backflip');
+    run(IDLE_FLIP - IDLE_THINK - 90); ok(idle.phase === 'think', 'no backflip just before 1 min'); run(90); ok(idle.phase === 'flip' || idle.phase === 'ko', 'after 1 min he tries a backflip');
     run(60); ok(idle.phase === 'ko', 'he lands on his head (KO)');
     render(1);
     input.left = true; run(30); input.left = false;
@@ -48,7 +48,7 @@ const { chromium } = require('playwright');
     run(500); input.left = true; step(); input.left = false; run(200);
     ok(idle.phase === '', 'pressing a key resets the idle timer');
     // getting hit while KO wakes him
-    go(0, 0); release(); player.x = 100; player.y = 300; run(1300);
+    go(0, 0); release(); player.x = 100; player.y = 300; run(IDLE_FLIP + 100);
     ok(idle.phase === 'ko', 'KO again');
     player.invuln = 0; hurt(0); ok(idle.phase === '', 'a hit wakes him up');
 
