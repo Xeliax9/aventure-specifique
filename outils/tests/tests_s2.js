@@ -13,6 +13,8 @@ const { chromium } = require('playwright');
     // ---- season structure
     ok(CHAPTERS.length === 10 && CHAPTERS[5].season === 2 && CHAPTERS[8].num === 4, 'ten chapters, 5..8 are season 2');
     ok(isUnlocked(5) && !isUnlocked(6), 'season 2: chapter 1 open, chapter 2 locked');
+    toMenu(); clean(); menuSel = 0; switchSeason(2); ok(menuSel === 0 && MAIN_CH.join() === '0,1,2,3', 'fresh save: season 2 hidden until season 1 is finished');
+    save.bestCh[3] = 90000; save.unlocked = 5;
     toMenu(); clean(); menuSel = 0; switchSeason(2); ok(menuSel === 5 && MAIN_CH.slice(4).join() === '5,6,7,8', 'switching to season 2 selects its first app');
     menuMove(-1); ok(seasonOf(menuSel) === 1, '◀ from the first season 2 card goes back to season 1');
     render(1);

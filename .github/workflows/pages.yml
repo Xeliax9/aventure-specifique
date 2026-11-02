@@ -27,7 +27,8 @@ jobs:
           node-version: 20
 
       - name: Assembler le jeu
-        run: node outils/build.js
+        # --demo : version démo (chapitres 1 et 2 seulement) ; enlever --demo pour mettre le jeu complet en ligne
+        run: node outils/build.js --demo
 
       - name: Préparer le site
         run: |

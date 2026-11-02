@@ -1167,7 +1167,10 @@ function drawSignBody(sg){
   ctx.strokeStyle = '#5a3418'; ctx.lineWidth = 1.4; ctx.stroke();
   outlined('!', sg.x + 10, sg.y - 18.5, 12, '#ffffff', '#5a3418', 3, FD, 400, 'center');
 }
-const KEYS_TXT = TOUCH ? {move:'◀ ▶', jump:'▲', shoot:'●', talk:'●', dash:'»'} : {move:'A / D', jump:'W', shoot:'J', talk:'E', dash:'K'};
+// les panneaux et messages citent les touches choisies par le joueur (page Commandes)
+const KEYS_TXT = TOUCH ? {move:'◀ ▶', jump:'▲', shoot:'●', talk:'●', dash:'»'}
+  : {get move(){ return keyName('left') + ' / ' + keyName('right'); }, get jump(){ return keyName('jump'); }, get shoot(){ return keyName('shoot'); },
+     get talk(){ return keyName('talk'); }, get dash(){ return keyName('dash'); }};
 const signText = t => t.replace(/\{(\w+)\}/g, (m, k) => KEYS_TXT[k] || m);
 function drawSignBubble(sg){
   if(sg.show <= 0.01) return;

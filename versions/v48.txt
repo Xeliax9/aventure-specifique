@@ -1,0 +1,49 @@
+VERSION 48 (v1.0.48) — La démo en ligne, et les retours des joueurs
+
+Numéro de version
+- Le numéro s'affiche en bas à gauche des menus : « v1.0.48 » (« v1.0.48 · démo » en ligne).
+  Il se met à jour tout seul à chaque nouveau fichier versions/vNN.txt.
+
+Boss final (saison 1, phase 2)
+- Pendant le combat, il ne reste que trois plateformes au-dessus de la lave : à gauche,
+  au milieu et à droite. Les plateformes en l'air en plus ont été enlevées.
+
+Jeu en ligne = une démo
+- Le jeu est publié sur https://xeliax9.github.io/aventure-specifique/ (merci Mathorck !).
+- En ligne, c'est une DÉMO : on peut jouer aux chapitres 1 et 2 de la saison 1.
+  Les autres chapitres, la saison 2 et les bonus affichent « Démo 🔒 » et
+  « Pas disponible dans la démo ».
+- Dans la démo, Crédits et Nourrir XELIAX ne s'ouvrent pas : un message « Pas disponible
+  dans la démo » s'affiche. Dans Paramètres, seuls Son, Jeu et Commandes s'ouvrent
+  (pour changer ses touches et le saut automatique) ; le reste affiche « Démo 🔒 ».
+- À la fin du chapitre 2 : retour au menu avec « Fin de la démo : merci d'avoir joué ! ».
+- Pour tester en ligne : Paramètres → Connexion admin (mot de passe admin) lève la démo,
+  tout s'ouvre ; en bas à gauche : « démo (admin : tout ouvert) ».
+- Plus de mot de passe pour jouer.
+- Sur ton PC (dist/aventure.html), le jeu est complet, comme avant.
+- Chaque joueur a sa propre progression : elle est gardée dans son navigateur.
+
+Menu des chapitres
+- La saison 2 n'apparaît qu'une fois la saison 1 terminée.
+- La fausse barre de téléphone en haut de l'écran (heure, « Olive 5G », wifi,
+  batterie à 0 %) a été enlevée. (retour GitHub n° 3)
+- Les textes des cartes de chapitres ne sont plus flous sur un grand écran. (n° 4)
+
+Touches dessinées cliquables (n° 6)
+- Dans les menus, les touches dessinées en bas (◀ ▶ ▲ ▼ Espace Échap) sont maintenant
+  de vrais boutons : cliquer dessus fait comme appuyer sur la touche.
+
+Changer ses touches (n° 5)
+- Paramètres → Commandes : choisis une action, appuie sur Espace (ou clique), puis
+  sur la nouvelle touche. Les touches de départ (A D W) tombent bien sur un clavier
+  QWERTZ suisse ; avec un clavier AZERTY, on peut passer à Z Q S D.
+- Si la touche servait déjà à une autre action, les deux s'échangent.
+- « Remettre les touches de départ » pour tout annuler.
+- Les flèches, Espace, Maj et Échap marchent toujours en plus.
+- Les touches sont gardées dans le navigateur, pas besoin de compte.
+- Les panneaux et messages du jeu affichent tes touches à toi.
+
+Saut automatique (n° 2)
+- Paramètres → Jeu → « Garder le saut appuyé : saute en boucle » (coupé au départ).
+- Si tu l'allumes : en gardant le saut appuyé, XELIAX ressaute dès qu'il touche le sol,
+  comme dans les jeux de rythme. Il ne fait jamais de double saut tout seul.

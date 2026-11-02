@@ -14,7 +14,7 @@ function buildDeck(){
   deck.head = deckEl('div', 'head', st);
   deckEl('b', '', deck.head, 'Chapitres'); deck.season = deckEl('span', '', deck.head);
   deck.deckEl = deckEl('div', 'deck', st);
-  for(const i of MAIN_CH){
+  for(const i of ALL_MAIN){
     const c = deckEl('div', 'card', deck.deckEl);
     const cv = deckEl('canvas', '', c);
     const badge = deckEl('div', 'badge', c);
@@ -95,7 +95,8 @@ function placeDeck(){
   const k = r.width / W;
   if(Math.abs(k - deck.k) > 1e-4 || !deck.placed){
     deck.k = k; deck.placed = true;
-    deck.root.querySelector('.stage').style.transform = `scale(${k})`;
+    // zoom (et non transform: scale) : le navigateur redessine le texte des cartes à la bonne taille, sans flou
+    deck.root.querySelector('.stage').style.zoom = k;
     const px = Math.round(136 * k * Math.min(window.devicePixelRatio || 1, 2) * 1.15);
     for(const c of deck.cards){ c.cv.width = px; c.cv.height = Math.round(px * 108 / 136); c.painted = -99; }
   }
@@ -111,9 +112,10 @@ function paintCard(c){
 }
 function cardInfo(i){
   const ch = CHAPTERS[i], locked = !isUnlocked(i), best = save.bestCh[i];
-  const badge = locked ? ['Verrouillé 🔒', ''] : best != null ? ['Complété ⭐', 'done'] : isNewApp(i) ? ['Nouveau', 'new'] : ['Débloqué', ''];
+  const notInDemo = demoOn() && (ch.bonus || ch.season === 2 || i > 1);
+  const badge = locked ? [notInDemo ? 'Démo 🔒' : 'Verrouillé 🔒', ''] : best != null ? ['Complété ⭐', 'done'] : isNewApp(i) ? ['Nouveau', 'new'] : ['Débloqué', ''];
   const kick = ch.season === 2 ? `Saison 2 · Ch. ${ch.num}` : `Saison 1 · Ch. ${i + 1}`;
-  const stat = locked ? '🔒 Finis le chapitre d\'avant'
+  const stat = locked ? (notInDemo ? '🔒 Pas dans la démo' : '🔒 Finis le chapitre d\'avant')
     : `${ch.rooms.length} salles · ${best != null ? 'record ' + fmt(best) : 'pas de record'}${save.gems[i] ? ' · 💎' : ''}`;
   return {locked, badge, kick, stat};
 }
@@ -126,11 +128,12 @@ function syncDeck(){
   const acc = CH_ACCENT[menuSel];
   deck.root.style.setProperty('--accent', acc);
   deck.season.textContent = seasonOf(menuSel) === 2 ? 'Saison 2 · La pie voleuse' : 'Saison 1 · La ficelle disparue';
+  if(!TOUCH){ const h = '◀ ▶ ou glisser : choisir · ' + (s2Visible() ? 'S : saison · ' : '') + 'Espace : jouer · Échap : retour'; if(deck.hint.textContent !== h) deck.hint.textContent = h; }
   deck.head.classList.toggle('dim', toast.t > 0);
   const pulse = REDUCED ? 0 : Math.sin(frame * 0.07) * 0.012;
   for(const c of deck.cards){
     const k = appIndex(c.i), d = (appPos(k) - menu.scroll) / APP.step, a = Math.abs(d), sg = Math.sign(d), n = Math.min(a, 1);
-    if(a > 3.4){ c.el.style.visibility = 'hidden'; continue; }
+    if(k < 0 || a > 3.4){ c.el.style.visibility = 'hidden'; continue; }
     c.el.style.visibility = 'visible';
     let x = sg * (n * DECK_GAP + Math.max(0, a - 1) * 74);
     if(c.i === menuSel && menu.shakeT > 0) x += Math.sin(menu.shakeT * 1.7) * menu.shakeT * 0.5;
@@ -151,10 +154,17 @@ function syncDeck(){
   }
   const locked = !isUnlocked(menuSel);
   deck.play.classList.toggle('locked', locked);
-  deck.play.textContent = locked ? 'VERROUILLÉ 🔒' : 'JOUER';
+  deck.play.textContent = locked ? (cardInfo(menuSel).badge[0] === 'Démo 🔒' ? 'DÉMO 🔒' : 'VERROUILLÉ 🔒') : 'JOUER';
 }
 window.addEventListener('resize', () => { deck.placed = false; });
 
+// numéro de version, discret, en bas à gauche des menus
+function drawVersion(){
+  if(!VERSION) return;
+  ctx.save(); ctx.globalAlpha = 0.55;
+  txt(VERSION + (DEMO ? (SET.creator ? ' · démo (admin : tout ouvert)' : ' · démo') : ''), 8, H - 8, 10, '#e0d4ff', 600, 'left');
+  ctx.restore();
+}
 function render(alpha){
   if(alpha !== undefined) ALPHA = alpha;
   if(!room) return;
@@ -163,7 +173,7 @@ function render(alpha){
   if(state === 'pet'){ drawPet(); drawIris(); return; }
   if(state === 'ending'){ drawEnding(); drawEndSkip(); drawIris(); return; }
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
-  if(state === 'title'){ drawMenu(); drawMenuToast(); drawIris(); return; }
+  if(state === 'title'){ drawMenu(); drawMenuToast(); drawVersion(); drawIris(); return; }
   const cx = lerp(prevCamX, camX, ALPHA), cy = lerp(prevCamY, camY, ALPHA);
   viewX = cx; viewY = cy;
   let sx = 0, sy = 0;
@@ -215,6 +225,7 @@ function confirmAction(){
   if((state === 'chapter' || state === 'win') && stateT < 45) return true;
   if(state === 'chapter'){
     if(clearInfo && clearInfo.bonus){ toMenu(); return true; }
+    if(demoOn() && !isUnlocked(chIndex + 1)){ toMenu(); showToast('Fin de la démo : merci d\'avoir joué ! La suite arrive bientôt', 260); return true; }
     transition(() => { startChapter(chIndex + 1, true); anim.appear = 0; setState('play'); });
     return true;
   }
@@ -246,7 +257,9 @@ function togglePause(){
 
 window.addEventListener('keydown', e => {
   if(adminOpen) return;           // typing the admin password
-  const k = e.key.toLowerCase();
+  if(state === 'title' && menu.bindWait){ e.preventDefault(); if(!e.repeat) bindKey(e.key); return; }   // page Commandes : on attend la nouvelle touche
+  let k = e.key.toLowerCase();
+  if(state === 'play' || state === 'talk') k = gameKey(k);   // touches choisies par le joueur
   if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
   initAudio();
   if(state === 'pet'){
@@ -279,7 +292,7 @@ window.addEventListener('keydown', e => {
   if(k === 'r' && !e.repeat && state === 'pause') transition(() => { startChapter(chIndex, false); anim.appear = 0; setState('play'); });
 });
 window.addEventListener('keyup', e => {
-  const k = e.key.toLowerCase();
+  const k = gameKey(e.key.toLowerCase());
   if(k === 'a' || k === 'arrowleft') input.left = false;
   if(k === 'd' || k === 'arrowright') input.right = false;
   if(k === 'w' || k === ' ' || k === 'arrowup' || k === 'enter'){ input.jumpHeld = false; menu.credFast = false; }
