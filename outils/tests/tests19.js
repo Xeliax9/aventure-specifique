@@ -43,9 +43,9 @@ const { chromium } = require('playwright');
   await key('ArrowLeft'); await key('ArrowLeft'); await steps(30);
   ok(await T(() => menuSel === 0 && Math.abs(menu.nudge) > 0.5 || menuSel === 0), '◀ at the first app bounces');
   await key('s'); await steps(30);
-  ok(await T(() => menuSel === 5), 'S jumps to season 2');
+  ok(await T(() => menuSel === 0), 'S does nothing while season 2 is hidden (season 1 not finished)');
   await key('s'); await steps(30);
-  ok(await T(() => menuSel === 0), 'and back to season 1');
+  ok(await T(() => menuSel === 0 && MAIN_CH.length === 4), 'still season 1: 4 cards');
   // drag the apps with the mouse
   await steps(30);
   const sc0 = await T(() => menu.scroll);

@@ -1,5 +1,11 @@
 
 'use strict';
+// DEMO : version en ligne (node outils/build.js --demo) : seuls les chapitres 1 et 2 ; le build remplace false par true
+const DEMO = /*@DEMO*/false;
+// la démo bloque tant que l'admin n'est pas connecté (Paramètres → Connexion admin) : connecté, tout s'ouvre pour tester
+function demoOn(){ return DEMO && !(save.settings && save.settings.creator); }
+// numéro de version affiché en bas à gauche des menus : le build met celui du dernier fichier versions/vNN.txt
+const VERSION = /*@VERSION*/'';
 // =====================================================================
 //  MATH & EASING
 // =====================================================================

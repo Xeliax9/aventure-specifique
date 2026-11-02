@@ -484,7 +484,7 @@ function updateWorld(){
   for(const s of spikes) if(s.appear !== undefined && s.appear < 1 && !s.pending) s.appear = Math.min(1, s.appear + 0.05);
   // people: the closest one within reach can be talked to
   animNpcs();
-  for(const n of npcs) if(n.gives === 'wall' && !hasWall && player.x > n.x + 110 && !n.told){ n.told = true; showToast('Parle d\'abord à Gaston (touche E) : il a quelque chose pour toi !', 170); }
+  for(const n of npcs) if(n.gives === 'wall' && !hasWall && player.x > n.x + 110 && !n.told){ n.told = true; showToast('Parle d\'abord à Gaston (touche ' + KEYS_TXT.talk + ') : il a quelque chose pour toi !', 170); }
   nearNpc = null;
   if(!player.dead && !cine){
     let bn = 34;
@@ -812,6 +812,8 @@ function updatePlayer(){
     if(hasDash && player.dashT <= 0 && player.dashReady && player.dashCD <= 0){ player.dashBuf = 0; startDash(dir || player.facing); }
   }
 
+  // option « saut automatique » : saut gardé appuyé = XELIAX ressaute dès qu'il touche le sol (jamais de double saut tout seul)
+  if(SET.autoJump && input.jumpHeld && !input.jumpPressed && player.onGround && state === 'play' && !finaleT && !cine) input.jumpPressed = true;
   // jump: coyote time + buffer + wall jump + double jump
   if(input.jumpPressed){
     if(player.coyote > 0) doJump();

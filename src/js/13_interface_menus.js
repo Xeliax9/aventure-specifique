@@ -227,6 +227,7 @@ function keycap(label, x, y){
   txt(label, x + w / 2, y, 11, '#1d1442', 700);
   return w;
 }
+const PROMPT_KEY = {'◀':'arrowleft', '▶':'arrowright', '▲':'arrowup', '▼':'arrowdown', 'Espace':' ', 'Échap':'escape'};
 // a centred row of keycaps and words, e.g. [Espace] jouer
 function promptLine(items, y, color='#ffffff'){
   const kw = it => { ctx.font = `700 11px ${FU}`; return Math.max(19, ctx.measureText(it.key).width + 13); };
@@ -235,7 +236,12 @@ function promptLine(items, y, color='#ffffff'){
   const total = widths.reduce((a, b) => a + b, 0) + (items.length - 1) * 6;
   let x = W / 2 - total / 2;
   items.forEach((it, i) => {
-    if(it.key) keycap(it.key, x, y);
+    if(it.key){
+      keycap(it.key, x, y);
+      // dans les menus, les touches dessinées sont de vrais boutons : un clic fait comme la touche
+      const k = PROMPT_KEY[it.key];
+      if(k && state === 'title' && menu.t >= 1 && !menu.splash) hit(x - 3, y - 17, widths[i] + 6, 25, {id:'pk:' + it.key, click:() => menuKey(k)});
+    }
     else if(it.text) txt(it.text, x, y, 12.5, color, 500, 'left');
     x += widths[i] + 6;
   });
@@ -248,9 +254,13 @@ function promptLine(items, y, color='#ffffff'){
 //  settings app, rolling credits, and a secret bonus folder hidden in the
 //  settings. Every menu page lives in the 'title' state.
 // =====================================================================
-const MAIN_CH = CHAPTERS.map((c, i) => i).filter(i => !CHAPTERS[i].bonus);
+const ALL_MAIN = CHAPTERS.map((c, i) => i).filter(i => !CHAPTERS[i].bonus);
+// la saison 2 n'apparaît dans le menu qu'une fois la saison 1 finie (ou si on l'a déjà commencée, ou en mode créateur)
+const s2Visible = () => SET.creator || save.bestCh[STORY_END] != null || save.unlocked2 > 1 || ALL_MAIN.some(i => CHAPTERS[i].season === 2 && save.bestCh[i] != null);
+const MAIN_CH = [];
+function refreshMainCh(){ MAIN_CH.length = 0; for(const i of ALL_MAIN) if(CHAPTERS[i].season !== 2 || s2Visible()) MAIN_CH.push(i); }
+refreshMainCh();
 const BONUS_CH = CHAPTERS.map((c, i) => i).filter(i => CHAPTERS[i].bonus);
-const PHONE_PAGES = new Set(['chapters', 'settings', 'son', 'jeu', 'look', 'controls', 'bonus', 'test']);
 const PAGE_PARENT = {chapters:'home', settings:'home', son:'settings', jeu:'settings', look:'settings', controls:'settings', bonus:'settings', test:'settings'};
 const PAGE_DIM = {home:0, settings:0.5, son:0.56, jeu:0.56, look:0.44, controls:0.58, credits:0.62, bonus:0.4, test:0.56};
 const PAGE_NAME = {home:'Accueil', chapters:'Chapitres', settings:'Paramètres', son:'Son', jeu:'Jeu', look:'Couleur de XELIAX', controls:'Commandes', credits:'Crédits', bonus:'Bonus secret', test:'Tester (admin)'};
@@ -258,7 +268,7 @@ const TAGLINE = ['Là où tout commence', 'Le Roi Gluant t\'attend sous terre', 
   'Le défi des étoiles', 'La gravité s\'inverse !', 'Glisse et saute sur les murs', 'Le dash, enfin !', 'Rattrape la pie voleuse', 'Le défi des pouvoirs'];
 const menu = {
   page:'home', from:null, t:1, dir:1,
-  sel:{home:0, settings:0, son:0, jeu:0, look:0, bonus:0, test:0},
+  sel:{home:0, settings:0, son:0, jeu:0, look:0, controls:0, bonus:0, test:0}, bindWait:null,
   scroll:0, drag:null, down:null, hits:[], wheel:0, wheelT:-99, bgFlash:0, nudge:0, shakeT:0,
   introT:0, mx:470, my:200, pointerT:999, knobs:{}, fx:[],
   bubble:null, bubbleT:80, saidHi:false, fly:null, flyT:420,
@@ -281,18 +291,12 @@ const PAGE_FOOT = {
 };
 
 function defaultChapter(){
-  return save.lastSeason === 2 ? S2_FIRST + Math.min(3, save.unlocked2 - 1) : Math.min(save.unlocked - 1, STORY_END);
+  return save.lastSeason === 2 && s2Visible() ? S2_FIRST + Math.min(3, save.unlocked2 - 1) : Math.min(save.unlocked - 1, STORY_END);
 }
 function nearestApp(s){
   let best = 0, bd = 1e9;
   MAIN_CH.forEach((c, k) => { const d = Math.abs(appPos(k) - s); if(d < bd){ bd = d; best = k; } });
   return best;
-}
-function progressPct(){
-  let done = 0, total = 0;
-  for(const i of MAIN_CH){ total += 2; if(save.bestCh[i] != null) done++; if(save.gems[i]) done++; }
-  total += 2; if(save.goldFicelle) done++; if(save.crystalFicelle) done++;
-  return Math.round(done / total * 100);
 }
 
 // ---------------------------------------------------------------- navigation
@@ -300,8 +304,9 @@ function goPage(p, dir = 1){
   menu.splash = null;
   if(menu.page === p) return;
   menu.from = menu.page; menu.page = p; menu.t = REDUCED ? 1 : 0; menu.dir = dir;
-  menu.drag = null; menu.down = null; menu.hits = []; menu.credFast = false;
+  menu.drag = null; menu.down = null; menu.hits = []; menu.credFast = false; menu.bindWait = null;
   if(p === 'chapters'){
+    refreshMainCh();
     if(!MAIN_CH.includes(menuSel)) menuSel = defaultChapter();
     if(chIndex !== menuSel || rIndex !== 0) loadRoom(menuSel, 0);
     menu.scroll = appPos(appIndex(menuSel)) + dir * 150;
@@ -320,7 +325,10 @@ function goBack(){
 
 // ---------------------------------------------------------------- home page
 function homeFocus(d){ menu.sel.home = (menu.sel.home + d + 4) % 4; SFX.menu(); }
+// démo en ligne : ce qui n'est pas dans la démo le dit, sans ouvrir la page
+function demoNo(){ showToast('Pas disponible dans la démo', 110); SFX.hurt(); menu.shakeT = 12; }
 function homeActivate(i){
+  if(demoOn() && i > 1){ demoNo(); return; }   // démo : Paramètres s'ouvre (Son, Jeu, Commandes), pas Crédits ni XELIAX
   if(i === 0){ homeHero.hop = 1; goPage('chapters'); }
   else if(i === 1) goPage('settings');
   else if(i === 2) goPage('credits');
@@ -328,6 +336,7 @@ function homeActivate(i){
 }
 function openPetFromHome(){
   if(fadeDir !== 0) return;
+  if(demoOn()){ demoNo(); return; }
   homeHero.hop = 1; homeHero.wobV += 0.8; setFace(homeHero, 'open', 30);
   SFX.bloop(); transition(openPet);
 }
@@ -356,10 +365,12 @@ function menuMove(d){
 }
 function switchSeason(s){
   if(seasonOf(menuSel) === s) return;
+  if(s === 2 && !s2Visible()){ menu.nudge = 30; SFX.thud(); return; }   // pas encore de saison 2
   selectApp(s === 2 ? S2_FIRST + Math.min(3, save.unlocked2 - 1) : Math.min(save.unlocked - 1, STORY_END));
 }
 function lockText(i){
   const c = CHAPTERS[i];
+  if(demoOn() && (c.bonus || c.season === 2 || i > 1)) return 'Pas disponible dans la démo';
   if(c.bonus) return c.bonus2 ? 'Finis la saison 2 pour débloquer ce bonus' : 'Finis la saison 1 pour débloquer ce bonus';
   return 'Termine le chapitre précédent pour le débloquer';
 }
@@ -384,6 +395,8 @@ function settingsRows(){
   if(SET.creator) rows.push({kind:'link', id:'test', label:'Tester une salle ou un boss', icon:'game', tile:'#ffb020', to:'test'});
   if(bonusVisible()) rows.push({kind:'link', id:'bonus', label:'Bonus secret', icon:'secret', tile:'#c9930e', to:'bonus',
     value:`${BONUS_CH.filter(isUnlocked).length * 2} défis`, badge:!save.bonusFolderSeen});
+  // démo : seuls Son, Jeu et Commandes s'ouvrent ; le reste dit « Pas disponible dans la démo »
+  if(demoOn()) for(const r of rows) if(!['son', 'jeu', 'controls', 'admin'].includes(r.id)){ r.demoOff = true; r.value = 'Démo 🔒'; r.badge = false; }
   return rows;
 }
 function sonRows(){
@@ -400,6 +413,7 @@ function jeuRows(){
     {kind:'toggle', id:'shake', label:'L\'écran tremble', get:() => SET.shake, set:v => { setSetting('shake', v); if(v) addShake(5); }},
     {kind:'toggle', id:'reduced', label:'Animations réduites', get:() => SET.reduced, set:v => setSetting('reduced', v)},
     {kind:'toggle', id:'fps', label:'Afficher les images par seconde', get:() => !!SET.fps, set:v => setSetting('fps', v)},
+    {kind:'toggle', id:'autoJump', label:'Garder le saut appuyé : saute en boucle', get:() => !!SET.autoJump, set:v => setSetting('autoJump', v)},
   ];
   if(SET.creatorFound) rows.push({kind:'toggle', id:'creator', label:'Mode créateur : tout ouvrir', accent:'#ffd54a', get:() => SET.creator,
     set:v => { setSetting('creator', v); showToast(v ? 'Mode créateur : tout est ouvert !' : 'Mode créateur coupé', 100); if(v) SFX.power(); }});
@@ -409,6 +423,7 @@ function jeuRows(){
 function pageRows(p){ return p === 'settings' ? settingsRows() : p === 'son' ? sonRows() : p === 'jeu' ? jeuRows() : p === 'test' ? testRows() : []; }
 function rowActivate(r){
   if(!r) return;
+  if(r.demoOff){ demoNo(); return; }
   if(r.kind === 'link') goPage(r.to, 1);
   else if(r.kind === 'toggle'){ r.set(!r.get()); SFX.menu(); }
   else if(r.kind === 'choice') rowAdjust(r, 1);
@@ -416,6 +431,7 @@ function rowActivate(r){
 }
 function rowAdjust(r, d){
   if(!r) return;
+  if(r.demoOff){ if(d > 0) demoNo(); return; }
   if(r.kind === 'toggle'){ const v = d > 0; if(r.get() !== v){ r.set(v); SFX.menu(); } }
   else if(r.kind === 'slider'){ const v = clamp(r.get() + d, r.min, r.max); if(v !== r.get()) r.set(v); }
   else if(r.kind === 'choice'){ const o = r.options, j = o.indexOf(r.get()); r.set(o[((j < 0 ? 0 : j) + d + o.length) % o.length]); SFX.menu(); }
@@ -593,7 +609,13 @@ function menuKey(k, rep = false){
   }
   if(p === 'credits'){ if(ok || up) menu.credFast = true; return; }
   if(p === 'look'){ if(left || right) lookPick(left ? -1 : 1); else if(ok && !rep){ const s = SKINS[menu.sel.look]; if(!(s && buySkin(s))) goBack(); } return; }
-  if(p === 'controls'){ if(ok && !rep) goBack(); return; }
+  if(p === 'controls'){
+    const n = KEY_ROWS.length + 1, s = clamp(menu.sel.controls || 0, 0, n - 1);
+    if(up){ menu.sel.controls = (s - 1 + n) % n; SFX.menu(); }
+    else if(down){ menu.sel.controls = (s + 1) % n; SFX.menu(); }
+    else if(ok && !rep) controlsActivate(s);
+    return;
+  }
   const rows = pageRows(p), n = rows.length;
   if(!n) return;
   const s = clamp(menu.sel[p] || 0, 0, n - 1);
@@ -724,27 +746,6 @@ function toggleSwitch(x, y, k, accent = '#34c759'){
   const kx = x + 11 + k * 18;
   ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.arc(kx, y + 12.2, 9, 0, TAU); ctx.fill();
   ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(kx, y + 11, 9, 0, TAU); ctx.fill();
-}
-function drawStatusBar(a){
-  if(a <= 0.01) return;
-  ctx.save(); ctx.globalAlpha *= a;
-  const d = new Date(), time = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-  txt(time, 24, 14.5, 12, '#ffffff', 700, 'left');
-  const pct = progressPct();
-  const bx = W - 40, by = 6;
-  rr(bx, by, 22, 11, 3); ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1.2; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'; rr(bx + 23, by + 3.5, 2, 4, 1); ctx.fill();
-  rr(bx + 2, by + 2, Math.max(1, 18 * pct / 100), 7, 1.5); ctx.fillStyle = pct >= 100 ? '#ffd54a' : pct > 20 ? '#4cd964' : '#ff4d6d'; ctx.fill();
-  ctx.font = `600 11px ${FU}`; const pw = ctx.measureText(`${pct} %`).width;
-  txt(`${pct} %`, bx - 5, 15, 11, '#ffffff', 600, 'right');
-  const wx = bx - 12 - pw, wy = 15;
-  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-  for(const r of [3.5, 6.5, 9.5]){ ctx.beginPath(); ctx.arc(wx, wy, r, -Math.PI * 0.75, -Math.PI * 0.25); ctx.stroke(); }
-  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(wx, wy, 1.3, 0, TAU); ctx.fill();
-  const sx = wx - 30;
-  for(let i = 0; i < 4; i++){ ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.fillRect(sx + i * 4, 15 - 3 - i * 2, 2.6, 3 + i * 2); }
-  txt('Olive 5G', sx - 5, 15, 11, '#ffffff', 600, 'right');
-  ctx.restore();
 }
 // menu toasts drop down from the top, like a phone notification
 function drawMenuToast(){
@@ -1072,7 +1073,7 @@ function drawHome(act){
     const sx = HOME_X - (w1 + w2) / 2;
     txt(a1, sx, 345, 12.5, '#e0d4ff', 500, 'left'); txt('xeliax9', sx + w1, 345, 12.5, '#ffd54a', 700, 'left');
     ctx.restore();
-    if(act) hit(HOME_X - 64, 332, 128, 20, {id:'sig', click:() => goPage('credits')});
+    if(act) hit(HOME_X - 64, 332, 128, 20, {id:'sig', click:() => demoOn() ? demoNo() : goPage('credits')});
   }
   if(!TOUCH && T > 70 && menu.pointerT > 300){
     ctx.save(); ctx.globalAlpha *= 0.85;
@@ -1187,31 +1188,67 @@ function drawLook(act){
   txt(`🪙 ${save.bank} pièces   ·   💎 ${gemCount()} gemmes`, 438, 74, 12, '#ffe58a', 700);
   if(!TOUCH) promptLine([{key:'◀'}, {key:'▶'}, {text:'changer de couleur'}, {gap:10}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
 }
-const CONTROL_ROWS = [
-  ['Bouger', ['A', 'D'], '◀ ▶'], ['Sauter, double saut', ['W', 'Espace'], '▲'], ['Tirer (garder : super tir)', ['J'], '●'], ['Dash', ['K', 'Maj'], '»'],
-  ['Parler', ['E'], '●'], ['Pause', ['P', 'Échap'], 'II'], ['Couper le son', ['M'], ''],
+// page Commandes : chaque action a une touche lettre qu'on peut changer (+ des touches fixes)
+const KEY_ROWS = [
+  {id:'left', label:'Aller à gauche', fixed:['◀'], pad:'◀'}, {id:'right', label:'Aller à droite', fixed:['▶'], pad:'▶'},
+  {id:'jump', label:'Sauter, double saut', fixed:['Espace', '▲'], pad:'▲'}, {id:'shoot', label:'Tirer (garder : super tir)', fixed:[], pad:'●'},
+  {id:'dash', label:'Dash', fixed:['Maj'], pad:'»'}, {id:'talk', label:'Parler', fixed:['▼'], pad:'●'},
+  {id:'pause', label:'Pause', fixed:['Échap'], pad:'II'},
 ];
+function controlsActivate(j){
+  if(j >= KEY_ROWS.length){   // dernière ligne : remettre les touches de départ
+    SET.keys = Object.assign({}, KEY_DEF); persist(); menu.bindWait = null;
+    showToast('Touches de départ remises', 90); SFX.menu(); return;
+  }
+  menu.bindWait = KEY_ROWS[j].id; menu.sel.controls = j; SFX.menu();
+}
+// la touche appuyée devient celle de l'action choisie (Échap annule) ; si une autre action l'avait, elles échangent
+function bindKey(key){
+  const a = menu.bindWait; menu.bindWait = null;
+  if(key === 'Escape'){ SFX.menu(); return; }
+  const k = key.toLowerCase(), name = id => KEY_ROWS.find(r => r.id === id).label;
+  if(k.length !== 1 || k === ' '){ showToast('Choisis une lettre ou un chiffre', 100); SFX.hurt(); return; }
+  if(k === 'm'){ showToast('M sert à couper le son : choisis une autre touche', 110); SFX.hurt(); return; }
+  const other = Object.keys(SET.keys).find(o => o !== a && SET.keys[o] === k);
+  if(other) SET.keys[other] = SET.keys[a];
+  SET.keys[a] = k; persist(); SFX.coin();
+  showToast(other ? `${name(a)} : ${k.toUpperCase()} (échangée avec « ${name(other)} »)` : `${name(a)} : touche ${k.toUpperCase()}`, 130);
+}
 function drawControls(act){
   navHeader(PAGE_NAME.controls, 'Paramètres', act);
-  const x = 120, y = 92, w = 400, rh = 29, h = CONTROL_ROWS.length * rh;
-  txt('Clavier', x + 220, y - 8, 11.5, '#c9c1f0', 600); txt('Tactile', x + 345, y - 8, 11.5, '#c9c1f0', 600);
+  const x = 120, y = 84, w = 400, rh = 25, n = KEY_ROWS.length + 1, h = n * rh;
+  const fs = clamp(menu.sel.controls || 0, 0, n - 1);
+  txt('Clavier (clique pour changer)', x + 228, y - 8, 11, '#c9c1f0', 600); txt('Tactile', x + 362, y - 8, 11, '#c9c1f0', 600);
   rr(x, y, w, h, 14); ctx.fillStyle = 'rgba(20,13,46,0.94)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
-  CONTROL_ROWS.forEach(([label, keys, pad], j) => {
-    const ry = y + j * rh, cy = ry + rh / 2;
+  for(let j = 0; j < n; j++){
+    const ry = y + j * rh, cy = ry + rh / 2, r = KEY_ROWS[j];
     if(j > 0){ ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x + 14, ry, w - 28, 1); }
-    txt(label, x + 16, cy + 5, 13.5, '#ffffff', 600, 'left');
+    if(j === fs){
+      ctx.save(); rr(x, y, w, h, 14); ctx.clip();
+      ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x, ry, w, rh);
+      ctx.fillStyle = '#ffd54a'; ctx.fillRect(x, ry + 6, 3, rh - 12);
+      ctx.restore();
+    }
+    if(act) hit(x, ry, w, rh, {id:'key:' + j, click:() => controlsActivate(j), hover:() => { if(!menu.bindWait) menu.sel.controls = j; }});
+    if(!r){ txt('Remettre les touches de départ', x + 16, cy + 4.5, 13, '#8cc4ff', 600, 'left'); continue; }
+    txt(r.label, x + 16, cy + 4.5, 13, '#ffffff', 600, 'left');
+    const wait = menu.bindWait === r.id;
+    const keys = [wait ? (Math.floor(frame / 20) % 2 ? '…' : '?') : keyName(r.id), ...r.fixed];
     ctx.font = `700 11px ${FU}`;
     const kws = keys.map(k => Math.max(19, ctx.measureText(k).width + 13)), total = kws.reduce((a, b) => a + b, 0) + (keys.length - 1) * 5;
-    let kx = x + 220 - total / 2;
-    keys.forEach((k, n) => { keycap(k, kx, cy + 4); kx += kws[n] + 5; });
-    if(pad){
-      const pcx = x + 345;
-      ctx.fillStyle = pad === '»' ? '#e0a400' : pad === '●' ? '#ff8a3d' : pad === 'II' ? '#d3c8fa' : '#5a2ee6';
-      rr(pcx - (pad.length > 1 ? 18 : 11), cy - 10, pad.length > 1 ? 36 : 22, 20, 10); ctx.fill();
-      txt(pad, pcx, cy + 4.5, 12, pad === 'II' ? '#2a1d63' : '#ffffff', 700, 'center', FD);
-    }
-  });
-  txt('Sur un téléphone, les boutons tactiles apparaissent sous le jeu.', W / 2, y + h + 24, 11.5, '#c9c1f0', 500);
+    let kx = x + 228 - total / 2;
+    keys.forEach((k, m) => {
+      if(m === 0 && (wait || j === fs)){ rr(kx - 3, cy - 13, kws[0] + 6, 25, 7); ctx.strokeStyle = wait ? '#ff9a3c' : '#ffd54a'; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.save(); if(m > 0) ctx.globalAlpha = 0.7; keycap(k, kx, cy + 4); ctx.restore(); kx += kws[m] + 5;
+    });
+    const pad = r.pad, pcx = x + 362;
+    ctx.fillStyle = pad === '»' ? '#e0a400' : pad === '●' ? '#ff8a3d' : pad === 'II' ? '#d3c8fa' : '#5a2ee6';
+    rr(pcx - (pad.length > 1 ? 18 : 11), cy - 10, pad.length > 1 ? 36 : 22, 20, 10); ctx.fill();
+    txt(pad, pcx, cy + 4.5, 12, pad === 'II' ? '#2a1d63' : '#ffffff', 700, 'center', FD);
+  }
+  const foot = menu.bindWait ? 'Appuie sur la nouvelle touche… (Échap pour annuler)' : 'M : couper le son  ·  sur téléphone, les boutons tactiles sont sous le jeu';
+  txt(foot, W / 2, y + h + 20, 11.5, menu.bindWait ? '#ffb86b' : '#c9c1f0', 500);
+  if(!TOUCH) promptLine([{key:'▲'}, {key:'▼'}, {text:'choisir'}, {gap:8}, {key:'Espace'}, {text:'changer la touche'}, {gap:8}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
 }
 function drawCreditItem(c, cy, act){
   if(c.k === 'logo'){
@@ -1372,7 +1409,6 @@ function drawMenu(){
   if(to === 'chapters') drawWorldPage(oTo);
   if(from) drawPageContent(from, oFrom, false);
   drawPageContent(to, oTo, !moving && fadeDir === 0);
-  drawStatusBar(Math.min(1, (PHONE_PAGES.has(to) ? e : 0) + (from && PHONE_PAGES.has(from) ? 1 - e : 0)));
   drawMenuFx();
   ctx.restore();
   drawSplash();
@@ -1455,7 +1491,7 @@ function drawChapterClear(){
     txt(v, b.x + b.w - 58, ry, 13.5, '#ffffff', 700, 'right');
     if(tag){ ctx.font = `700 10px ${FU}`; const tw = ctx.measureText(tag).width + 12; rr(b.x + b.w - 58 - 112 - tw, ry - 11, tw, 15, 7); ctx.fillStyle = '#ffd54a'; ctx.fill(); txt(tag, b.x + b.w - 58 - 112 - tw / 2, ry, 10, '#3a2400', 700); }
   });
-  const nextTxt = clearInfo.bonus ? 'retour au menu' : 'chapitre suivant';
+  const nextTxt = clearInfo.bonus ? 'retour au menu' : demoOn() && !isUnlocked(chIndex + 1) ? 'fin de la démo' : 'chapitre suivant';
   if(stateT >= 45 && (Math.floor(frame / 30) % 2 === 0 || REDUCED)) promptLine(TOUCH ? [{key:'▲'}, {text:nextTxt}] : [{key:'Espace'}, {text:nextTxt}], b.y + b.h - 15);
   ctx.restore();
 }

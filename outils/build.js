@@ -1,7 +1,7 @@
 // Rassemble le jeu : src/ -> dist/aventure.html (un seul fichier, jouable hors ligne)
 //   1. la saison 2 est générée depuis src/niveaux/saison2/entetes.js + salles/<monde>-<salle>.js
 //   2. les fichiers de src/js et src/niveaux sont mis bout à bout dans l'ordre de src/ordre.json
-// usage : node outils/build.js [--out chemin.html]
+// usage : node outils/build.js [--out chemin.html] [--demo]
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), SRC = path.join(ROOT, 'src');
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : path.join(ROOT, 'dist', 'aventure.html');
@@ -47,7 +47,12 @@ fs.writeFileSync(path.join(ROOT, 'outils', 'cache', 'chapters2.js'), 'const CHAP
 
 // ---- assemblage
 const order = JSON.parse(fs.readFileSync(path.join(SRC, 'ordre.json'), 'utf8'));
-const js = order.map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('');
+let js = order.map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('');
+// --demo : version en ligne, seuls les chapitres 1 et 2 (voir DEMO dans src/js/00_bases.js)
+if(process.argv.includes('--demo')) js = js.replace('/*@DEMO*/false', 'true');
+// numéro de version : 1.0.NN, NN = le plus grand versions/vNN.txt
+const vMax = Math.max(0, ...fs.readdirSync(path.join(ROOT, 'versions')).map(f => +(/^v(\d+)\.txt$/.exec(f) || [])[1] || 0));
+js = js.replace("/*@VERSION*/''", () => `'v1.0.${vMax}'`);   // affiché « v1.0.48 » ; le tag GitHub a le même nom
 const css = fs.readFileSync(path.join(SRC, 'style.css'), 'utf8');
 const page = fs.readFileSync(path.join(SRC, 'page.html'), 'utf8');
 const html = page.replace('/*@CSS*/', () => css).replace('/*@JS*/', () => js);

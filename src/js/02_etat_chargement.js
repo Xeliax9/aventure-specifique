@@ -326,7 +326,7 @@ function toMenu(){
   timerRunning = false;
   const c = CHAPTERS[chIndex];
   if(c && c.bonus){ menu.page = 'bonus'; menu.sel.bonus = Math.max(0, BONUS_CH.indexOf(chIndex)); menuSel = defaultChapter(); }
-  else { menu.page = 'chapters'; menuSel = c && isUnlocked(chIndex) ? chIndex : defaultChapter(); }
+  else { refreshMainCh(); menu.page = 'chapters'; menuSel = c && isUnlocked(chIndex) && MAIN_CH.includes(chIndex) ? chIndex : defaultChapter(); }
   menu.from = null; menu.t = 1; menu.drag = null; menu.down = null; menu.splash = null;
   loadRoom(menuSel, 0);
   menu.scroll = appPos(appIndex(menuSel));

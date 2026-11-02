@@ -95,6 +95,7 @@ if(save.bestCh[3] != null) save.unlocked = Math.max(save.unlocked, 5);   // fini
 const bonusOpen = () => save.bestCh[3] != null || SET.creator;
 const isUnlocked = i => {
   const c = CHAPTERS[i];
+  if(demoOn() && (c.bonus || c.season === 2 || i > 1)) return false;   // démo : chapitres 1 et 2 seulement
   if(SET.creator) return true;
   if(c.bonus) return c.bonus2 ? !!save.s2Done : save.bestCh[3] != null;
   return c.season === 2 ? c.num <= save.unlocked2 : i < save.unlocked;
@@ -185,6 +186,18 @@ function addBank(n){ save.bank = (save.bank || 0) + n; persist(); }
 save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, timer:true, lives:5, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
 if(![3, 5, 7, 9].includes(save.settings.lives)) save.settings.lives = 5;
 const SET = save.settings;
+// touches au choix (page Commandes) : chaque action a une touche lettre que le joueur peut changer.
+// Les flèches, Espace, Maj et Échap marchent toujours en plus.
+const KEY_DEF = {left:'a', right:'d', jump:'w', shoot:'j', dash:'k', talk:'e', pause:'p'};
+SET.keys = Object.assign({}, KEY_DEF, SET.keys && typeof SET.keys === 'object' ? SET.keys : {});
+const keyName = a => (SET.keys[a] || KEY_DEF[a]).toUpperCase();
+// pendant une partie : la touche choisie par le joueur -> la touche d'origine que le moteur connaît ;
+// la touche d'origine d'une action déplacée ne fait plus rien
+function gameKey(k){
+  for(const a in KEY_DEF) if(SET.keys[a] === k) return KEY_DEF[a];
+  for(const a in KEY_DEF) if(KEY_DEF[a] === k) return '';
+  return k;
+}
 const skinOpen = s => SET.creator || (s.price ? !!(save.owned || {})[s.id] : s.gems ? gemCount() >= s.gems : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
 const skinOf = () => SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
 const startLives = () => SET.lives || 5;

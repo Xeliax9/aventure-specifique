@@ -216,7 +216,7 @@ function drawNpcPrompt(n){
   if(n.near <= 0.01 || state !== 'play' || idle.phase) return;
   const s = Math.max(0.01, easeOutBack(n.near));
   const D = NPCS[n.who], learned = D.step == null ? !!(save.talked && save.talked[n.who]) : save.recipe[D.step];
-  const label = learned ? 'Reparler' : 'Parler', keyLabel = TOUCH ? '●' : 'E';
+  const label = learned ? 'Reparler' : 'Parler', keyLabel = TOUCH ? '●' : keyName('talk');
   ctx.font = `700 11px ${FU}`;
   const kw = Math.max(19, ctx.measureText(keyLabel).width + 13);
   ctx.font = `600 11px ${FU}`;

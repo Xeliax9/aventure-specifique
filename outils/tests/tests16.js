@@ -12,10 +12,13 @@ const { chromium } = require('playwright');
     const go = (ci, ri) => { newRun(ci); fade=0; fadeDir=0; pendingAction=null; loadRoom(ci, ri); setState('play'); bannerT=0; toast.t=0; if(cine) finishCine(); };
     // ---- bonus card hidden until the adventure is finished
     toMenu(); fade=0; fadeDir=0; run(30);
-    ok(MAIN_CH.length === 8 && !isUnlocked(4) && !bonusVisible(), 'fresh save: 8 chapter apps, no bonus anywhere');
-    menuSel = 3; menuMove(1); ok(menuSel === 5, 'right from chapter 4 goes to season 2, chapter 1');
+    ok(MAIN_CH.length === 4 && !isUnlocked(4) && !bonusVisible(), 'fresh save: 4 chapter apps (season 2 hidden), no bonus anywhere');
+    menuSel = 3; menuMove(1); ok(menuSel === 3, 'right from chapter 4 stays (no season 2 yet)');
     menuSel = 0;
     save.bestCh[3] = 90000; save.unlocked = 5;
+    toMenu(); fade=0; fadeDir=0; run(5);
+    ok(MAIN_CH.length === 8, 'after finishing season 1: the 4 season 2 apps appear');
+    menuSel = 3; menuMove(1); ok(menuSel === 5, 'right from chapter 4 goes to season 2, chapter 1');
     menuSel = 0; run(5); render(1);
     ok(isUnlocked(4) && bonusVisible() && !MAIN_CH.includes(4), 'after finishing chapter 4: the bonus opens, hidden in the settings (not among the apps)');
     // ---- every room fits its 1.5x size and loads

@@ -410,8 +410,8 @@ const CHAPTERS = [
         platforms:[
           {x:0, y:1080, w:640, h:20},
           {x:80, y:985, w:90},
-          {x:300, y:925, w:80, move:{axis:'x', min:260, max:420, speed:1.2}},
-          {x:480, y:850, w:90},
+          // v48 : pendant le combat, seulement gauche / milieu / droite (plus de plateformes en l'air) ;
+          // celle-ci (y 805) est l'endroit où la lave propulse XELIAX après la victoire (launchTo)
           {x:330, y:805, w:70},
           {x:150, y:700, w:90, move:{axis:'x', min:100, max:260, speed:1.3}},
           {x:20, y:625, w:80},
@@ -422,17 +422,15 @@ const CHAPTERS = [
           {x:150, y:250, w:90, move:{axis:'x', min:120, max:260, speed:1.4}},
           {x:20, y:175, w:90},
           {x:180, y:100, w:240},
-          {x:20, y:900, w:70},
           {x:470, y:985, w:90},
           {x:290, y:1010, w:60},
         ],
         enemies:[
-          {on:3, from:0, to:90, speed:1.3},
-          {on:9, from:0, to:80, speed:1.5},
-          {on:13, from:0, to:150, speed:1.8},
+          {on:7, from:0, to:80, speed:1.5},
+          {on:11, from:0, to:150, speed:1.8},
         ],
         powerUps:[{x:50, y:598, type:'life'}],
-        coins:[[165, 970], [520, 820], [210, 520], [580, 370], [440, 295], [60, 145]],
+        coins:[[165, 970], [515, 955], [210, 520], [580, 370], [440, 295], [60, 145]],
         boss:{mode:'ascent', name:'Le Seigneur Pourpre', hp:12, x:300, y:900, w:40, h:40},
         door:null,
       },
