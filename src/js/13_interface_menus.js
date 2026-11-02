@@ -1493,8 +1493,24 @@ function drawChapterClear(){
   });
   const nextTxt = clearInfo.bonus ? 'retour au menu' : demoOn() && !isUnlocked(chIndex + 1) ? 'fin de la démo' : 'chapitre suivant';
   if(stateT >= 45 && (Math.floor(frame / 30) % 2 === 0 || REDUCED)) promptLine(TOUCH ? [{key:'▲'}, {text:nextTxt}] : [{key:'Espace'}, {text:nextTxt}], b.y + b.h - 15);
+  // fin de la démo : un bouton pour donner son avis (page GitHub des retours, comme les amis l'ont fait)
+  feedbackBtn = null;
+  if(demoOn() && !clearInfo.bonus && !isUnlocked(chIndex + 1) && stateT >= 45){
+    const label = TOUCH ? '💬 Donne ton avis' : '💬 Donne ton avis (touche A)';
+    ctx.font = `700 13px ${FU}`;
+    const bw = ctx.measureText(label).width + 30, bh = 28, bx = W / 2 - bw / 2, by = b.y + b.h + 12;
+    const hov = menu.mx >= bx && menu.mx <= bx + bw && menu.my >= by && menu.my <= by + bh;
+    rr(bx, by, bw, bh, 14); ctx.fillStyle = hov ? '#ffe27a' : '#ffd54a'; ctx.fill();
+    ctx.strokeStyle = '#b4841f'; ctx.lineWidth = 1.5; ctx.stroke();
+    txt(label, W / 2, by + 18.5, 13, '#3a2400', 700);
+    feedbackBtn = {x:bx, y:by, w:bw, h:bh};
+  }
   ctx.restore();
 }
+let feedbackBtn = null;
+const FEEDBACK_URL = 'https://github.com/Xeliax9/aventure-specifique/issues/new?title=' + encodeURIComponent('Mon avis sur la démo')
+  + '&body=' + encodeURIComponent('Version : ' + VERSION + '\n\nCe qui m\'a plu :\n\nCe qui ne va pas / bugs :\n\nIdées :\n');
+function openFeedback(){ SFX.menu(); window.open(FEEDBACK_URL, '_blank', 'noopener'); }
 
 function drawWin(){
   overlayDim(0.55);

@@ -18,7 +18,9 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
 - `src/niveaux/saison2.js` est **généré** par le build : ne pas le modifier à la main.
 - `dist/aventure.html` : le jeu assemblé (à ouvrir dans un navigateur) ; **pas suivi par git** (généré par le build).
 - En ligne : https://xeliax9.github.io/aventure-specifique/, publié par `.github/workflows/pages.yml` quand on pousse
-  un tag (`git tag vNN && git push origin vNN`). Le workflow construit avec `--demo` : version démo
+  un tag (`git tag -a v0.9.NN -m "…" && git push origin v0.9.NN`) ; tags v0.9.34 → v0.9.NN = versions 34 → NN.
+  Attention : chaque tag poussé sur un commit qui contient le workflow republie le site (pousser le plus récent en dernier).
+  Releases GitHub : Claude n'a pas accès au compte ; préparer des liens pré-remplis (`perso/RELEASES_A_CREER.md`). Le workflow construit avec `--demo` : version démo
   (`DEMO` dans `00_bases.js` : chapitres 1 et 2 seulement ; Crédits, Nourrir XELIAX bloqués ; Paramètres : Son, Jeu, Commandes, Connexion admin ; `demoOn()` = démo active, l'admin connecté lève tout).
   Enlever `--demo` du workflow pour mettre le jeu complet en ligne.
 
@@ -43,11 +45,12 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v49 = v1.0.49, 2 novembre 2026)
+## État (v50 = v0.9.50, 2 novembre 2026)
 - Menu : la saison 2 n'apparaît qu'après la fin de la saison 1 (`s2Visible`, `refreshMainCh`) ; plus de barre de téléphone.
 - v48 (retours GitHub de hugomslv) : touches dessinées cliquables dans les menus (`PROMPT_KEY`) ; touches au choix
   (page Commandes, `SET.keys`, `gameKey`) ; option saut automatique (`SET.autoJump`) ; cartes de chapitres nettes (`zoom`) ;
-  numéro de version `v1.0.NN` en bas à gauche (`VERSION`, mis par le build d'après `versions/`) ; tag GitHub `v1.0.NN`.
+  numéro de version `v0.9.NN` en bas à gauche (`VERSION`, mis par le build d’après `versions/`) ; tag GitHub `v0.9.NN`
+  (0.9 = démo ; passer en 1.0.0 quand le jeu complet sort en ligne). Mot de passe admin : seule l’empreinte SHA-256 (`ADMIN_HASH`).
 - `perso/` (ignoré par git) : notes pour l'utilisateur, dont `perso/A_TESTER.md` (liste de choses à tester).
 - `capture pour correction/` (ignoré par git) : captures d’écran que l’utilisateur dépose pour signaler un défaut.
 - S2 monde 1 : 1-1 Tête en bas, 1-2 Chemin des Nuages, 1-3 Les Planches (validée et adorée), 1-4 Les Parachutes,

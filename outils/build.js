@@ -50,9 +50,9 @@ const order = JSON.parse(fs.readFileSync(path.join(SRC, 'ordre.json'), 'utf8'));
 let js = order.map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('');
 // --demo : version en ligne, seuls les chapitres 1 et 2 (voir DEMO dans src/js/00_bases.js)
 if(process.argv.includes('--demo')) js = js.replace('/*@DEMO*/false', 'true');
-// numéro de version : 1.0.NN, NN = le plus grand versions/vNN.txt
+// numéro de version : 0.9.NN, NN = le plus grand versions/vNN.txt
 const vMax = Math.max(0, ...fs.readdirSync(path.join(ROOT, 'versions')).map(f => +(/^v(\d+)\.txt$/.exec(f) || [])[1] || 0));
-js = js.replace("/*@VERSION*/''", () => `'v1.0.${vMax}'`);   // affiché « v1.0.48 » ; le tag GitHub a le même nom
+js = js.replace("/*@VERSION*/''", () => `'v0.9.${vMax}'`);   // affiché « v0.9.50 » (0.9 = démo, jeu pas fini ; 1.0.0 = jeu complet en ligne) ; le tag GitHub a le même nom
 const css = fs.readFileSync(path.join(SRC, 'style.css'), 'utf8');
 const page = fs.readFileSync(path.join(SRC, 'page.html'), 'utf8');
 const html = page.replace('/*@CSS*/', () => css).replace('/*@JS*/', () => js);
