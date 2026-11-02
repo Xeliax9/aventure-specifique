@@ -64,7 +64,7 @@ function buildDeck(){
 }
 // ---- admin login (debugging): the right password turns the creator mode on, which opens everything
 // seule l'empreinte SHA-256 du mot de passe est dans le code (le jeu est public sur GitHub) : on ne peut pas le relire
-const ADMIN_HASH = '1f86c446121a0219e5eae8c531981ee550b0844384f1603bc0c9eb625b2c3d91';
+const ADMIN_HASH = '6ff0ecd528600081dac2bc287cd45997ef8eb467e844ab8afb15488a1abefe65';
 async function sha256hex(t){
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
