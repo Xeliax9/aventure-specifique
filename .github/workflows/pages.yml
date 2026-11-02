@@ -1,0 +1,52 @@
+# Publie le jeu sur GitHub Pages à chaque nouveau tag (ex. : git tag v35 && git push origin v35)
+name: Déploiement GitHub Pages
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Assembler le jeu
+        run: node outils/build.js
+
+      - name: Préparer le site
+        run: |
+          mkdir -p _site
+          cp dist/aventure.html _site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deployer:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - name: Déployer sur GitHub Pages
+        id: deploiement
+        uses: actions/deploy-pages@v4
