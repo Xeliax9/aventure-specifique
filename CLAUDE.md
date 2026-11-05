@@ -45,7 +45,15 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v50 = v0.9.50, 2 novembre 2026)
+## État (v52 = v0.9.52, 4 novembre 2026)
+- Chapitre 3 de la saison 1 (v52) : 3-2 L'Escalier refaite (sans chauves-souris, un thème par étage), nouvelle 3-4 Le Chemin de Ronde, boss Gardien en 3-5 (`loadRoom(2,4)`).
+  Gardien : 5 + 5 PV, plus de piques ; `p2crumble` = plateforme fragile en phase 2 (`back:600` = retour après 10 s) ; sauter sur lui en vol = `grab` puis `player.slam` (jeté au sol, un cœur).
+  Une bombe casse aussitôt une plateforme `p2crumble` (`breakPlatform`) ; celle du milieu reste solide. Rasage : 7 / 9 px/image, attaque et côté au hasard (`b.same` : deux fois de suite au plus), attente variable, demi-tour possible en phase 2 (`b.turnT`).
+  Gemme du chapitre 3 : dans 3-4, au-dessus de l'écran (y −68), la pièce à y 30 est le seul indice. Les autres gemmes n'ont pas été retouchées.
+- Pause (v52) : lignes cliquables (`pauseBtns`), `pauseRestart` (boss : reprend la phase sans rendre de cœurs), `openPauseKeys` (page Commandes, retour à la pause via `menu.pauseKeys`).
+- Fuite finale : lave à 1,35 px/image ; le robot sans erreur bloque vers 1,8.
+- Bonus Le Cosmos (v52) : salle 1 refaite d'après `capture pour correction/level design.png` (1210 × 680) ; `parTime` 110000 estimé, à ajuster. Tête en bas, le saut ne fait que 64 à 73 px.
+  `route2` ignore les portes (`hp`) : les tester dans le vrai moteur. Après une téléportation dans un test, recaler la caméra, sinon les tirs disparaissent.
 - Menu : la saison 2 n'apparaît qu'après la fin de la saison 1 (`s2Visible`, `refreshMainCh`) ; plus de barre de téléphone.
 - v48 (retours GitHub de hugomslv) : touches dessinées cliquables dans les menus (`PROMPT_KEY`) ; touches au choix
   (page Commandes, `SET.keys`, `gameKey`) ; option saut automatique (`SET.autoJump`) ; cartes de chapitres nettes (`zoom`) ;

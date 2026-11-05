@@ -48,7 +48,7 @@ const { chromium } = require('playwright');
     ok(cine === null, 'skip with jump ends it quickly');
 
     // ---- owl: stomping while it flies back up, or landing on its head while it hovers, never hurts
-    newRun(2); clean(); loadRoom(2,3); setState('play'); finishCine(); lives=5; player.invuln=0; powerUps = [];
+    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); lives=5; player.invuln=0; powerUps = [];
     boss.state='rise'; boss.inv=0; boss.x=300; boss.y=220; const hpA = boss.hp;
     player.x = boss.x + 17; player.y = boss.y - player.h - 1; player.vy = 3; player.onGround=false; player.standingOn=null;
     step();
@@ -58,7 +58,8 @@ const { chromium } = require('playwright');
     ok(lives === 5, 'touching the rising owl from the side is harmless');
     boss.state='hover'; boss.stT=999; boss.inv=0; boss.y=120; player.invuln=0; player.x = boss.x + 17; player.y = boss.y - player.h - 1; player.vy = 3;
     step();
-    ok(lives === 5 && player.vy < 0, 'landing on the hovering owl bounces you off');
+    ok(lives === 5 && boss.state === 'grab' && player.held, 'landing on the hovering owl: it grabs XELIAX (v52)');
+    player.held = false; player.slam = false;
     boss.state='hover'; boss.y=120; player.invuln=0; player.x = boss.x + 20; player.y = boss.y + 10; player.vy = -2;
     step();
     ok(lives === 4, 'hitting the hovering owl from below still hurts');
@@ -67,22 +68,44 @@ const { chromium } = require('playwright');
     player.x = boss.x + 17; player.y = boss.y - player.h - 1; player.vy = 3; step();
     ok(boss.hp === hpB - 1 && boss.state === 'rise', 'stomping the stunned owl hits it');
 
-    // ---- owl phase 2: spikes are telegraphed and XELIAX is walked out of the strip
-    newRun(2); clean(); loadRoom(2,3); setState('play'); finishCine(); lives=5; powerUps = [];
+    // ---- owl phase 2 (v52): no spikes, the side platforms turn fragile
+    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); lives=5; powerUps = [];
     boss.hp=1; boss.state='stunned'; boss.stT=999; boss.inv=0; boss.x=292; boss.y=FLOOR-boss.h;
     player.invuln=0; player.x = boss.x + 17; player.y = boss.y - player.h - 1; player.vy = 3; player.onGround=false;
     step();
     ok(boss.phase === 2 && cine && cine.kind === 'phase2', 'last phase-1 hit starts the phase-2 cinematic');
-    const pend = spikes.filter(s => s.pending);
-    ok(pend.length === 1 && pend[0].appear === 0, 'phase-2 spikes are pending (harmless, not out yet)');
-    let minAppear = 1; run(140); minAppear = pend[0].appear;
-    ok(minAppear === 0, 'spikes stay down for the first 2.3 s');
-    run(140);
-    const zone = room.phase2Spikes[0], pc = player.x + player.w/2;
+    ok(spikes.length === 0, 'no spikes in phase 2');
+    run(280);
     ok(cine === null && !player.dead && lives === 5, `phase-2 cinematic over, XELIAX alive (lives ${lives})`);
-    ok(pc < zone.x || pc > zone.x + zone.w, `XELIAX was walked out of the spike strip (center ${pc.toFixed(0)})`);
-    ok(spikes.every(s => !s.pending), 'spikes active after the cinematic');
-    run(30); ok(!player.dead && lives === 5, 'still alive after the spikes are up');
+    ok(platforms.filter(p => p.p2crumble).length === 2 && platforms.filter(p => p.p2crumble).every(p => p.crumble && p.back === 600), 'side platforms are fragile, back after 10 s');
+
+    // ---- owl phase 2 (v52): a bomb breaks a fragile platform at once, it comes back after 10 s; the middle one holds
+    const sidePl = platforms.find(p => p.p2crumble), midPl = platforms.find(p => p.y === 176);
+    const dropBomb = q => bullets.push({x:q.x + 40, y:q.y - 20, w:12, h:12, vx:0, vy:2, grav:0.12, kind:'bomb'});
+    boss.state = 'rise'; boss.y = 300; player.x = 20; player.y = FLOOR - player.h; player.invuln = 9999;
+    dropBomb(sidePl); run(12);
+    ok(sidePl.gone, 'a bomb breaks the fragile side platform');
+    dropBomb(midPl); run(12);
+    ok(!midPl.gone, 'the middle platform survives bombs');
+    let backF = 0; while(sidePl.gone && backF < 700){ boss.state = 'rise'; boss.y = 300; step(); backF++; }
+    ok(backF > 560 && backF <= 600, `the broken platform comes back after 10 s (${backF} frames)`);
+
+    // ---- owl sweep (v52): random attacks, never three of a kind, both sides, U-turn in phase 2 only
+    const sides = new Set(); let seq = '', maxRun = 0, curRun = 0, last = '';
+    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); bossDemo = null; powerUps = []; player.x = 20; player.y = FLOOR - player.h;
+    for(let i = 0; i < 300; i++){
+      boss.state = 'hover'; boss.stT = 1; boss.fireT = 999; step();
+      const a = boss.state === 'warn' ? 'd' : 's';
+      if(a === 's') sides.add(boss.sx);
+      seq += a; curRun = a === last ? curRun + 1 : 1; last = a; maxRun = Math.max(maxRun, curRun);
+    }
+    ok(seq[0] === 'd' && seq.includes('s') && maxRun <= 2, `attacks are mixed, at most 2 in a row (${seq.slice(0, 16)})`);
+    ok(sides.size === 2, 'the sweep starts from either side');
+    const sweepRun = phase => { boss.phase = phase; boss.state = 'sweep'; boss.x = 300; boss.vx = phase === 2 ? 9 : 7; boss.turned = false; boss.turnT = 0; boss.y = FLOOR - boss.h - 6; player.invuln = 9999;
+      let n = 0, t = false; while(boss.state === 'sweep' && n < 300){ step(); if(boss.turned) t = true; n++; } return t; };
+    let u1 = 0, u2 = 0; for(let i = 0; i < 40; i++){ if(sweepRun(1)) u1++; if(sweepRun(2)) u2++; }
+    ok(u1 === 0 && u2 > 5 && u2 < 35, `U-turn in phase 2 only (phase 1: ${u1}/40, phase 2: ${u2}/40)`);
+    ok(boss.state === 'rise', 'the sweep always ends');
 
     // ---- talking: Mamie Farine teaches step 1
     save.recipe = [false,false,false,false];
@@ -138,9 +161,9 @@ const { chromium } = require('playwright');
     finishCine(); lives=1; player.invuln=0; hurt(0); ok(state === 'over', 'game over in phase 2');
     confirmAction(); run(60);
     ok(boss.phase === 2 && cine && cine.kind === 'phase2' && cine.skippable, 'retry restarts phase 2 (its cinematic can be skipped)');
-    newRun(2); clean(); loadRoom(2,3); setState('play'); finishCine(); boss.hp=1; boss.inv=0; bossDamage(); finishCine();
+    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); boss.hp=1; boss.inv=0; bossDamage(); finishCine();
     lives=1; player.invuln=0; hurt(0); confirmAction(); run(60);
-    ok(boss.phase === 2 && spikes.length === 1 && spikes[0].pending, `owl retry: phase 2, ${spikes.length} spike strip, pending again`);
+    ok(boss.phase === 2 && spikes.length === 0 && platforms.filter(p => p.p2crumble).every(p => p.crumble), 'owl retry: phase 2, side platforms still fragile');
     return o;
   });
   console.log(out.join('\n')); console.log('errors', errs);

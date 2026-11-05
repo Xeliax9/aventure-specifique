@@ -1,0 +1,35 @@
+VERSION 52 (v0.9.52) — Le chapitre 3 se refait une beauté
+
+La Tour (chapitre 3)
+- 3-2 L'Escalier : salle refaite et plus courte. Plus aucune chauve-souris. Chaque étage a
+  maintenant sa propre idée : les marches, l'ascenseur, le ressort, puis la pierre fragile.
+- Nouvelle salle 3-4 : Le Chemin de Ronde, juste avant le boss, avec des pierres fragiles
+  pour s'entraîner. Le Gardien passe donc en 3-5.
+- La gemme secrète a déménagé dans 3-4 : on ne la voit plus à l'écran, et il faut bien viser pour l'attraper.
+
+Le Gardien (boss)
+- 5 points de vie à la phase 1, et 5 à la phase 2 (au lieu de 3 et 3).
+- Phase 2 : plus de piques au sol. Les deux plateformes des côtés deviennent fragiles : elles
+  se cassent quand on reste dessus ou quand une bombe tombe dessus, et reviennent 10 secondes plus tard.
+- Il rase le sol bien plus vite. Il choisit son attaque et son côté au hasard, attend plus ou moins longtemps,
+  et en phase 2 il peut faire demi-tour pour un deuxième passage.
+- Lui sauter dessus en plein vol ne marche plus : il attrape XELIAX et le jette au sol
+  (un cœur en moins). Il faut attendre qu'il s'écrase ou qu'il rase le sol.
+- La présentation « Comment battre le Gardien » est corrigée : il se place au-dessus de toi et
+  tombe tout droit, au lieu de descendre de biais. Une page explique aussi la nouvelle punition.
+
+Tous les boss
+- Dans la présentation d'un boss, Échap revient à la page précédente, puis ferme la présentation.
+
+Fin de la saison 1
+- Après la victoire contre le Seigneur Pourpre, la lave monte presque deux fois plus vite.
+
+Bonus Le Cosmos
+- La première salle, La Traversée Cosmique, est refaite d'après un dessin : mur à grimper, rideau rose,
+  course au plafond sur des pierres fragiles, portes à casser au tir, verre à traverser au dash.
+- Le temps à battre passe de 2 min 15 à 1 min 50, car la salle est plus courte.
+
+Menu pause (Échap ou P)
+- Dans une salle de boss, « Recommencer le chapitre » devient « Recommencer la phase ».
+- Nouveau bouton « Changer les touches » (touche T) : on règle ses touches sans quitter la partie.
+- Les lignes du menu pause se cliquent maintenant à la souris.
