@@ -257,6 +257,19 @@ function pressJump(){
 
 function backToMenu(){ if(state === 'pause' || state === 'over') toMenu(); else if(state === 'pet') closePet(); }
 
+// pause : dans une salle de boss on reprend la phase en cours (sans regagner de cœurs ni compter un « continue »)
+function pauseRestart(){
+  transition(() => {
+    if(room.boss){ const l = lives; restartPhase(); lives = l; continues--; }
+    else { startChapter(chIndex, false); anim.appear = 0; setState('play'); }
+  });
+}
+// pause : la page Commandes s'ouvre par-dessus la partie, qui reste en attente ; le retour ramène à la pause
+function openPauseKeys(){
+  menu.pauseKeys = true; menu.splash = null; menu.page = 'controls'; menu.from = null; menu.t = 1;
+  menu.sel.controls = 0; menu.bindWait = null; menu.drag = null; menu.down = null; menu.hits = [];
+  SFX.menu(); setState('title');
+}
 function togglePause(){
   if(state === 'play' && fadeDir === 0) setState('pause');
   else if(state === 'pause') setState('play');
@@ -292,12 +305,16 @@ window.addEventListener('keydown', e => {
   if(k === 'j' && !e.repeat && state === 'play'){ input.shootPressed = true; input.shootHeld = true; }
   if((k === 'k' || k === 'shift') && !e.repeat && state === 'play') input.dashPressed = true;
   if((k === 'e' || k === 's' || k === 'arrowdown') && !e.repeat) interact();
-  if((k === 'p' || k === 'escape') && !e.repeat){ if(state === 'talk') endTalk(); else togglePause(); }
+  if((k === 'p' || k === 'escape') && !e.repeat){
+    if(bossDemo && state === 'play'){ if(bossDemo.i > 0){ bossDemo.i--; bossDemo.t = 12; } else bossDemo = null; SFX.menu(); }   // tuto du boss : Échap = page précédente, puis fermer
+    else if(state === 'talk') endTalk(); else togglePause();
+  }
   if(k === 'r' && !e.repeat && isSpeedrun()) srRestart();
   if(k === 'm' && !e.repeat) setMuted(!muted);
   if(k === 'q' && !e.repeat) backToMenu();
   if(k === 'c' && !e.repeat && state === 'over') confirmAction();
-  if(k === 'r' && !e.repeat && state === 'pause') transition(() => { startChapter(chIndex, false); anim.appear = 0; setState('play'); });
+  if(k === 'r' && !e.repeat && state === 'pause') pauseRestart();
+  if(k === 't' && !e.repeat && state === 'pause') openPauseKeys();
 });
 window.addEventListener('keyup', e => {
   const k = gameKey(e.key.toLowerCase());
@@ -375,6 +392,7 @@ canvas.addEventListener('pointerdown', ev => {
   if(state === 'title'){ try{ canvas.setPointerCapture(ev.pointerId); }catch(e){} menuPointerDown(x, y); return; }
   const fb = feedbackBtn;   // fin de la démo : bouton « Donne ton avis »
   if(state === 'chapter' && fb && x >= fb.x && x <= fb.x + fb.w && y >= fb.y && y <= fb.y + fb.h){ openFeedback(); return; }
+  if(state === 'pause'){ const pb = pauseBtns.find(q => x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h); if(pb){ pb.act(); return; } }
   if(state === 'over' || state === 'chapter' || state === 'win' || state === 'pause' || state === 'talk') confirmAction();
   else if(state === 'play'){
     if(idle.phase === 'ko'){ idleWake(); return; }

@@ -281,7 +281,7 @@ function resetPlayer(){
   gdir = checkpoint.g || 1;
   Object.assign(player, {
     x:checkpoint.x, y:checkpoint.y, vx:0, vy:0, onGround:false, standingOn:null,
-    coyote:0, buffer:0, usedDJ:false, sx:1, sy:1, dead:false, noCut:false, hurtT:0,
+    coyote:0, buffer:0, usedDJ:false, sx:1, sy:1, dead:false, noCut:false, hurtT:0, held:false, slam:false,
     wallSide:0, wallT:0, wallLock:0, sliding:false, dashT:0, dashReady:true, dashCD:0, dashBuf:0, ghosts:[],
   });
   for(const o of flips){ o.armed = !overlap(player, o); }

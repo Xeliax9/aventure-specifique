@@ -231,7 +231,12 @@ function enterPhase2(announce){
   b.inv = 90; b.hitT = 0;
   if(b.mode === 'slime'){ b.onGround = true; b.y = FLOOR - b.h; b.vx = b.vy = 0; b.hopT = 70; b.hops = 0; b.burstNext = false; b.burst = 0; b.warnT = 0; b.inBurst = false; }
   // the phase-2 spikes are only announced here: they come out during the cinematic, never under XELIAX
-  if(b.mode === 'swoop'){ b.state = 'rise'; for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true}); }
+  if(b.mode === 'swoop'){
+    b.state = 'rise';
+    for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true});
+    // phase 2 : les plateformes des côtés deviennent fragiles et reviennent 10 s après s'être cassées
+    for(const p of platforms) if(p.p2crumble){ p.crumble = true; p.back = 600; p.cT = 0; }
+  }
   if(S2_BOSS.has(b.mode)){
     for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true});
     if(b.mode === 'gecko'){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 120; b.leaps = 0; b.runT = 480; b.shots = 0; }

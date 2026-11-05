@@ -463,11 +463,7 @@ function updateWorld(){
       } else if(p.cT > 0){
         if(frame % 4 === 0) crumbs(p.x + Math.random() * p.w, p.y + p.h, 1, '#b8844f');
         if(++p.cT > 40){
-          p.gone = true; p.rT = 200;
-          crumbs(p.x + p.w/2, p.y + p.h/2, 14, '#c99a62');
-          burst(p.x + p.w/2, p.y + p.h/2, 8, '#ffffff', 1.5, 22, -0.01, 3, 'puff');
-          SFX.crumble();
-          if(player.standingOn === p){ player.standingOn = null; player.onGround = false; }
+          breakPlatform(p);
         }
       }
     }
@@ -562,6 +558,7 @@ function updateWorld(){
         burst(b.x + 6, gy - 2, 10, '#ff8a3c', 2.5, 22, 0.1, 3);
         burst(b.x + 6, gy - 4, 6, '#ffffff', 1.4, 26, -0.01, 4, 'puff');
         ring(b.x + 6, gy - 4, '#ffb347', 2, 18, 14);
+        if(ledge && ledge.p2crumble && ledge.crumble) breakPlatform(ledge);   // phase 2 du Gardien : la bombe casse la plateforme fragile
         if(!ledge && boss && boss.mode === 'swoop'){
           const hot = boss.phase === 2 || boss.hp <= boss.enrage;
           const fw = hot ? 60 : 44;
@@ -574,6 +571,15 @@ function updateWorld(){
   bullets = bullets.filter(b => !b.dead && b.x > camX - 40 && b.x < camX + W + 40 && b.y > camY - 40 && b.y < camY + H + 40);
   for(const f of fires){ f.t++; if(f.t % 9 === 0 && f.t < f.max - 20) particles.push({x:f.x + 6 + Math.random() * (f.w - 12), y:FLOOR - 10, vx:(Math.random() - 0.5) * 0.4, vy:-0.8 - Math.random(), life:26, max:26, color:f.acid ? (Math.random() < 0.5 ? '#9dff5a' : '#d8ffa8') : Math.random() < 0.5 ? '#ffb347' : '#ffe08a', grav:-0.01, size:2.4, type:'dot'}); }
   fires = fires.filter(f => f.t < f.max);
+}
+
+// une plateforme fragile se casse : back = délai de retour propre à la plateforme (images)
+function breakPlatform(p){
+  p.gone = true; p.cT = 0; p.rT = p.back || 200;
+  crumbs(p.x + p.w/2, p.y + p.h/2, 14, '#c99a62');
+  burst(p.x + p.w/2, p.y + p.h/2, 8, '#ffffff', 1.5, 22, -0.01, 3, 'puff');
+  SFX.crumble();
+  if(player.standingOn === p){ player.standingOn = null; player.onGround = false; }
 }
 
 function updateBoss(){
@@ -729,12 +735,16 @@ function updateBoss(){
           SFX.bossShot();
         }
         if(--b.stT <= 0){
-          b.next = b.next === 'dive' ? 'sweep' : 'dive';
+          // le plongeon d'abord, puis au hasard, jamais plus de deux fois de suite la même attaque
+          let nx = !b.next ? 'dive' : Math.random() < 0.5 ? 'dive' : 'sweep';
+          if(nx === b.next && b.same >= 2) nx = nx === 'dive' ? 'sweep' : 'dive';
+          b.same = nx === b.next ? b.same + 1 : 1;
+          b.next = nx;
           if(b.next === 'dive'){ b.state = 'warn'; b.stT = b.phase === 2 ? 30 : 45; SFX.warn(); }
           else {
-            // the sweep: it flies to the far side, screeches, then skims the floor all the way across
-            b.state = 'sweepGo'; b.stT = 0;
-            b.sx = player.x + player.w / 2 < W / 2 ? W - b.w - 6 : 6;
+            // the sweep: it flies to one side (au hasard), screeches, then skims the floor all the way across
+            b.state = 'sweepGo'; b.stT = 0; b.turned = false; b.turnT = 0;
+            b.sx = Math.random() < 0.5 ? W - b.w - 6 : 6;
           }
         }
       } else if(--b.stT <= 0){ b.state = 'dive'; b.vy = 2; }
@@ -753,27 +763,42 @@ function updateBoss(){
     } else if(b.state === 'stunned'){
       if(--b.stT <= 0) b.state = 'rise';
     } else if(b.state === 'sweepGo'){
-      b.x += clamp((b.sx - b.x) * 0.08, -6, 6);
-      b.y += (70 - b.y) * 0.08;
-      if(Math.abs(b.sx - b.x) < 3){ b.x = b.sx; b.state = 'sweepWarn'; b.stT = b.phase === 2 ? 34 : 46; SFX.warn();
+      b.x += clamp((b.sx - b.x) * 0.14, -9, 9);
+      b.y += (70 - b.y) * 0.14;
+      if(Math.abs(b.sx - b.x) < 3){ b.x = b.sx; b.state = 'sweepWarn'; b.stT = b.phase === 2 ? 24 : 32; SFX.warn();
         if(!b.toldSweep){ b.toldSweep = true; showToast('Il va raser le sol : monte sur une plateforme !', 140); } }
     } else if(b.state === 'sweepWarn'){
       b.y += (70 + Math.sin(frame * 0.5) * 2 - b.y) * 0.2;
       if(--b.stT <= 0){ b.state = 'sweepDown'; b.vy = 0; }
     } else if(b.state === 'sweepDown'){
-      b.vy = Math.min(b.vy + 0.9, 11); b.y += b.vy;
+      b.vy = Math.min(b.vy + 1.4, 16); b.y += b.vy;
       if(b.y >= FLOOR - b.h - 6){
         b.y = FLOOR - b.h - 6; b.state = 'sweep';
-        b.vx = (b.x < W / 2 ? 1 : -1) * (b.phase === 2 ? 6.4 : 5);
+        b.vx = (b.x < W / 2 ? 1 : -1) * (b.phase === 2 ? 9 : 7);
         addShake(4); dust(b.x + b.w / 2, FLOOR, 10); SFX.bossFlee();
       }
     } else if(b.state === 'sweep'){
-      b.x += b.vx;
-      if(frame % 3 === 0) dust(b.x + b.w / 2 - Math.sign(b.vx) * 18, FLOOR, 2);
-      if((b.vx > 0 && b.x >= W - b.w - 6) || (b.vx < 0 && b.x <= 6)){ b.x = clamp(b.x, 6, W - b.w - 6); b.state = 'rise'; }
+      if(b.turnT > 0){ if(--b.turnT === 0) SFX.bossFlee(); }   // demi-tour : il s'arrête un court instant contre le mur
+      else {
+        b.x += b.vx;
+        if(frame % 3 === 0) dust(b.x + b.w / 2 - Math.sign(b.vx) * 18, FLOOR, 2);
+        if((b.vx > 0 && b.x >= W - b.w - 6) || (b.vx < 0 && b.x <= 6)){
+          b.x = clamp(b.x, 6, W - b.w - 6);
+          // phase 2 : une fois sur deux, il repart aussitôt dans l'autre sens
+          if(b.phase === 2 && !b.turned && Math.random() < 0.5){ b.turned = true; b.turnT = 16; b.vx = -b.vx; addShake(3); SFX.warn(); }
+          else b.state = 'rise';
+        }
+      }
+    } else if(b.state === 'grab'){
+      // XELIAX a voulu lui sauter dessus en plein vol : il le tient un instant, puis le jette au sol
+      b.y += (40 - b.y) * 0.12;
+      if(--b.stT <= 0){
+        player.held = false; player.slam = true; player.vx = 0; player.vy = 13;
+        b.state = 'rise'; addShake(5); SFX.bossFlee();
+      }
     } else if(b.state === 'rise'){
       b.y -= 3;
-      if(b.y <= 55){ b.state = 'hover'; b.stT = b.phase === 2 ? 140 : (angry ? 150 : 220); b.fireT = 40; }
+      if(b.y <= 55){ b.state = 'hover'; b.stT = (b.phase === 2 ? 140 : (angry ? 150 : 220)) * (0.6 + Math.random() * 0.6); b.fireT = 40; }   // attente variable : on ne peut pas compter
     }
   }
 }
@@ -781,7 +806,12 @@ function updateBoss(){
 function updatePlayer(){
   const knocked = idle.phase === 'flip' || idle.phase === 'ko' || idle.phase === 'up';
   if(knocked && input.jumpPressed) idleWake();
-  if(finaleT > 0 || cine || knocked){ input.jumpPressed = false; input.shootPressed = false; input.dashPressed = false; player.buffer = 0; }
+  if(finaleT > 0 || cine || knocked || player.held || player.slam){ input.jumpPressed = false; input.shootPressed = false; input.dashPressed = false; player.buffer = 0; }
+  if(player.held){   // dans les serres du Gardien
+    player.x = boss.x + boss.w / 2 - player.w / 2; player.y = boss.y + boss.h - 6;
+    player.vx = player.vy = 0; player.onGround = false; player.standingOn = null;
+    return;
+  }
   const G = gdir;          // 1: normal gravity, -1: upside down (feet on the ceiling)
   // ride moving platforms
   if(player.standingOn){
@@ -789,7 +819,7 @@ function updatePlayer(){
     else { player.x += player.standingOn.dx; player.y += player.standingOn.dy; }
   }
 
-  let dir = finaleT > 0 || knocked ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  let dir = finaleT > 0 || knocked || player.slam ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
   if(player.pushT > 0){ player.pushT--; dir = Math.sign(player.vx); }   // poussé sur le côté après un coup sur le Roi Gluant
   if(cine){
     // during a cinematic XELIAX only walks out of danger, then faces the boss
@@ -915,6 +945,7 @@ function updatePlayer(){
     for(const p of platforms){
       if(p.gone) continue;
       if(flipping && p.y < idle.groundY - 2) continue;
+      if(player.slam && p.y < FLOOR - 2) continue;   // jeté par le Gardien : il traverse les plateformes jusqu'au sol
       if(player.x + player.w > p.x + 2 && player.x < p.x + p.w - 2 &&
          prevBottom <= p.y + 1 + Math.max(0, p.dy) && player.y + player.h >= p.y){
         player.y = p.y - player.h;
@@ -1198,6 +1229,14 @@ function updatePlayer(){
   }
   shots = shots.filter(s => !s.dead && s.x > camX - 30 && s.x < camX + W + 30 && s.y > camY - 30 && s.y < camY + H + 30);
 
+  // jeté au sol par le Gardien : l'atterrissage coûte un cœur
+  if(player.slam && player.onGround){
+    player.slam = false;
+    addShake(12); dust(player.x + player.w / 2, FLOOR, 14); SFX.thud();
+    hurt(player.x + player.w / 2);
+    if(state !== 'play') return;
+  }
+
   // boss contact: landing on top of the slime or the owl always bounces you (it only scores when
   // they're vulnerable), and the owl is harmless while stunned or flying back up after a hit
   if(boss && boss.alive && !boss.fleeing && !boss.dying && !cine && S2_BOSS.has(boss.mode)){
@@ -1205,6 +1244,14 @@ function updatePlayer(){
   } else if(boss && boss.alive && !boss.fleeing && !boss.dying && !cine && overlap(player, boss)){
     const sw = boss.mode === 'swoop', calm = sw && (boss.state === 'stunned' || boss.state === 'rise');
     const fromAbove = player.vy > 0 && prevBottom <= boss.y + 16;
+    // sauter sur le Gardien en plein vol ne marche pas : il attrape XELIAX et le jette au sol
+    if(sw && fromAbove && player.invuln <= 0 && ['hover', 'warn', 'sweepGo', 'sweepWarn'].includes(boss.state)){
+      boss.state = 'grab'; boss.stT = 36;
+      player.held = true; player.vx = player.vy = 0;
+      setFace(anim, 'hurt', 70); SFX.warn(); addShake(4);
+      showToast('Il t\'attrape ! Attends qu\'il s\'écrase au sol pour le frapper', 130);
+      return;
+    }
     if((boss.mode === 'slime' || sw) && fromAbove){
       if(boss.inv <= 0 && (!sw || boss.state === 'stunned' || boss.state === 'sweep')){
         const phaseBefore = boss.phase;

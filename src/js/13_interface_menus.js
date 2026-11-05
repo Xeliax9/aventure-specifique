@@ -319,6 +319,7 @@ function goPage(p, dir = 1){
   SFX.menu();
 }
 function goBack(){
+  if(menu.pauseKeys){ menu.pauseKeys = false; menu.bindWait = null; SFX.menu(); setState('pause'); return; }   // page Commandes ouverte depuis la pause
   const p = menu.page === 'credits' ? menu.creditsFrom : PAGE_PARENT[menu.page];
   if(p) goPage(p, -1);
 }
@@ -1219,7 +1220,7 @@ function bindKey(key){
   showToast(other ? `${name(a)} : ${k.toUpperCase()} (échangée avec « ${name(other)} »)` : `${name(a)} : touche ${k.toUpperCase()}`, 130);
 }
 function drawControls(act){
-  navHeader(PAGE_NAME.controls, 'Paramètres', act);
+  navHeader(PAGE_NAME.controls, menu.pauseKeys ? 'Pause' : 'Paramètres', act);
   const x = 120, y = 84, w = 400, rh = 25, n = KEY_ROWS.length + 1, h = n * rh;
   const fs = clamp(menu.sel.controls || 0, 0, n - 1);
   txt('Clavier (clique pour changer)', x + 228, y - 8, 11, '#c9c1f0', 600); txt('Tactile', x + 362, y - 8, 11, '#c9c1f0', 600);
@@ -1439,17 +1440,23 @@ function panelContent(b){
 }
 const counted = (v, delay) => v * easeOutCubic(clamp((stateT - delay) / 40, 0, 1));
 
+let pauseBtns = [];   // les lignes de la pause sont aussi des boutons : un clic fait comme la touche
 function drawPause(){
   overlayDim(0.55);
   ctx.save();
-  const b = panelBox(320, 206, CH_ACCENT[chIndex]);
+  const b = panelBox(320, 232, CH_ACCENT[chIndex]);
   heading('Pause', W / 2, b.y + 48, 32, '#ffffff');
   txt(`${chName(chIndex)}, salle ${rIndex + 1}, ${score} points`, W / 2, b.y + 70, 12.5, '#bfb6f0', 500);
-  const rows = TOUCH ? [['▲', 'Reprendre'], ['●', 'Retour au menu']] : [['P', 'Reprendre'], ['R', 'Recommencer le chapitre'], ['Q', 'Retour au menu'], ['M', muted ? 'Activer le son' : 'Couper le son']];
-  rows.forEach(([key2, label], i) => {
+  const resume = () => setState('play');
+  const rows = TOUCH ? [['▲', 'Reprendre', resume], ['●', 'Retour au menu', backToMenu]]
+    : [['P', 'Reprendre', resume], ['R', room.boss ? 'Recommencer la phase' : 'Recommencer le chapitre', pauseRestart], ['T', 'Changer les touches', openPauseKeys],
+       ['Q', 'Retour au menu', backToMenu], ['M', muted ? 'Activer le son' : 'Couper le son', () => setMuted(!muted)]];
+  pauseBtns = [];
+  rows.forEach(([key2, label, act], i) => {
     const ry = b.y + 104 + i * 25;
     const kw = keycap(key2, b.x + 78, ry);
     txt(label, b.x + 78 + kw + 10, ry, 13, '#ffffff', 600, 'left');
+    pauseBtns.push({x:b.x + 70, y:ry - 15, w:b.w - 140, h:24, act});
   });
   ctx.restore();
 }
