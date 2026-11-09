@@ -641,6 +641,7 @@ function updateDJScene(c){
     S.state = q > 0.55 ? 'dive' : 'hover'; S.vx = -3; S.vy = 3; S.face = -1;
     if(t === 110){
       S.got = true; S.x1 = S.x; S.y1 = S.y;
+      hasDJ = false;   // v54 : volé dès maintenant (sinon l'icône du HUD le montrait encore quand la cinématique s'efface)
       SFX.crack(); addShake(6); setFace(anim, 'hurt', 120);
       player.vy = -4; player.onGround = false; player.standingOn = null; player.sx = 0.75; player.sy = 1.3;
       burst(hx, hy, 14, '#7df9ff', 2.4, 30, 0.04, 3, 'star');

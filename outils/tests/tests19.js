@@ -63,7 +63,7 @@ const { chromium } = require('playwright');
   // tap the selected (unlocked) app → play
   await click(320, 166);
   await steps(5);
-  ok(await T(() => state === 'play' && chIndex === 0), 'tapping the selected app starts the chapter');
+  ok(await T(() => state === 'opening' && chIndex === 0), 'tapping the selected app starts the chapter (chapter 1: opening cinematic first)');
   // back to the menu from pause
   await T(() => { fade = 0; fadeDir = 0; setState('pause'); });
   await key('q'); await steps(40);
@@ -93,21 +93,20 @@ const { chromium } = require('playwright');
   await steps(20);
   ok(await T(() => menu.page === 'settings'), 'the back chip returns to Paramètres');
   await T(() => goPage('jeu')); await steps(20);
-  await T(() => { menu.sel.jeu = 0; }); await key('ArrowRight');
-  ok(await T(() => SET.lives === 7), 'lives: 5 → 7');
-  await T(() => { menu.sel.jeu = 1; }); await key('Enter');
+  ok(await T(() => !jeuRows().some(r => r.id === 'lives') && SET.lives === undefined), 'v54: no lives setting any more');
+  await T(() => { menu.sel.jeu = 0; }); await key('Enter');
   ok(await T(() => SET.timer === false), 'Enter toggles the timer off');
-  await T(() => { menu.sel.jeu = 2; }); await key('ArrowLeft');
+  await T(() => { menu.sel.jeu = 1; }); await key('ArrowLeft');
   ok(await T(() => SET.shake === false), '◀ switches the screen shake off');
   await T(() => { shake = 0; addShake(9); });
   ok(await T(() => shake === 0), 'no shake when it is off');
-  await T(() => { menu.sel.jeu = 3; }); await key(' ');
+  await T(() => { menu.sel.jeu = 2; }); await key(' ');
   ok(await T(() => SET.reduced === true && REDUCED === true), 'reduced animations on');
-  await T(() => { menu.sel.jeu = 3; }); await key(' ');
+  await T(() => { menu.sel.jeu = 2; }); await key(' ');
   ok(await T(() => REDUCED === MEDIA_REDUCED), 'and off again');
-  // the lives setting is used by a new run, the hidden timer does not break the HUD
+  // a new run always starts with 5 lives, the hidden timer does not break the HUD
   await T(() => { newRun(0); fade = 0; fadeDir = 0; for(let i = 0; i < 5; i++) step(); render(1); });
-  ok(await T(() => lives === 7), 'a new run starts with 7 lives');
+  ok(await T(() => lives === 5 && startLives() === 5), 'a new run starts with 5 lives');
   await T(() => { toMenu(); fade = 0; fadeDir = 0; goPage('home', -1); for(let i = 0; i < 20; i++) step(); goPage('settings'); for(let i = 0; i < 20; i++) step(); goPage('look'); for(let i = 0; i < 20; i++) step(); render(1); });
   // ---------------------------------------------------------------- XELIAX's colour
   await key('ArrowRight');
@@ -235,7 +234,7 @@ const { chromium } = require('playwright');
   await key('Enter');
   ok(await T(() => save.unlocked === 3 && menu.resetT > 0 && /Sûr/.test(jeuRows().find(r => r.id === 'reset').label)), 'first press asks for confirmation');
   await key('Enter');
-  ok(await T(() => save.unlocked === 1 && save.bestCh.every(v => v == null) && SET.lives === 7), 'second press erases the progress, keeps the settings');
+  ok(await T(() => save.unlocked === 1 && save.bestCh.every(v => v == null) && SET.timer === false),'second press erases the progress, keeps the settings');
 
   // ---------------------------------------------------------------- XELIAX's corner from the home page
   await T(() => { goPage('settings', -1); for(let i = 0; i < 20; i++) step(); goPage('home', -1); for(let i = 0; i < 20; i++) step(); render(1); });

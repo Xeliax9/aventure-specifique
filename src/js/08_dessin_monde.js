@@ -1,12 +1,22 @@
 // =====================================================================
 //  DRAW: BACKGROUNDS (parallax, one world per chapter)
 // =====================================================================
+// v54 : un dégradé de ciel par décor, créé une fois (un dégradé de canvas se réutilise d'une image à l'autre)
+const SKY_GRAD = new Map();
+function skyGradient(sky){
+  let g = SKY_GRAD.get(sky);
+  if(!g){
+    g = ctx.createLinearGradient(0, 0, 0, H);
+    if(Array.isArray(sky[0])) for(const [t, c] of sky) g.addColorStop(t, c);      // [[arrêt, couleur], …]
+    else { g.addColorStop(0, sky[0]); g.addColorStop(0.55, sky[1]); g.addColorStop(1, sky[2]); }
+    SKY_GRAD.set(sky, g);
+  }
+  return g;
+}
 function drawBackground(cx, cy){
   const deco = decoOf(), th = theme();
   const by = (room.h - H - cy) * 0.35;
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, th.sky[0]); g.addColorStop(0.55, th.sky[1]); g.addColorStop(1, th.sky[2]);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = skyGradient(th.sky); ctx.fillRect(0, 0, W, H);
   if(deco === 'hills') bgHills(cx, by, th);
   else if(deco === 'cave') bgCave(cx, by, th);
   else if(deco === 'tower') bgTower(cx, by, th);
@@ -51,17 +61,20 @@ function bgCosmos(cx, cy, by, th){
     const x = ((x0 - cx * 0.03) % (W + 320) + W + 320) % (W + 320) - 160;
     softGlow(x, y0 + by * 0.1 - cy * 0.02, rx, ry, rgb, a);
   }
+  // v54 : couleur fixe + globalAlpha (au lieu d'une chaîne rgba() par étoile et par image)
+  const ga = ctx.globalAlpha;
   for(let i = 0; i < 110; i++){
     const z = 0.015 + hash(i * 7 + 1) * 0.05;
     const x = ((hash(i * 13 + 5) * (W + 40) - cx * z) % (W + 40) + W + 40) % (W + 40) - 20;
     const y = ((hash(i * 17 + 3) * (H + 40) - cy * z) % (H + 40) + H + 40) % (H + 40) - 20;
     const tw = 0.55 + 0.45 * Math.sin(frame * (0.02 + hash(i * 5) * 0.05) + i * 1.7);
     const r = 0.5 + hash(i * 3 + 9) * 1.2;
-    const col = i % 5 === 0 ? '255,190,240' : i % 3 === 0 ? '170,230,255' : '255,250,240';
-    ctx.fillStyle = `rgba(${col},${(0.3 + 0.7 * hash(i * 29)) * tw})`;
+    ctx.fillStyle = i % 5 === 0 ? 'rgb(255,190,240)' : i % 3 === 0 ? 'rgb(170,230,255)' : 'rgb(255,250,240)';
+    ctx.globalAlpha = ga * (0.3 + 0.7 * hash(i * 29)) * tw;
     ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-    if(r > 1.45 && tw > 0.82){ ctx.fillStyle = `rgba(${col},${(tw - 0.82) * 3})`; star(x, y, r * 3.4, 0); }
+    if(r > 1.45 && tw > 0.82){ ctx.globalAlpha = ga * (tw - 0.82) * 3; star(x, y, r * 3.4, 0); }
   }
+  ctx.globalAlpha = ga;
   const st = frame % 380;
   if(st < 40 && !REDUCED){
     const k = st / 40, sx = 580 - k * 380 + hash(Math.floor(frame / 380)) * 60, sy = 26 + k * 80;
@@ -319,16 +332,19 @@ function bgNight(cx, cy, by, th){
     ctx.closePath(); ctx.fill();
   }
   // stars at three depths, twinkling
+  const ga = ctx.globalAlpha;
+  ctx.fillStyle = 'rgb(255,246,220)';
   for(let i = 0; i < 95; i++){
     const z = 0.015 + hash(i * 7 + 1) * 0.05;
     const x = ((hash(i * 13 + 5) * (W + 40) - cx * z) % (W + 40) + W + 40) % (W + 40) - 20;
     const y = ((hash(i * 17 + 3) * (H + 40) - cy * z) % (H + 40) + H + 40) % (H + 40) - 20;
     const tw = 0.55 + 0.45 * Math.sin(frame * (0.02 + hash(i * 5) * 0.05) + i * 1.7);
     const r = 0.5 + hash(i * 3 + 9) * 1.2;
-    ctx.fillStyle = `rgba(255,246,220,${(0.3 + 0.7 * hash(i * 29)) * tw})`;
+    ctx.globalAlpha = ga * (0.3 + 0.7 * hash(i * 29)) * tw;
     ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-    if(r > 1.45 && tw > 0.82){ ctx.fillStyle = `rgba(255,246,220,${(tw - 0.82) * 3})`; star(x, y, r * 3.4, 0); }
+    if(r > 1.45 && tw > 0.82){ ctx.globalAlpha = ga * (tw - 0.82) * 3; star(x, y, r * 3.4, 0); }
   }
+  ctx.globalAlpha = ga;
   // a shooting star now and then
   const st = frame % 420;
   if(st < 46 && !REDUCED){
@@ -567,13 +583,35 @@ function drawAmbient(cx, cy){
   }
 }
 
+const VIG_SPR = new Map();
+function vignetteSprite(r0, r1, col){
+  const key = r0 + '|' + r1 + '|' + col;
+  let c = VIG_SPR.get(key);
+  if(c) return c;
+  const n = 512, m = n / 2, k = m / r1;
+  c = document.createElement('canvas'); c.width = c.height = n;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(m, m, r0 * k, m, m, m);
+  gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, col);
+  g.fillStyle = gr; g.fillRect(0, 0, n, n);
+  VIG_SPR.set(key, c);
+  return c;
+}
 function drawLighting(hx, hy){
   const th = theme();
   // a soft vignette around XELIAX: no visible spotlight edge
-  const g = ctx.createRadialGradient(hx, hy, th.dark ? 110 : 200, hx, hy, th.dark ? 430 : 560);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, th.dark ? th.darkness : 'rgba(20,10,60,0.12)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // v54 : le dégradé est gardé dans une image (le disque de rayon r1), posée sur le héros et coupée au bord de l'écran ;
+  // au-delà du disque, la couleur finale en aplats
+  const r0 = th.dark ? 110 : 200, r1 = th.dark ? 430 : 560, col = th.dark ? th.darkness : 'rgba(20,10,60,0.12)';
+  const spr = vignetteSprite(r0, r1, col), k = spr.width / (2 * r1);
+  const x0 = Math.max(0, hx - r1), y0 = Math.max(0, hy - r1), x1 = Math.min(W, hx + r1), y1 = Math.min(H, hy + r1);
+  if(x1 > x0 && y1 > y0){
+    ctx.drawImage(spr, (x0 - hx + r1) * k, (y0 - hy + r1) * k, (x1 - x0) * k, (y1 - y0) * k, x0, y0, x1 - x0, y1 - y0);
+    ctx.fillStyle = col;
+    if(y0 > 0) ctx.fillRect(0, 0, W, y0);
+    if(y1 < H) ctx.fillRect(0, y1, W, H - y1);
+    if(x0 > 0) ctx.fillRect(0, y0, x0, y1 - y0);
+    if(x1 < W) ctx.fillRect(x1, y0, W - x1, y1 - y0);
+  } else { ctx.fillStyle = col; ctx.fillRect(0, 0, W, H); }
   if(hud.flash > 0){
     const f = ctx.createRadialGradient(W/2, H/2, 120, W/2, H/2, 420);
     f.addColorStop(0, 'rgba(255,40,80,0)'); f.addColorStop(1, `rgba(255,40,80,${0.4 * hud.flash})`);
@@ -623,9 +661,10 @@ function crystalsOn(p, x, y, w, th){
     const bx = x + 8 + i * 22 + r * 8, col = th.crystal[Math.floor(hash(p.seed + i) * 3)];
     if(bx + 7 > x + w - 2) continue;      // keep every crystal on its ledge
     const glow = 0.6 + 0.4 * Math.sin(frame * 0.06 + i + p.seed);
-    const gr = ctx.createRadialGradient(bx + 1, y - 4, 0, bx + 1, y - 4, 11);
-    gr.addColorStop(0, rgba(col, 0.32 * glow)); gr.addColorStop(1, rgba(col, 0));
-    ctx.fillStyle = gr; ctx.fillRect(bx - 10, y - 15, 22, 22);
+    // v54 : halo en image (dégradé linéaire de 1 à 0), même rendu que le dégradé radial recréé à chaque image
+    const ga = ctx.globalAlpha; ctx.globalAlpha = ga * 0.32 * glow;
+    ctx.drawImage(glowSprite(col, true), bx - 10, y - 15, 22, 22);
+    ctx.globalAlpha = ga;
     ctx.fillStyle = col; ctx.strokeStyle = th.line; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(bx - 3, y); ctx.lineTo(bx - 1, y - 8); ctx.lineTo(bx + 1.5, y - 9); ctx.lineTo(bx + 3, y); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(bx + 2, y); ctx.lineTo(bx + 5, y - 5); ctx.lineTo(bx + 6, y); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -648,12 +687,38 @@ function ivy(p, x, y, w, h, th){
   }
 }
 
+// v54 : une plateforme fixe se dessine en passes ; les passes fixes (1 et 3) sont gardées dans un canvas hors écran
+// (PLAT_SPR), les passes animées (2 : motif scintillant sous le contour, 4 : herbe, cristaux, lierre) sont redessinées.
+// PL_PASS = 0 : tout, dans l'ordre d'origine.
+let PL_PASS = 0, PL_M = null, PL_BAKES = 0;
+const SOLID_MID = d => d === 'cosmos' || d === 'night' || !['hills', 'tower', 'cave', 'sky', 'canyon', 'ice', 'nest'].includes(d);
+const WALL_MID = d => d === 'cosmos' || d === 'night' || d === 'fortress' || d === 'ascent';
+function plPass(mid, stat){ return PL_PASS === 0 || (stat ? (mid ? PL_PASS === stat : PL_PASS === 1) : (mid && PL_PASS === 2)); }
 function drawSolid(p, x, y, w, h, th){
   const deco = decoOf();
   const r = Math.min(7, h / 2);
-  const g = ctx.createLinearGradient(0, y, 0, y + h);
-  g.addColorStop(0, th.body[0]); g.addColorStop(1, th.body[1]);
-  rr(x, y, w, h, r); ctx.fillStyle = g; ctx.fill();
+  const mid = SOLID_MID(deco);
+  if(plPass(mid, 1)){
+    const g = ctx.createLinearGradient(0, y, 0, y + h);
+    g.addColorStop(0, th.body[0]); g.addColorStop(1, th.body[1]);
+    rr(x, y, w, h, r); ctx.fillStyle = g; ctx.fill();
+  }
+  if(plPass(mid, 0) || (!mid && PL_PASS === 1)) drawSolidPattern(p, x, y, w, h, th, deco, r);
+  if(plPass(mid, 3)){
+    rr(x, y, w, h, r); ctx.strokeStyle = th.line; ctx.lineWidth = 1.6; ctx.stroke();
+    rr(x - 1, y - 2, w + 2, 6, 3); ctx.fillStyle = th.top; ctx.fill(); ctx.strokeStyle = th.line; ctx.lineWidth = 1.3; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x + 3, y - 1, w - 6, 1.2);
+    if(deco === 'sky') cloudFringe(p, x, y, w, h);
+    else if(deco === 'ice') icicles(p, x, y, w, h);
+  }
+  if(PL_PASS === 0 || PL_PASS === 4){
+    if(deco === 'hills') grassTufts(p, x, y, w, th);
+    else if(deco === 'cave') crystalsOn(p, x, y, w, th);
+    else if(deco === 'tower') ivy(p, x, y, w, h, th);
+    else if(deco === 'cosmos') crystalsOn(p, x, y, w, th);
+  }
+}
+function drawSolidPattern(p, x, y, w, h, th, deco, r){
   ctx.save();
   rr(x, y, w, h, r); ctx.clip();
   if(deco === 'hills'){
@@ -685,33 +750,28 @@ function drawSolid(p, x, y, w, h, th){
     ctx.strokeStyle = 'rgba(255,220,160,0.18)';
     for(let i = 0; i < w / 13; i++){ const xx = x + i * 13; ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx + h * 0.7, y + h); ctx.stroke(); }
   } else if(deco === 'cosmos'){
+    const ga = ctx.globalAlpha;
     for(let i = 0; i < w / 15; i++){
       const q = hash(p.seed + i * 7), tw = 0.35 + 0.65 * Math.abs(Math.sin(frame * 0.045 + q * 9));
-      ctx.fillStyle = q > 0.5 ? `rgba(140,240,255,${0.6 * tw})` : `rgba(255,160,235,${0.55 * tw})`;
+      ctx.fillStyle = q > 0.5 ? 'rgb(140,240,255)' : 'rgb(255,160,235)'; ctx.globalAlpha = ga * (q > 0.5 ? 0.6 : 0.55) * tw;
       star(x + 6 + i * 15 + q * 6, y + 6 + q * Math.max(1, h - 10), 1.5 + q * 1.4, q * 3);
     }
+    ctx.globalAlpha = ga;
   } else if(deco === 'night'){
     // little golden stars set in the stone
+    const ga = ctx.globalAlpha; ctx.fillStyle = 'rgb(255,224,140)';
     for(let i = 0; i < w / 16; i++){
       const q = hash(p.seed + i * 7), tw = 0.35 + 0.65 * Math.abs(Math.sin(frame * 0.04 + q * 9));
-      ctx.fillStyle = `rgba(255,224,140,${0.55 * tw})`;
+      ctx.globalAlpha = ga * 0.55 * tw;
       star(x + 6 + i * 16 + q * 6, y + 6 + q * Math.max(1, h - 10), 1.6 + q * 1.4, q * 3);
     }
+    ctx.globalAlpha = ga;
   } else {
     const glow = 0.45 + 0.35 * Math.sin(frame * 0.05 + p.seed);
     ctx.strokeStyle = rgba(th.crack, glow); ctx.lineWidth = 1.4;
     for(let i = 0; i < w / 30; i++){ const q = hash(p.seed + i * 5), cxx = x + 10 + i * 30 + q * 10; ctx.beginPath(); ctx.moveTo(cxx, y + 5); ctx.lineTo(cxx + 3, y + h * 0.5); ctx.lineTo(cxx - 2, y + h - 1); ctx.stroke(); }
   }
   ctx.restore();
-  rr(x, y, w, h, r); ctx.strokeStyle = th.line; ctx.lineWidth = 1.6; ctx.stroke();
-  rr(x - 1, y - 2, w + 2, 6, 3); ctx.fillStyle = th.top; ctx.fill(); ctx.strokeStyle = th.line; ctx.lineWidth = 1.3; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x + 3, y - 1, w - 6, 1.2);
-  if(deco === 'hills') grassTufts(p, x, y, w, th);
-  else if(deco === 'cave') crystalsOn(p, x, y, w, th);
-  else if(deco === 'tower') ivy(p, x, y, w, h, th);
-  else if(deco === 'sky') cloudFringe(p, x, y, w, h);
-  else if(deco === 'ice') icicles(p, x, y, w, h);
-  else if(deco === 'cosmos') crystalsOn(p, x, y, w, th);
 }
 // puffs of cloud under the sky ledges (their underside is a floor when gravity flips)
 function cloudFringe(p, x, y, w, h){
@@ -809,14 +869,19 @@ function drawPlank(p, x, y, w, h){
 // thick stone blocks: walls and ceilings you cannot pass through
 function drawWall(p, x, y, w, h, th){
   const deco = decoOf();
-  const g = ctx.createLinearGradient(0, y, 0, y + Math.min(h, 220));
-  g.addColorStop(0, shade(th.body[0], -0.08)); g.addColorStop(1, shade(th.body[1], -0.3));
-  rr(x, y, w, h, 6); ctx.fillStyle = g; ctx.fill();
+  const mid = WALL_MID(deco), stat1 = plPass(mid, 1), dyn2 = plPass(mid, 0), stat3 = plPass(mid, 3);
+  if(stat1){
+    const g = ctx.createLinearGradient(0, y, 0, y + Math.min(h, 220));
+    g.addColorStop(0, shade(th.body[0], -0.08)); g.addColorStop(1, shade(th.body[1], -0.3));
+    rr(x, y, w, h, 6); ctx.fillStyle = g; ctx.fill();
+  }
+  if(stat1 || dyn2 || stat3){
   ctx.save();
   rr(x, y, w, h, 6); ctx.clip();
   // staggered masonry
   const bh = deco === 'tower' ? 12 : 16, bw = deco === 'tower' ? 22 : 30, off = hash(p.seed) * bw;
   ctx.strokeStyle = rgba(th.line, deco === 'night' ? 0.45 : 0.3); ctx.lineWidth = 1;
+  if(stat1){
   if(!['sky', 'canyon', 'ice', 'nest', 'cosmos'].includes(deco)) for(let r = 0, yy = y + 5; yy < y + h; r++, yy += bh){
     ctx.beginPath(); ctx.moveTo(x, yy + 0.5); ctx.lineTo(x + w, yy + 0.5); ctx.stroke();
     for(let xx = x - bw + ((off + (r % 2) * bw / 2) % bw); xx < x + w; xx += bw){ ctx.beginPath(); ctx.moveTo(xx + 0.5, yy); ctx.lineTo(xx + 0.5, yy + bh); ctx.stroke(); }
@@ -834,39 +899,58 @@ function drawWall(p, x, y, w, h, th){
     for(let i = 0; i < h / 42; i++){ const q = hash(p.seed + i * 17); if(q > 0.65) continue;
       const col = th.crystal[Math.floor(q * 7) % 3], cx = x + 5 + q * (w - 10), cy = y + 12 + i * 42;
       ctx.fillStyle = rgba(col, 0.7); ctx.beginPath(); ctx.moveTo(cx - 3, cy + 4); ctx.lineTo(cx, cy - 6); ctx.lineTo(cx + 3, cy + 4); ctx.closePath(); ctx.fill(); }
-    for(let i = 0; i < (w * h) / 1100; i++){ const q = hash(p.seed + i * 7), q2 = hash(p.seed + i * 11 + 3);
-      ctx.fillStyle = `rgba(200,240,255,${0.2 + 0.3 * Math.abs(Math.sin(frame * 0.03 + q * 9))})`; ctx.beginPath(); ctx.arc(x + 4 + q * (w - 8), y + 8 + q2 * (h - 12), 0.9 + q, 0, TAU); ctx.fill(); }
   } else if(deco === 'nest'){
     ctx.strokeStyle = 'rgba(255,214,150,0.16)'; ctx.lineWidth = 2;
     for(let i = 0; i < w / 10; i++){ const xx = x + 5 + i * 10 + hash(p.seed + i) * 4; ctx.beginPath(); ctx.moveTo(xx, y); ctx.quadraticCurveTo(xx + 4, y + h / 2, xx - 2, y + h); ctx.stroke(); }
+  }
+  if(deco === 'cave'){
+    for(let i = 0; i < h / 50; i++){ const q = hash(p.seed + i * 17); if(q > 0.6) continue;
+      const col = th.crystal[Math.floor(q * 5) % 3], cx = x + 5 + q * (w - 10), cy = y + 14 + i * 50;
+      ctx.fillStyle = rgba(col, 0.75); ctx.beginPath(); ctx.moveTo(cx - 3, cy + 4); ctx.lineTo(cx, cy - 6); ctx.lineTo(cx + 3, cy + 4); ctx.closePath(); ctx.fill(); }
+  } else if(deco === 'hills'){
+    ctx.fillStyle = rgba(th.line, 0.16);
+    for(let i = 0; i < (w * h) / 700; i++){ const q = hash(p.seed + i * 5), q2 = hash(p.seed + i * 9 + 1); ctx.beginPath(); ctx.ellipse(x + 4 + q * (w - 8), y + 10 + q2 * (h - 14), 2 + q, 1.3, 0, 0, TAU); ctx.fill(); }
+  }
+  }
+  if(dyn2){
+  if(deco === 'cosmos'){
+    const ga = ctx.globalAlpha, cull = PL_PASS === 2 && !p.hang; ctx.fillStyle = 'rgb(200,240,255)';
+    for(let i = 0; i < (w * h) / 1100; i++){ const q = hash(p.seed + i * 7), q2 = hash(p.seed + i * 11 + 3), sx = x + 4 + q * (w - 8), sy = y + 8 + q2 * (h - 12);
+      if(cull && !onView(sx, sy, 0, 0, 16)) continue;
+      ctx.globalAlpha = ga * (0.2 + 0.3 * Math.abs(Math.sin(frame * 0.03 + q * 9))); ctx.beginPath(); ctx.arc(sx, sy, 0.9 + q, 0, TAU); ctx.fill(); }
+    ctx.globalAlpha = ga;
   }
   if(deco === 'fortress' || deco === 'ascent'){
     const glow = 0.4 + 0.3 * Math.sin(frame * 0.05 + p.seed);
     ctx.strokeStyle = rgba(th.crack, glow); ctx.lineWidth = 1.3;
     for(let i = 0; i < h / 60; i++){ const q = hash(p.seed + i * 13), cx = x + 6 + q * (w - 12), cy = y + 10 + i * 60; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 4, cy + 12); ctx.lineTo(cx - 2, cy + 24); ctx.stroke(); }
-  } else if(deco === 'cave'){
-    for(let i = 0; i < h / 50; i++){ const q = hash(p.seed + i * 17); if(q > 0.6) continue;
-      const col = th.crystal[Math.floor(q * 5) % 3], cx = x + 5 + q * (w - 10), cy = y + 14 + i * 50;
-      ctx.fillStyle = rgba(col, 0.75); ctx.beginPath(); ctx.moveTo(cx - 3, cy + 4); ctx.lineTo(cx, cy - 6); ctx.lineTo(cx + 3, cy + 4); ctx.closePath(); ctx.fill(); }
   } else if(deco === 'night'){
-    for(let i = 0; i < (w * h) / 900; i++){ const q = hash(p.seed + i * 7), q2 = hash(p.seed + i * 11 + 3);
-      ctx.fillStyle = `rgba(255,224,140,${0.25 + 0.35 * Math.abs(Math.sin(frame * 0.03 + q * 9))})`; star(x + 4 + q * (w - 8), y + 8 + q2 * (h - 12), 1.3 + q * 1.2, q * 3); }
-  } else if(deco === 'hills'){
-    ctx.fillStyle = rgba(th.line, 0.16);
-    for(let i = 0; i < (w * h) / 700; i++){ const q = hash(p.seed + i * 5), q2 = hash(p.seed + i * 9 + 1); ctx.beginPath(); ctx.ellipse(x + 4 + q * (w - 8), y + 10 + q2 * (h - 14), 2 + q, 1.3, 0, 0, TAU); ctx.fill(); }
+    const ga = ctx.globalAlpha, cull = PL_PASS === 2 && !p.hang; ctx.fillStyle = 'rgb(255,224,140)';
+    for(let i = 0; i < (w * h) / 900; i++){ const q = hash(p.seed + i * 7), q2 = hash(p.seed + i * 11 + 3), sx = x + 4 + q * (w - 8), sy = y + 8 + q2 * (h - 12);
+      if(cull && !onView(sx, sy, 0, 0, 16)) continue;
+      ctx.globalAlpha = ga * (0.25 + 0.35 * Math.abs(Math.sin(frame * 0.03 + q * 9))); star(sx, sy, 1.3 + q * 1.2, q * 3); }
+    ctx.globalAlpha = ga;
   }
+  }
+  if(stat3){
   // light from the left, shade on the right
   const sg = ctx.createLinearGradient(x, 0, x + w, 0);
   sg.addColorStop(0, 'rgba(255,255,255,0.1)'); sg.addColorStop(0.35, 'rgba(255,255,255,0)'); sg.addColorStop(1, 'rgba(0,0,0,0.2)');
   ctx.fillStyle = sg; ctx.fillRect(x, y, w, h);
+  }
   ctx.restore();
-  rr(x, y, w, h, 6); ctx.strokeStyle = th.line; ctx.lineWidth = 1.7; ctx.stroke();
-  rr(x - 1, y - 2, w + 2, 6, 3); ctx.fillStyle = th.top; ctx.fill(); ctx.strokeStyle = th.line; ctx.lineWidth = 1.3; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x + 3, y - 1, w - 6, 1.2);
-  if(deco === 'hills') grassTufts(p, x, y, w, th);
-  else if(deco === 'cave' || deco === 'cosmos') crystalsOn(p, x, y, w, th);
-  else if(deco === 'sky') cloudFringe(p, x, y, w, h);
-  else if(deco === 'ice') icicles(p, x, y, w, h);
+  }
+  if(stat3){
+    rr(x, y, w, h, 6); ctx.strokeStyle = th.line; ctx.lineWidth = 1.7; ctx.stroke();
+    rr(x - 1, y - 2, w + 2, 6, 3); ctx.fillStyle = th.top; ctx.fill(); ctx.strokeStyle = th.line; ctx.lineWidth = 1.3; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x + 3, y - 1, w - 6, 1.2);
+    if(deco === 'sky') cloudFringe(p, x, y, w, h);
+    else if(deco === 'ice') icicles(p, x, y, w, h);
+  }
+  if(PL_PASS === 0 || PL_PASS === 4){
+    if(deco === 'hills') grassTufts(p, x, y, w, th);
+    else if(deco === 'cave' || deco === 'cosmos') crystalsOn(p, x, y, w, th);
+  }
 }
 
 // wooden gate: planks with iron bands, cracks as it takes hits
@@ -901,6 +985,7 @@ function drawPlatform(p){
   const y = iy(p), w = p.w, h = p.h;
   if(p.crumble && p.cT > 0) x += (hash(frame * 7 + (p.x | 0)) - 0.5) * (1 + p.cT / 14);
   if(p.fall && !p.loose && p.fT > 0) x += (hash(frame * 7 + (p.x | 0)) - 0.5) * (1.5 + p.fT / 8);
+  if(p.appear >= 1 && !p.gate && !p.glass && !p.slick && !p.move && !p.crumble && !p.fall && platCached(p, x, y, w, h, th)) return;
   ctx.save();
   if(p.appear < 1){
     const s = Math.max(0.01, easeOutBack(p.appear));
@@ -920,6 +1005,65 @@ function drawPlatform(p){
   else if(p.fall) drawPlank(p, x, y, w, h);
   else { drawSolid(p, x, y, w, h, th); if(p.ice) iceTop(x, y, w); }
   ctx.restore();
+}
+
+// v54 : plateformes fixes (sol, murs, corniches) gardées en image, à la résolution de l'écran ;
+// l'image est posée au pixel près, les détails animés sont redessinés par-dessus dans le bon ordre.
+const PL_PAD = 18, PL_MAXPX = 4.2e6;
+function platBake(p, x, y, w, h, th, pass, S, deco){
+  const cw = Math.ceil((w + PL_PAD * 2) * S), ch = Math.ceil((h + PL_PAD * 2) * S);
+  if(cw > 8192 || ch > 8192 || cw * ch > PL_MAXPX) return null;
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const g = cv.getContext('2d'), keep = ctx, kp = PL_PASS;
+  ctx = g; PL_PASS = pass;
+  try{
+    g.setTransform(S, 0, 0, S, (PL_PAD - x) * S, (PL_PAD - y) * S);
+    if(p.solid){
+      if(p.hang){ g.translate(0, y + h / 2); g.scale(1, -1); g.translate(0, -(y + h / 2)); }
+      drawWall(p, x, y, w, h, th);
+    } else drawSolid(p, x, y, w, h, th);
+  } finally { ctx = keep; PL_PASS = kp; }
+  return cv;
+}
+function platCached(p, x, y, w, h, th){
+  const m = PL_M;
+  if(!m || m.b !== 0 || m.c !== 0 || m.a !== m.d || Math.abs(m.a - SCALE) > 1e-6) return false;
+  if(ctx.globalAlpha !== 1 || ctx.globalCompositeOperation !== 'source-over') return false;
+  const deco = decoOf(), S = m.a;
+  const key = S + '|' + deco + '|' + w + '|' + h + '|' + (deco === 'canyon' ? y : '');
+  let c = p._spr;
+  if(!c || c.key !== key){
+    if(c && c.fail === key) return false;
+    if(PL_BAKES <= 0) return false;      // pas plus de quelques cuissons par image (pas de saccade quand beaucoup de plateformes apparaissent)
+    PL_BAKES--;
+    const mid = p.solid ? WALL_MID(deco) : SOLID_MID(deco);
+    const a = platBake(p, x, y, w, h, th, 1, S, deco), b = a && mid ? platBake(p, x, y, w, h, th, 3, S, deco) : null;
+    if(!a || (mid && !b)){ p._spr = {fail:key}; return false; }
+    c = p._spr = {key, a, b, mid};
+  }
+  // position au pixel près de l'écran (au plus un demi-pixel d'écart)
+  const dx = Math.round(m.a * (x - PL_PAD) + m.e), dy = Math.round(m.d * (y - PL_PAD) + m.f);
+  const sx = (dx - m.e) / m.a + PL_PAD, sy = (dy - m.f) / m.d + PL_PAD;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(c.a, dx, dy);
+  ctx.setTransform(m);
+  const flip = p.solid && p.hang;
+  const dyn = pass => {
+    PL_PASS = pass;
+    if(flip){ ctx.save(); ctx.translate(0, sy + h / 2); ctx.scale(1, -1); ctx.translate(0, -(sy + h / 2)); }
+    if(p.solid) drawWall(p, sx, sy, w, h, th); else drawSolid(p, sx, sy, w, h, th);
+    if(flip) ctx.restore();
+    PL_PASS = 0;
+  };
+  if(c.mid){
+    dyn(2);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(c.b, dx, dy); ctx.setTransform(m);
+  }
+  dyn(4);
+  if(p.ice) iceTop(sx, sy, w);
+  ctx.restore();
+  return true;
 }
 
 // slippery ice on top of a ledge
@@ -1018,8 +1162,30 @@ function drawFlip(o){
 }
 
 // an elliptical glow that fades out on every side (no hard edges)
+// v54 : le dégradé est dessiné une fois par couleur dans une petite image (intensité 1), puis posé à la bonne taille
+// avec globalAlpha = a (même résultat : les arrêts du dégradé sont proportionnels à a)
+const GLOW_SPR = new Map(), GLOW_R = 128;
+function glowSprite(rgb, lin){
+  const key = lin ? 'lin|' + rgb : rgb;
+  let c = GLOW_SPR.get(key);
+  if(c) return c;
+  c = document.createElement('canvas'); c.width = c.height = GLOW_R * 2;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(GLOW_R, GLOW_R, 0, GLOW_R, GLOW_R, GLOW_R);
+  const col = rgb[0] === '#' ? hexRGB(rgb).join(',') : rgb;
+  gr.addColorStop(0, `rgba(${col},1)`); if(!lin) gr.addColorStop(0.45, `rgba(${col},0.5)`); gr.addColorStop(1, `rgba(${col},0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, GLOW_R * 2, GLOW_R * 2);
+  GLOW_SPR.set(key, c);
+  return c;
+}
 function softGlow(cx, cy, rx, ry, rgb, a){
   if(a <= 0.003) return;
+  if(a <= 1 && rx > 0 && ry > 0){
+    const ga = ctx.globalAlpha;
+    ctx.globalAlpha = ga * a;
+    ctx.drawImage(glowSprite(rgb), cx - rx, cy - ry, rx * 2, ry * 2);
+    ctx.globalAlpha = ga;
+    return;
+  }
   ctx.save();
   ctx.translate(cx, cy); ctx.scale(rx / ry, 1);
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, ry);

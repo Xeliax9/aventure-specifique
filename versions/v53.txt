@@ -1,0 +1,18 @@
+VERSION 53 (v0.9.53) — Une vraie ouverture pour l'aventure
+
+Début du chapitre 1
+- Nouvelle cinématique de 10 secondes : à l'aube, XELIAX dort dans les Plaines, une ombre pourpre vole
+  la ficelle aux olives, il se réveille, crie, part en courant, puis le titre du jeu apparaît.
+- La première fois, on la regarde en entier. Ensuite, Espace permet de la passer.
+
+Démo
+- La pie ne traverse plus le ciel de l'accueil, même si on a déjà une sauvegarde du jeu complet.
+
+Bonus Le Cosmos
+- Le temps à battre passe de 1 min 50 à 1 min 30.
+
+Saison 2
+- 1-4 Les Parachutes : les murs montent plus haut, on ne peut plus les contourner par le dessus.
+
+Textes
+- Quelques phrases corrigées : les conseils du combat contre la pie et des phrases de XELIAX.

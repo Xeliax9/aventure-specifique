@@ -26,7 +26,7 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
 
 ## Commandes
 - Construire : `node outils/build.js`
-- Tests (Playwright, `npm install` une fois) : `node outils/tests/tests19.js`, `tests_s2.js`, `tests14.js`
+- Tests (Playwright, `npm install` une fois) : `node outils/tests/tests19.js`, `tests_s2.js`, `tests14.js`, `tests_ouverture.js` (a besoin de `dist/demo.html` : `node outils/build.js --demo --out dist/demo.html`)
 - Vérifier qu'une salle saison 2 est faisable (copie exacte de la physique) :
   `node outils/verif/route2.js outils/cache/chapters2.js 2-3 --gates` (avec la variable `NOLONE=1` pour interdire
   l'escalade d'un seul mur). `--gates` dit quels éléments sont obligatoires / évitables, `--verbose` liste les étapes.
@@ -45,14 +45,23 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v52 = v0.9.52, 4 novembre 2026)
+## État (v54 = v0.9.54, 9 novembre 2026, publiée ; v53 et v54 sur le même commit, tags v0.9.53 et v0.9.54)
+- v54 : motifs et accessoires des couleurs à acheter (`pat`, `acc`, `desc`, `ghost` dans `SKINS` ; `drawSkinPattern`, `drawSkinAcc` ; `drawHero(..., {skin})` = aperçu boutique).
+  Indice de la suite (`12c_indice_suite.js`) : `clearInfo.teaser` avant les résultats, passable après une première vue (`save.teaserSeen`).
+  Pause : R = recommencer la salle (`pauseRestartRoom`, `roomEntry`), C = le chapitre. Qualité automatique `RES_K` (00_bases, `autoQuality`) ; page des chapitres sans flou CSS ni recalcul à chaque image (`setCss`, `setText`).
+  Fin v54 (9 nov.) : rendu 240 Hz (`onView`/`spikesOnView` hors écran, `platCached`, `glowSprite`, `VIG_SPR`, `SKY_GRAD`) ; Or/Cristal (`shineGold`, `shineCrystal`), Émeraude/Galaxie légendaires (`legend:true`, `legendTex`) ;
+  flammes Lave (`LAVA_FLAMES`, `drawSkinGlowOver` après `drawLighting`) ; piment = `{recolor}` ; Nuit 400 pièces / Corail gratuite (`save.nuitPaid`) ; `save.allCoins` = « Complété ⭐⭐ » ; chant du coin (`SONG_TUNE`).
+  Démo : connexion admin à part (`settings.demoAdmin`, `demoSaveView`) ; le mode créateur du jeu complet n'ouvre plus la démo.
+  Démo : `skinOf()` renvoie toujours Indigo (boutique fermée, sauvegarde partagée avec le jeu complet).
+- Ouverture du chapitre 1 (v53) : `12b_ouverture_saison1.js`, état `opening`, 10 s ; lancée seulement depuis le menu (`playChapter`), pas par `newRun` ; passable après une première vue (`save.openingSeen`), comme la fin de la saison 2.
+- `demo.html` et `aventure.html` ouverts en local partagent la même sauvegarde : `s2Visible` renvoie toujours faux dans la démo (sauf admin connecté).
 - Chapitre 3 de la saison 1 (v52) : 3-2 L'Escalier refaite (sans chauves-souris, un thème par étage), nouvelle 3-4 Le Chemin de Ronde, boss Gardien en 3-5 (`loadRoom(2,4)`).
   Gardien : 5 + 5 PV, plus de piques ; `p2crumble` = plateforme fragile en phase 2 (`back:600` = retour après 10 s) ; sauter sur lui en vol = `grab` puis `player.slam` (jeté au sol, un cœur).
   Une bombe casse aussitôt une plateforme `p2crumble` (`breakPlatform`) ; celle du milieu reste solide. Rasage : 7 / 9 px/image, attaque et côté au hasard (`b.same` : deux fois de suite au plus), attente variable, demi-tour possible en phase 2 (`b.turnT`).
   Gemme du chapitre 3 : dans 3-4, au-dessus de l'écran (y −68), la pièce à y 30 est le seul indice. Les autres gemmes n'ont pas été retouchées.
 - Pause (v52) : lignes cliquables (`pauseBtns`), `pauseRestart` (boss : reprend la phase sans rendre de cœurs), `openPauseKeys` (page Commandes, retour à la pause via `menu.pauseKeys`).
 - Fuite finale : lave à 1,35 px/image ; le robot sans erreur bloque vers 1,8.
-- Bonus Le Cosmos (v52) : salle 1 refaite d'après `capture pour correction/level design.png` (1210 × 680) ; `parTime` 110000 estimé, à ajuster. Tête en bas, le saut ne fait que 64 à 73 px.
+- Bonus Le Cosmos (v52) : salle 1 refaite d'après `capture pour correction/level design.png` (1210 × 680) ; `parTime` 90000 (1 min 30, choisi par l'utilisateur en v53). Tête en bas, le saut ne fait que 64 à 73 px.
   `route2` ignore les portes (`hp`) : les tester dans le vrai moteur. Après une téléportation dans un test, recaler la caméra, sinon les tirs disparaissent.
 - Menu : la saison 2 n'apparaît qu'après la fin de la saison 1 (`s2Visible`, `refreshMainCh`) ; plus de barre de téléphone.
 - v48 (retours GitHub de hugomslv) : touches dessinées cliquables dans les menus (`PROMPT_KEY`) ; touches au choix

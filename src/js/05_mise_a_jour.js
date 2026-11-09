@@ -42,7 +42,9 @@ function step(){
   if(state === 'title'){ updateMenu(); clearPresses(); return; }
   if(state === 'pet'){ updatePet(); clearPresses(); return; }
   if(state === 'ending'){ updateEnding(); clearPresses(); return; }
+  if(state === 'opening'){ updateOpening(); clearPresses(); return; }
   if(state === 'talk'){ stepTalk(); stepHero(); clearPresses(); return; }
+  if(state === 'chapter' && clearInfo && clearInfo.teaser) updateTeaser();
   if(state !== 'play'){ updateUiHero(); clearPresses(); return; }
   // a boss demo is on screen: everything waits until it is closed
   if(bossDemo){ updateBossDemo(); clearPresses(); return; }
@@ -62,6 +64,7 @@ function step(){
   if(phaseT > 0 && --phaseT === 0) transition(() => loadRoom(chIndex, rIndex + 1));
 
   updateWorld();
+  notePowers();   // v54 : un pouvoir reçu reste visible dans les menus
 
   if(exitT > 0){ updateExit(); updateCamera(); stepHero(); clearPresses(); return; }
   if(finaleT > 0){

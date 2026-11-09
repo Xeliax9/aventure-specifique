@@ -81,7 +81,9 @@ const PET_LINES = {
   bird:['Oh, un petit oiseau !', 'Salut, l\'oiseau !', 'Il vient chercher des miettes.', 'Cui cui ! Ça veut dire « bonjour ».'],
   birdGone:['Il est parti…', 'Au revoir, petit oiseau !', 'Tu lui as fait peur !'],
   birdLeave:['Bon vol, l\'oiseau !', 'À demain, petit oiseau.'],
-  song:['La la la, la ficelle aux olives…', 'Pom pom pom… je suis boulanger…', 'Tralala, la pâte lève…', 'Ding ding dong, le pain est bon…'],
+  // v54 : quand il chantonne, il dit ces bulles l'une après l'autre : [texte, début, durée] (images à 60/s)
+  song:[['Juste le goût…', 0, 120], ['Olala, quoi de mieux ?', 125, 130], ['Je sais pas…', 260, 105],
+        ['Vas-y, cherche…', 370, 115], ['Je trouve pas…', 490, 115], ['Eh bien ! Ça me rappelle une musique !', 610, 170]],
   stretch:['Hmmmf… petit étirement.', 'Ahh, ça fait du bien.', 'Un, deux… étirement !'],
   lampOff:['Hé ! Qui a éteint ?', 'J\'ai un peu peur du noir…', 'Je ne vois plus mes ficelles !', 'Allume, s\'il te plaît !'],
   lampOn:['Ah, la lumière !', 'Merci, c\'est mieux.', 'Ouf ! Il faisait tout noir.'],
@@ -227,7 +229,8 @@ function onCall(){ return !!pet.phone && pet.phone.stage === 'call'; }
 function petSelect(d){ pet.sel = (pet.sel + d + FOODS.length) % FOODS.length; SFX.menu(); }
 
 // any real interaction: wakes him up, stops small idle shows, resets his boredom
-const PET_SHORT = ['song', 'muse', 'stretch', 'lonely', 'growl', 'chat'];
+const SONG_TUNE = 650;   // v54 : image où il retrouve l'air et le chante (après « ça me rappelle une musique »)
+const PET_SHORT = ['song','muse', 'stretch', 'lonely', 'growl', 'chat'];
 function petInteract(){
   pet.hint = 0; pet.quiet = 0; pet.nextEv = 360 + Math.random() * 300;
   pet.after = pet.after.filter(a => !a.greet);
@@ -650,7 +653,7 @@ function startEv(type, text){
     ev.stage = 'in'; ev.x = W + 20; ev.y = 26;
     ev.sx = PET_WIN.x + 40 + Math.random() * 70; ev.sy = PET_WIN.y + PET_WIN.h + 6; ev.dur = 520;
   } else if(type === 'song'){
-    ev.dur = 170; petSay(line('song'), 150);
+    ev.dur = SONG_TUNE + 13 * 12 + 4; ev.t = -1;   // les bulles et l'air sont joués dans updatePetEv
   } else if(type === 'stretch'){
     ev.dur = 100; petSay(line('stretch'), 90); tone(200, 0.5, 'sine', 0.03, 320);
   } else if(type === 'muse'){
@@ -794,13 +797,27 @@ function updatePetEv(){
       if(ev.t > 90) end();
     }
   } else if(ev.type === 'song'){
+    // v54 : il chantonne doucement en cherchant l'air, bulle après bulle, puis le retrouve et le chante
+    for(const [text, at, d] of PET_LINES.song) if(ev.t === at) petSay(text, d);
     const notes = [523, 587, 659, 523, 659, 698, 784, 0, 784, 698, 659, 587, 523];
-    if(ev.t % 12 === 1){
-      const q = notes[Math.floor(ev.t / 12)];
-      if(q) tone(q, 0.11, 'triangle', 0.035);
-      if(q && ev.t % 24 === 1) petPart({type:'note', x:PET.x + 40 + Math.random() * 20, y:PET.y - 100, vx:0.6, vy:-1, g:0, life:50, max:50});
+    if(ev.t < SONG_TUNE){
+      // fredonnement : quelques notes graves, lentes, au hasard
+      if(ev.t % 36 === 6){
+        tone(pick([262, 294, 330, 349, 392]), 0.22, 'sine', 0.022);
+        if(ev.t % 72 === 6) petPart({type:'note', x:PET.x + 40 + Math.random() * 20, y:PET.y - 100, vx:0.5, vy:-0.8, g:0, life:50, max:50});
+      }
+      pet.lean = Math.sin(ev.t * 0.05) * 0.06;
+      if(ev.t >= 370 && ev.t < 605) pet.look = pet.look || {x:Math.sin(ev.t * 0.03) * 0.8, y:-0.45};   // il cherche
+      if(ev.t === 610){ setFace(h, 'open', 50); petHop(3.5); }
+    } else {
+      const u = ev.t - SONG_TUNE;
+      if(u % 12 === 1){
+        const q = notes[Math.floor(u / 12)];
+        if(q) tone(q, 0.11, 'triangle', 0.035);
+        if(q && u % 24 === 1) petPart({type:'note', x:PET.x + 40 + Math.random() * 20, y:PET.y - 100, vx:0.6, vy:-1, g:0, life:50, max:50});
+      }
+      pet.lean = Math.sin(u * 0.1) * 0.12;
     }
-    pet.lean = Math.sin(ev.t * 0.1) * 0.12;
     if(ev.t >= ev.dur) end();
   } else if(ev.t >= ev.dur) end();
 }
@@ -1140,7 +1157,7 @@ function drawPet(){
   const spicyK = clamp(pet.spicy / 120, 0, 1), greenK = clamp(pet.green / 80, 0, 1) * 0.7;
   const tint = spicyK > 0 ? mixHex(HERO.body, '#d4243a', spicyK) : greenK > 0 ? mixHex(HERO.body, '#5aa83a', greenK) : null;
   const jx = pet.spicy > 130 ? (Math.random() - 0.5) * 3 : 0;
-  drawHero(h, PET.x + jx, PET.y + pet.hy, PET.s, {tint, phone:onPhone()});
+  drawHero(h, PET.x + jx, PET.y + pet.hy, PET.s, {recolor:tint, phone:onPhone()});
   // the curly cord from the handset to the phone on the tray
   if(onPhone()){
     const tx = trayX(FOODS.length - 1) + TRAY.w / 2, ty = TRAY.y + 14;
@@ -1199,9 +1216,11 @@ function drawPet(){
   rr(bxx, 12, bw, 28, 14); ctx.fillStyle = 'rgba(90,42,16,0.85)'; ctx.fill();
   keycap(backKey, bxx + 8, 31);
   txt('Retour', bxx + 8 + bkw + 9, 30.5, 12.5, '#ffffff', 600, 'left');
-  // your coins (to buy food)
-  rr(W - 118, 12, 104, 28, 14); ctx.fillStyle = 'rgba(90,42,16,0.85)'; ctx.fill();
-  txt('🪙 ' + save.bank, W - 66, 30.5, 13, '#ffe58a', 700);
+  // your coins (to buy food) : une pastille à part, à gauche du bouton Retour (v54 : elle le recouvrait)
+  ctx.font = `700 13px ${FU}`;
+  const coinTxt = '🪙 ' + save.bank, cpw = Math.max(64, ctx.measureText(coinTxt).width + 26), cpx = bxx - 8 - cpw;
+  rr(cpx, 12, cpw, 28, 14); ctx.fillStyle = 'rgba(90,42,16,0.85)'; ctx.fill();
+  txt(coinTxt, cpx + cpw / 2, 30.5, 13, '#ffe58a', 700);
   // the food tray
   for(let i = 0; i < FOODS.length; i++){
     const x = trayX(i), sel = i === pet.sel && !TOUCH;
@@ -1238,7 +1257,7 @@ function drawPet(){
   else if(ph && ph.stage === 'listen' && ph.t > 40) hint = 'Pose ta question dans ta tête, puis appuie encore sur le téléphone';
   else if(ev && ev.type === 'sleep' && ev.t > 240) hint = TOUCH ? 'Chut… il dort. Touche-le pour le réveiller.' : 'Chut… il dort. Clique sur lui pour le réveiller.';
   else if(ev && ev.type === 'fly' && ev.stage === 'buzz' && ev.t > 60) hint = TOUCH ? 'Touche la mouche !' : 'Clique sur la mouche !';
-  else if(pet.hint > 0) hint = TOUCH ? 'Touche un aliment, le téléphone, ou XELIAX' : 'Clique sur un aliment, le téléphone ou XELIAX  (◀ ▶ et Espace pour choisir, E pour chatouiller)';
+  else if(pet.hint > 0) hint = TOUCH ? 'Touche un aliment, le téléphone, ou XELIAX' : 'Clique sur un aliment, le téléphone ou XELIAX (◀ ▶ et Espace pour choisir, E pour chatouiller)';
   if(hint){
     hint = frTypo(hint);
     ctx.font = `600 11px ${FU}`;

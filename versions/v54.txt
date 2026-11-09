@@ -1,0 +1,69 @@
+VERSION 54 (v0.9.54) — Des couleurs qui ont du style, et un aperçu de la suite
+
+Couleurs à acheter
+- Chaque couleur à acheter a maintenant un motif sur le corps et un petit accessoire :
+  Citron (des pois et une feuille de citron), Lavande (des fleurs et un béret),
+  Corail (une marinière et une étoile de mer, désormais gratuite), Fantôme (un peu transparent, avec son feu follet),
+  Lave (des fissures brûlantes et des flammes).
+- Nuit devient un vrai noir, façon ninja : bandeau rouge et nœud qui flotte au vent.
+- Nuit et Corail échangent leur place : le noir coûte plus cher, la Nuit s'achète maintenant 400 pièces
+  et Corail devient gratuite. Si tu portais déjà la Nuit, tu la gardes.
+- Or et Cristal scintillent : sur l'Or, un reflet de lumière glisse sur le corps et des étincelles dorées s'allument ;
+  sur le Cristal, des facettes brillent tour à tour, avec des éclats blancs et un petit reflet d'arc-en-ciel.
+- Émeraude et Galaxie deviennent LÉGENDAIRES. Émeraude : XELIAX devient une pierre précieuse taillée, avec des facettes
+  qui brillent, un reflet qui passe, des cristaux sur la tête et de petits éclats verts qui s'envolent.
+  Galaxie : un vrai ciel étoilé dans le corps (une nébuleuse qui bouge doucement, des étoiles qui scintillent,
+  parfois une étoile filante) et une petite planète à anneau qui tourne autour de lui. Les deux laissent une traînée
+  (avec des étoiles pour Galaxie) et, dans la boutique, ont l'étiquette « Légendaire », des rayons dorés et un anneau doré.
+- Dans la boutique, une couleur pas encore achetée se montre telle quelle (« Aperçu ») avec sa description,
+  pour savoir ce qu'on achète.
+
+Fin de chapitre
+- Avant l'écran des résultats, une petite animation de 4 secondes montre le chapitre suivant :
+  le voleur traverse l'image (l'ombre en saison 1, la pie en saison 2), puis le nom du chapitre apparaît.
+- La première fois, on la regarde en entier ; ensuite, Espace permet de la passer.
+- Page des chapitres : un chapitre fini avec toutes ses pièces (celles attrapées au tir comptent aussi) affiche
+  « Complété » avec 2 étoiles et une pastille dorée qui brille ; sinon, 1 étoile comme avant.
+
+Pause
+- Nouvelle option « Recommencer la salle » (touche R) : XELIAX repart du début de la salle, tout est remis
+  comme à l'entrée. On garde ses cœurs (sans en regagner), les pièces déjà prises le restent.
+- « Recommencer le chapitre » passe sur la touche C. Contre un boss, R recommence la phase, comme avant.
+
+Pas de surprise gâchée
+- Un pouvoir qu'on n'a jamais reçu (tir, dash, ventouses, gravité…) n'apparaît plus dans les menus : page Commandes,
+  bouton tactile du dash, images et phrases des cartes de chapitres, démonstrations « Comment battre… ».
+
+Nourrir XELIAX
+- Quand XELIAX chantonne, il cherche l'air à voix haute : « Juste le goût… », « Olala, quoi de mieux ? »,
+  « Je sais pas… », « Vas-y, cherche… », « Je trouve pas… », puis « Eh bien ! Ça me rappelle une musique ! »
+  et il la chante.
+
+Vies
+- On ne choisit plus son nombre de vies : chaque partie commence avec 5 vies.
+
+Fluidité
+- Le retour au menu et la page des chapitres sont beaucoup plus légers (halo plus simple, moins de calculs à
+  chaque image, cartes dessinées petit à petit).
+- Si l'ordinateur n'arrive pas à suivre la fréquence de l'écran (60, 144 ou 240 Hz), le jeu baisse un peu sa
+  résolution tout seul pour rester fluide.
+- Nouvelle option dans Paramètres → Jeu : « Limiter à 60 images/s », pour les ordinateurs qui ont du mal.
+- Dans les niveaux, le jeu ne dessine plus ce qui est hors de l'écran. Les plateformes, les halos de lumière,
+  le ciel et l'ombre douce autour de XELIAX sont préparés une seule fois puis réutilisés, au lieu d'être
+  redessinés à chaque image. Le jeu a la même allure, mais chaque image demande beaucoup moins de travail :
+  c'est plus fluide sur les écrans rapides (240 Hz), surtout dans les niveaux de nuit et le Cosmos.
+
+Corrections
+- Démo : la pie n'apparaît plus sur l'accueil. Le mode créateur du jeu complet n'ouvre plus la démo (les deux partagent
+  la même sauvegarde sur ton PC) : dans la démo, il faut passer par « Connexion admin ». Une pie déjà en vol
+  disparaît aussitôt qu'on se déconnecte.
+- Démo : XELIAX garde toujours sa couleur de départ (Indigo). Avant, il pouvait porter une couleur achetée ou
+  débloquée dans le jeu complet (Lave, Galaxie…), ce qui dévoilait la boutique.
+- Couleur Lave : les flammes sont maintenant bien centrées sur XELIAX (deux de chaque côté, posées sur le bord du corps),
+  et elles gardent leurs couleurs quand XELIAX devient rouge après un piment dans « Nourrir XELIAX ».
+  Dans les niveaux de nuit, elles brillent un peu pour mieux se voir.
+- L'icône du double saut pouvait rester affichée en haut à gauche après la cinématique de la pie, même dans
+  une autre partie. Le message « La pie t'a pris ton double saut » ne peut plus apparaître ailleurs.
+- « Le coin de XELIAX » : le compteur de pièces ne recouvre plus le bouton « Retour » ; il a sa propre pastille juste à côté.
+- Quand XELIAX ouvre grand la bouche (« Oh ! », en sautant), un rond noir dépassait sous son sourire : c'était le
+  contour de la langue. Maintenant le contour suit bien la bouche, et la langue reste dedans.

@@ -88,6 +88,7 @@ if(!Array.isArray(save.recipe) || save.recipe.length !== 4) save.recipe = [false
 while(save.bestCh.length < CHAPTERS.length) save.bestCh.push(null);
 while(save.gems.length < CHAPTERS.length) save.gems.push(false);
 if(!save.seen || typeof save.seen !== 'object') save.seen = {};
+if(!save.allCoins || typeof save.allCoins !== 'object') save.allCoins = {};   // v54 : chapitres finis avec toutes leurs pièces (2e étoile)
 if(!(save.unlocked2 >= 1)) save.unlocked2 = 1;
 if(save.bestCh[3] != null) save.unlocked = Math.max(save.unlocked, 5);   // finished the adventure
 // the two secret bonuses: « Les Étoiles » once season 1 is finished, « Le Cosmos » once season 2 is.
@@ -102,7 +103,14 @@ const isUnlocked = i => {
 };
 const bonusVisible = () => CHAPTERS.some((c, i) => c.bonus && isUnlocked(i));
 const isNewApp = i => isUnlocked(i) && !save.seen[i] && save.bestCh[i] == null && !(i === S2_FIRST && save.s2Seen);
-function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(DEMO ? demoSaveView() : save)); }catch(e){} }
+// démo et jeu complet ouverts en local partagent la même sauvegarde : la connexion admin de la démo est rangée à part
+// (settings.demoAdmin), sinon le mode créateur du jeu complet ouvrait toute la démo (saison 2, la pie…) sans mot de passe
+function demoSaveView(){
+  let full = false;
+  try{ const old = JSON.parse(localStorage.getItem(SAVE_KEY)); full = !!(old && old.settings && old.settings.creator); }catch(e){}
+  return Object.assign({}, save, {settings:Object.assign({}, save.settings, {creator:full, demoAdmin:!!save.settings.creator})});
+}
 
 // =====================================================================
 //  AUDIO (tiny synth, starts after the first key press or tap)
@@ -158,7 +166,7 @@ const SFX = {
 };
 
 // =====================================================================
-//  SETTINGS (kept in the save): sound, volume, lives, timer, screen shake,
+//  SETTINGS (kept in the save): sound, volume, timer, screen shake,
 //  reduced animations, XELIAX's colour, and the secret creator mode
 // =====================================================================
 const SKINS = [
@@ -167,25 +175,28 @@ const SKINS = [
   {id:'framboise', name:'Framboise', body:'#b8145a', deep:'#4a0624', light:'#ff5c9a'},
   {id:'ocean', name:'Océan', body:'#1456b0', deep:'#07234d', light:'#4fa6ff'},
   {id:'citrouille', name:'Citrouille', body:'#d05a14', deep:'#561f04', light:'#ffa25c'},
-  {id:'nuit', name:'Nuit', body:'#262046', deep:'#0b0918', light:'#6a63a8'},
-  {id:'or', name:'Or', body:'#c08a0a', deep:'#553a00', light:'#ffd85a', lock:'gold'},
-  {id:'cristal', name:'Cristal', body:'#2a9cc0', deep:'#0a4458', light:'#b4f2ff', lock:'crystal'},
-  {id:'citron', name:'Citron', body:'#c9b40c', deep:'#4d4400', light:'#fff36a', price:150},
-  {id:'lavande', name:'Lavande', body:'#8a6ad8', deep:'#33236a', light:'#d2c2ff', price:250},
-  {id:'corail', name:'Corail', body:'#e0505a', deep:'#5a1218', light:'#ff9a8a', price:400},
-  {id:'fantome', name:'Fantôme', body:'#b8b4cc', deep:'#47435a', light:'#ffffff', price:600},
-  {id:'lave', name:'Lave', body:'#2a1010', deep:'#0c0303', light:'#ff6a2a', price:900},
-  {id:'emeraude', name:'Émeraude', body:'#0a7a3a', deep:'#02301a', light:'#5cff9a', gems:3},
-  {id:'galaxie', name:'Galaxie', body:'#3a1a7a', deep:'#0a0424', light:'#ff7af0', gems:7},
+  {id:'corail', name:'Corail', body:'#e0505a', deep:'#5a1218', light:'#ff9a8a', pat:'rayures', acc:'etoile', desc:'Une marinière et une étoile de mer'},
+  {id:'or', name:'Or', body:'#c08a0a', deep:'#553a00', light:'#ffd85a', lock:'gold', pat:'or', acc:'or', desc:'Des reflets dorés et des étincelles'},
+  {id:'cristal', name:'Cristal', body:'#2a9cc0', deep:'#0a4458', light:'#b4f2ff', lock:'crystal', pat:'cristal', acc:'cristal', desc:'Des facettes qui brillent, un éclat d’arc-en-ciel'},
+  {id:'citron', name:'Citron', body:'#c9b40c', deep:'#4d4400', light:'#fff36a', price:150, pat:'pois', acc:'feuille', desc:'Des pois et une feuille de citron'},
+  {id:'lavande', name:'Lavande', body:'#8a6ad8', deep:'#33236a', light:'#d2c2ff', price:250, pat:'fleurs', acc:'beret', desc:'Des fleurs et un béret'},
+  {id:'nuit', name:'Nuit', body:'#15131c', deep:'#040307', light:'#4b4664', price:400, pat:'ninja', acc:'noeud', desc:'Un ninja, avec son bandeau rouge'},
+  {id:'fantome', name:'Fantôme', body:'#b8b4cc', deep:'#47435a', light:'#ffffff', price:600, pat:'brume', acc:'follet', ghost:true, desc:'Un peu transparent, avec son feu follet'},
+  {id:'lave', name:'Lave', body:'#2a1010', deep:'#0c0303', light:'#ff6a2a', price:900, pat:'fissures', acc:'flammes', desc:'Des fissures brûlantes et des flammes'},
+  {id:'emeraude', name:'Émeraude', body:'#0b8a44', deep:'#01331a', light:'#7dffb8', gems:3, trail:'92,255,154', pat:'gemme', acc:'gemme', legend:true, desc:'Une pierre précieuse vivante, qui scintille !'},
+  {id:'galaxie', name:'Galaxie', body:'#1d0c52', deep:'#05021a', light:'#ff7af0', gems:7, trail:'255,122,240', stars:true, pat:'cosmos', acc:'cosmos', legend:true, desc:'Tout un ciel étoilé, avec sa petite planète !'},
 ];
 // the shop: every coin picked up goes into XELIAX's piggy bank, to spend on colours
 if(!(save.bank >= 0)) save.bank = 0;
 if(!save.owned || typeof save.owned !== 'object') save.owned = {};
 const gemCount = () => (save.gems || []).filter(Boolean).length;
 function addBank(n){ save.bank = (save.bank || 0) + n; persist(); }
-save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, timer:true, lives:5, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
-if(![3, 5, 7, 9].includes(save.settings.lives)) save.settings.lives = 5;
+save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, timer:true, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
+delete save.settings.lives;   // v54 : plus de choix du nombre de vies (les anciennes sauvegardes à 3, 7 ou 9 repartent à 5)
 const SET = save.settings;
+// v54 : la Nuit (gratuite avant) prend la place et le prix de Corail ; qui l'avait déjà sur lui la garde
+if(!save.nuitPaid){ if(SET.skin === 'nuit') save.owned.nuit = true; save.nuitPaid = true; }
+if(DEMO) SET.creator = !!SET.demoAdmin;   // démo : seul l'admin connecté dans la démo compte (voir demoSaveView)
 // touches au choix (page Commandes) : chaque action a une touche lettre que le joueur peut changer.
 // Les flèches, Espace, Maj et Échap marchent toujours en plus.
 const KEY_DEF = {left:'a', right:'d', jump:'w', shoot:'j', dash:'k', talk:'e', pause:'p'};
@@ -199,14 +210,16 @@ function gameKey(k){
   return k;
 }
 const skinOpen = s => SET.creator || (s.price ? !!(save.owned || {})[s.id] : s.gems ? gemCount() >= s.gems : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
-const skinOf = () => SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
-const startLives = () => SET.lives || 5;
+// démo : boutique fermée, donc toujours la couleur de départ (la sauvegarde du jeu complet est partagée et ne doit rien dévoiler)
+const skinOf = () => demoOn() ? SKINS[0] : SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
+const START_LIVES = 5;   // nombre de vies au départ, fixe (v54)
+const startLives = () => START_LIVES;
 function applySettings(){
   REDUCED = MEDIA_REDUCED || !!SET.reduced;
   muted = !SET.sound;
   VOL = Math.pow(clamp(SET.vol, 0, 10) / 8, 1.5);
   const s = skinOf();
-  HERO.body = s.body; HERO.deep = s.deep; HERO.light = s.light;
+  HERO.body = s.body; HERO.deep = s.deep; HERO.light = s.light; HERO.skin = s;
 }
 function setSetting(k, v){ SET[k] = v; applySettings(); persist(); }
 function setMuted(v){ setSetting('sound', !v); }

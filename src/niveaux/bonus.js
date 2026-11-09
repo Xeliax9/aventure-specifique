@@ -1,7 +1,7 @@
   // ==== END SEASON 2 ====
   // ==== BONUS 2 ====
   {
-    name:'Le Cosmos', bonus:true, bonus2:true, parTime:110000, deco:'cosmos', grants:{dj:true, shoot:true, wall:true, dash:true},
+    name:'Le Cosmos', bonus:true, bonus2:true, parTime:90000, deco:'cosmos', grants:{dj:true, shoot:true, wall:true, dash:true},
     rooms:[
       {
         // v52 : d'après le dessin de l'utilisateur. Parcours : on part au milieu, on passe sous le gros bloc, on grimpe le mur

@@ -311,6 +311,7 @@ function drawParticles(){
   for(const p of particles){
     const a = Math.max(0, p.life / p.max);
     const x = ix(p), y = iy(p);
+    if(x < viewX - 120 || x > viewX + W + 120 || y < viewY - 120 || y > viewY + H + 120) continue;
     switch(p.type){
       case 'star':
         ctx.globalAlpha = Math.min(1, a * 1.5); ctx.fillStyle = p.color; star(x, y, p.size * (0.4 + 0.6 * a), p.rot); break;
@@ -387,24 +388,33 @@ function drawHotFloor(hf){
   if(fxTick && frame % 4 === 0) particles.push({x:hf.x0 + Math.random() * w, y:y - 2, vx:(Math.random() - 0.5) * 0.4, vy:-0.7 - Math.random(), life:28, max:28, color:Math.random() < 0.5 ? '#ffb347' : '#ff6a3c', grav:-0.01, size:2.4, type:'dot'});
 }
 
+// v54 : on ne dessine que ce qui touche l'écran (marge m en px du jeu, pour les halos, la secousse, les parachutes…)
+function onView(x, y, w, h, m){ return x + w > viewX - m && x < viewX + W + m && y + h > viewY - m && y < viewY + H + m; }
+// piques : au sol pas de h (pointes de 11 px, chaînes jusqu'à 140 px au-dessus), sur un mur pas de w, lave jusqu'au bas de la salle
+function spikesOnView(s){
+  if(s.side) return onView(s.x - 12, s.y, 24, s.h, 40);
+  if(s.lava) return onView(s.x - 40, s.y - 60, s.w + 80, room.h + 90 - s.y, 40);
+  return onView(s.x - 3, s.y - 145, s.w + 6, 165, 40);
+}
 function drawWorld(){
-  for(const p of platforms) if(p.move) drawRail(p);
+  PL_M = ctx.getTransform(); PL_BAKES = 3;
+  for(const p of platforms) if(p.move && (p.move.axis === 'x' ? onView(p.move.min, p.y, p.move.max - p.move.min + p.w, p.h, 20) : onView(p.x, p.move.min, p.w, p.move.max - p.move.min + p.h, 20))) drawRail(p);
   for(const s of signs) drawSign(s);
   for(const c of checkpoints) drawCheckpoint(c);
   if(door) drawDoor();
-  for(const p of platforms) drawPlatform(p);
-  for(const s of springs) drawSpring(s);
-  for(const s of spikes) drawSpikes(s);
-  for(const f of fires) drawFire(f);
+  for(const p of platforms) if(onView(ix(p), iy(p), p.w, p.h, 110)) drawPlatform(p);
+  for(const s of springs) if(onView(s.x, s.y, s.w, s.h, 60)) drawSpring(s);
+  for(const s of spikes) if(spikesOnView(s)) drawSpikes(s);
+  for(const f of fires) if(onView(f.x, FLOOR - 60, f.w, 70, 120)) drawFire(f);
   if(room.hotFloor && boss && boss.alive) drawHotFloor(room.hotFloor);
   for(const n of npcs) drawNpc(n, n.x + 13, n.y, 1, !!(talk && talk.npc === n && talk.chars < talk.data.lines[talk.line].length), state === 'title' || player.x + player.w / 2 >= n.x + 13 ? 1 : -1);
-  for(const c of coins) if(!c.got) drawCoin(c);
-  for(const p of powerUps) if(!p.got) drawPowerUp(p);
-  for(const o of flips) drawFlip(o);
+  for(const c of coins) if(!c.got && onView(c.x, c.y, 0, 0, 40)) drawCoin(c);
+  for(const p of powerUps) if(!p.got && onView(p.x, p.y, 20, 20, 80)) drawPowerUp(p);
+  for(const o of flips) if(onView(o.x, o.y, o.w, o.h, 60)) drawFlip(o);
   if(key && !key.got) drawKey(key);
-  for(const t of turrets) if(t.alive) drawTurret(t);
-  for(const e of enemies) if(e.alive) drawEnemy(e);
-  for(const b of bats) if(b.alive) drawBat(b);
+  for(const t of turrets) if(t.alive && onView(t.x, t.y, t.w, t.h, 100)) drawTurret(t);
+  for(const e of enemies) if(e.alive && onView(ix(e), iy(e), e.w, e.h, 100)) drawEnemy(e);
+  for(const b of bats) if(b.alive && onView(ix(b), iy(b), b.w, b.h, 100)) drawBat(b);
   drawBoss();
   for(const s of shots) drawShot(s);
   for(const b of bullets) drawBullet(b);
@@ -417,5 +427,6 @@ function drawWorld(){
   drawPopups();
   if(state === 'play'){ for(const s of signs) drawSignBubble(s); for(const n of npcs) drawNpcPrompt(n); }
   drawIdleBubble();
+  PL_M = null;
 }
 

@@ -256,7 +256,8 @@ function promptLine(items, y, color='#ffffff'){
 // =====================================================================
 const ALL_MAIN = CHAPTERS.map((c, i) => i).filter(i => !CHAPTERS[i].bonus);
 // la saison 2 n'apparaît dans le menu qu'une fois la saison 1 finie (ou si on l'a déjà commencée, ou en mode créateur)
-const s2Visible = () => SET.creator || save.bestCh[STORY_END] != null || save.unlocked2 > 1 || ALL_MAIN.some(i => CHAPTERS[i].season === 2 && save.bestCh[i] != null);
+// démo : jamais de saison 2, même avec une sauvegarde du jeu complet (les deux fichiers partagent la même sauvegarde)
+const s2Visible = () => !demoOn() && (SET.creator || save.bestCh[STORY_END] != null || save.unlocked2 > 1 || ALL_MAIN.some(i => CHAPTERS[i].season === 2 && save.bestCh[i] != null));
 const MAIN_CH = [];
 function refreshMainCh(){ MAIN_CH.length = 0; for(const i of ALL_MAIN) if(CHAPTERS[i].season !== 2 || s2Visible()) MAIN_CH.push(i); }
 refreshMainCh();
@@ -282,12 +283,11 @@ const appPos = k => k * APP.step + (MAIN_CH[k] >= S2_FIRST ? APP.seasonGap : 0);
 const HOME_BTN = [{label:'Jouer', y:184, h:46}, {label:'Paramètres', y:242, h:36}, {label:'Crédits', y:288, h:36}];
 const HOME_X = 176, HOME_BW = 212, HERO_X = 470, HERO_Y = 292;
 const LIST = {x:150, y:80, w:340, rh:34};
-const LIVES_NAME = {3:'3 (difficile)', 5:'5 (normal)', 7:'7 (facile)', 9:'9 (très facile)'};
 const PAGE_FOOT = {
   settings:() => 'L\'aventure spécifique, un jeu de xeliax9',
   son:() => 'Le son démarre dès que tu appuies sur une touche.',
   test:() => 'Gauche / droite pour choisir, Entrée pour lancer.',
-  jeu:() => SET.creatorFound ? 'Le mode créateur ouvre tout, sans toucher à ta vraie progression.' : 'Les vies et le chrono comptent dès la prochaine partie.',
+  jeu:() => SET.creatorFound && !DEMO ? 'Le mode créateur ouvre tout, sans toucher à ta vraie progression.' : `Chaque partie commence avec ${START_LIVES} vies.`,
 };
 
 function defaultChapter(){
@@ -341,7 +341,7 @@ function openPetFromHome(){
   homeHero.hop = 1; homeHero.wobV += 0.8; setFace(homeHero, 'open', 30);
   SFX.bloop(); transition(openPet);
 }
-const HOME_LINES = ['Prêt pour l\'aventure ?', 'J\'ai une faim… d\'olives.', 'Clique sur moi, pour voir !',
+const HOME_LINES = ['Prêt pour l\'aventure ?', 'J\'ai une faim… d\'olives.', 'Clique sur moi pour voir !',
   'Coucou xeliax9 !', 'Allez, encore une partie !', 'Tu as fouillé les paramètres ?'];
 // phrases qui dévoilent la saison 2 (la pie, les orbes, les murs) : seulement une fois la saison 2 débloquée
 const HOME_LINES_S2 = ['La pie n\'a qu\'à bien se tenir !', 'Des ressorts, des orbes, des murs… j\'adore !'];
@@ -350,8 +350,8 @@ function homeLine(){
   if(bonusVisible() && !save.bonusFolderSeen && Math.random() < 0.6) return 'Psst… les paramètres cachent un secret !';
   const pool = HOME_LINES.slice();
   if(s2Visible()) pool.push(...HOME_LINES_S2);
-  if(SET.skin !== 'indigo') pool.push('Tu aimes ma nouvelle couleur ?');
-  if(save.s2Done) pool.push('Ma ficelle est bien rangée. Personne n\'y touche !');
+  if(skinOf().id !== 'indigo') pool.push('Tu aimes ma nouvelle couleur ?');
+  if(save.s2Done && !demoOn()) pool.push('Ma ficelle est bien rangée. Personne n\'y touche !');
   return pick(pool);
 }
 
@@ -380,7 +380,7 @@ function lockText(i){
 }
 function playChapter(i){
   if(fadeDir !== 0) return;
-  if(isUnlocked(i)){ initAudio(); newRun(i); return; }
+  if(isUnlocked(i)){ initAudio(); newRun(i); if(i === 0) startOpening(); return; }   // chapitre 1 : la cinématique d'ouverture
   showToast(lockText(i), 110); SFX.hurt(); menu.shakeT = 18;
 }
 
@@ -388,7 +388,7 @@ function playChapter(i){
 function settingsRows(){
   const rows = [
     {kind:'link', id:'son', label:'Son', icon:'sound', tile:'#ff4f7b', to:'son', value:SET.sound ? `${SET.vol * 10} %` : 'coupé'},
-    {kind:'link', id:'jeu', label:'Jeu', icon:'game', tile:'#2fbf62', to:'jeu', value:`${SET.lives} vies`},
+    {kind:'link', id:'jeu', label:'Jeu', icon:'game', tile:'#2fbf62', to:'jeu'},
     {kind:'link', id:'look', label:'Couleur de XELIAX', icon:'hero', tile:skinOf().light, to:'look', value:skinOf().name},
     {kind:'link', id:'controls', label:'Commandes', icon:'keys', tile:'#3a8dff', to:'controls'},
     {kind:'link', id:'credits', label:'Crédits', icon:'star', tile:'#ff9f0a', to:'credits', value:'xeliax9'},
@@ -412,14 +412,15 @@ function sonRows(){
 }
 function jeuRows(){
   const rows = [
-    {kind:'choice', id:'lives', label:'Vies au départ', options:[3, 5, 7, 9], get:() => SET.lives, set:v => setSetting('lives', v), fmt:v => LIVES_NAME[v]},
     {kind:'toggle', id:'timer', label:'Chronomètre à l\'écran', get:() => SET.timer, set:v => setSetting('timer', v)},
     {kind:'toggle', id:'shake', label:'L\'écran tremble', get:() => SET.shake, set:v => { setSetting('shake', v); if(v) addShake(5); }},
     {kind:'toggle', id:'reduced', label:'Animations réduites', get:() => SET.reduced, set:v => setSetting('reduced', v)},
     {kind:'toggle', id:'fps', label:'Afficher les images par seconde', get:() => !!SET.fps, set:v => setSetting('fps', v)},
+    {kind:'toggle', id:'cap60', label:'Limiter à 60 images/s (si ça rame)', get:() => !!SET.cap60, set:v => setSetting('cap60', v)},
     {kind:'toggle', id:'autoJump', label:'Garder le saut appuyé : saute en boucle', get:() => !!SET.autoJump, set:v => setSetting('autoJump', v)},
   ];
-  if(SET.creatorFound) rows.push({kind:'toggle', id:'creator', label:'Mode créateur : tout ouvrir', accent:'#ffd54a', get:() => SET.creator,
+  // démo : pas d'interrupteur (le secret trouvé dans le jeu complet ouvrait la démo sans mot de passe) ; on passe par « Connexion admin »
+  if(SET.creatorFound && !DEMO) rows.push({kind:'toggle', id:'creator', label:'Mode créateur : tout ouvrir', accent:'#ffd54a', get:() => SET.creator,
     set:v => { setSetting('creator', v); showToast(v ? 'Mode créateur : tout est ouvert !' : 'Mode créateur coupé', 100); if(v) SFX.power(); }});
   rows.push({kind:'action', id:'reset', danger:true, label:menu.resetT > 0 ? 'Sûr ? Appuie encore pour tout effacer' : 'Effacer la progression', act:resetProgress});
   return rows;
@@ -575,7 +576,9 @@ function updateMenu(){
   }
   // what XELIAX says on the home page
   if(menu.bubble){ if(--menu.bubble.t <= 0) menu.bubble = null; }
-  else if(p === 'home' && --menu.bubbleT <= 0){ const t = frTypo(homeLine()); menu.bubble = {text:t, t:230, max:230}; menu.bubbleT = 520 + Math.random() * 380; }
+  else if(p === 'home' && --menu.bubbleT <= 0){ const l = homeLine(), t = frTypo(l); menu.bubble = {text:t, t:230, max:230, s2:HOME_LINES_S2.includes(l) || l.startsWith('Ma ficelle')}; menu.bubbleT = 520 + Math.random() * 380; }
+  // admin déconnecté ou mode créateur coupé (démo) : ce qui dévoile la saison 2 disparaît aussitôt, même en plein vol
+  if(!s2Visible()){ menu.fly = null; if(menu.bubble && menu.bubble.s2) menu.bubble = null; }
   // now and then the magpie crosses the sky
   if(menu.fly){ menu.fly.x += menu.fly.vx; menu.fly.t++; if(menu.fly.x < -100) menu.fly = null; }
   // la pie ne traverse le ciel de l'accueil qu'une fois la saison 2 débloquée (sinon : spoiler)
@@ -615,7 +618,7 @@ function menuKey(k, rep = false){
   if(p === 'credits'){ if(ok || up) menu.credFast = true; return; }
   if(p === 'look'){ if(left || right) lookPick(left ? -1 : 1); else if(ok && !rep){ const s = SKINS[menu.sel.look]; if(!(s && buySkin(s))) goBack(); } return; }
   if(p === 'controls'){
-    const n = KEY_ROWS.length + 1, s = clamp(menu.sel.controls || 0, 0, n - 1);
+    const n = keyRows().length + 1, s = clamp(menu.sel.controls || 0, 0, n - 1);
     if(up){ menu.sel.controls = (s - 1 + n) % n; SFX.menu(); }
     else if(down){ menu.sel.controls = (s + 1) % n; SFX.menu(); }
     else if(ok && !rep) controlsActivate(s);
@@ -822,6 +825,7 @@ function appArt(i){
     skyIsland(50, 20, 0.62, '#c8b4f0', '#fff6ff', true);
     skyIsland(50, 84, 0.62, '#b39ae8', '#fff6ff', false);
     const oy = 52 + Math.sin(t * 0.06) * 2;
+    if(!powerSeen('gravity')) return;   // v54 : l'orbe de gravité, seulement une fois la gravité découverte
     softGlow(50, oy, 24, 24, '255,122,224', 0.75);
     const g = ctx.createRadialGradient(47, oy - 3, 1, 50, oy, 11);
     g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, '#ffb8f0'); g.addColorStop(1, '#c43fa8');
@@ -834,7 +838,7 @@ function appArt(i){
     ctx.fillStyle = '#c56a3e'; ctx.beginPath(); ctx.moveTo(0, 0); for(let y = 0; y <= 100; y += 12) ctx.lineTo(20 + (hash(y + 3) - 0.5) * 10, y); ctx.lineTo(0, 100); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#a24e2a'; ctx.beginPath(); ctx.moveTo(100, 0); for(let y = 0; y <= 100; y += 12) ctx.lineTo(78 + (hash(y + 9) - 0.5) * 10, y); ctx.lineTo(100, 100); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#8a3e22'; ctx.fillRect(0, 92, 100, 8);
-    wallIcon(50, 52, 3.3);
+    if(powerSeen('wall')) wallIcon(50, 52, 3.3);   // v54 : les ventouses, une fois reçues
   } else if(deco === 'ice'){
     sky('#0e1f4c', '#3568ad', '#b8e2ff');
     dots(10, '255,255,255', 40);
@@ -842,6 +846,7 @@ function appArt(i){
     ctx.fillStyle = '#8fb4dc'; ctx.beginPath(); ctx.moveTo(-6, 100); ctx.lineTo(30, 46); ctx.lineTo(66, 100); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#f4fbff'; ctx.beginPath(); ctx.moveTo(30, 46); ctx.lineTo(39, 59); ctx.lineTo(21, 59); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#6f94c4'; ctx.beginPath(); ctx.moveTo(40, 100); ctx.lineTo(76, 54); ctx.lineTo(112, 100); ctx.closePath(); ctx.fill();
+    if(!powerSeen('dash')) return;   // v54 : le dash, une fois reçu
     ctx.strokeStyle = 'rgba(255,210,63,0.5)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
     for(const y of [56, 64, 72]){ ctx.beginPath(); ctx.moveTo(14 + (y % 3) * 4, y); ctx.lineTo(32, y); ctx.stroke(); }
     dashIcon(56, 64, 3.1, POWER_COLORS.dash);
@@ -928,19 +933,21 @@ function homeRidge(base, amp, col, par, seed){
   for(let x = -20; x <= W + 20; x += 10){ const wx = x + seed * 157 - off; ctx.lineTo(x, base + Math.sin(wx * 0.011 + seed) * amp + Math.sin(wx * 0.029 + seed * 2) * amp * 0.45); }
   ctx.lineTo(W + 20, H); ctx.closePath(); ctx.fill();
 }
+const HOME_SKY = [[0, '#0e072e'], [0.42, '#331868'], [0.75, '#a3477d'], [1, '#ff9d6c']];
 function drawHomeScene(){
   const t = frame, px = (menu.mx - W / 2) / W, py = (menu.my - H / 2) / H;
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#0e072e'); g.addColorStop(0.42, '#331868'); g.addColorStop(0.75, '#a3477d'); g.addColorStop(1, '#ff9d6c');
-  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  ctx.fillStyle = skyGradient(HOME_SKY); ctx.fillRect(-20, -20, W + 40, H + 40);
+  const ga = ctx.globalAlpha;      // v54 : couleur fixe + globalAlpha (pas de chaîne rgba() par étoile)
+  ctx.fillStyle = 'rgb(255,244,230)';
   for(let i = 0; i < 80; i++){
     const x = ((hash(i * 13 + 5) * (W + 20) - px * 8 * (0.5 + hash(i))) % (W + 20) + W + 20) % (W + 20) - 10;
     const y = hash(i * 17 + 3) * 210 - py * 5;
     const tw = 0.5 + 0.5 * Math.sin(t * (0.02 + hash(i * 5) * 0.04) + i);
     const a = (0.25 + 0.65 * hash(i * 29)) * tw * clamp(1 - y / 240, 0, 1);
     if(a <= 0.02) continue;
-    ctx.fillStyle = `rgba(255,244,230,${a})`; ctx.beginPath(); ctx.arc(x, y, 0.5 + hash(i * 3) * 1.1, 0, TAU); ctx.fill();
+    ctx.globalAlpha = ga * a; ctx.beginPath(); ctx.arc(x, y, 0.5 + hash(i * 3) * 1.1, 0, TAU); ctx.fill();
   }
+  ctx.globalAlpha = ga;
   const st = t % 600;
   if(st < 44 && !REDUCED){
     const k = st / 44, sx = 300 - k * 240, sy = 30 + k * 60;
@@ -1172,9 +1179,13 @@ function drawLook(act){
   softGlow(px, py - 66, 120, 100, hexRGB(cur.light).join(','), 0.32);
   ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.ellipse(px, py + 3, 74, 14, 0, 0, TAU); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1.4; ctx.stroke();
+  if(foc.legend) legendShowcase(px, py);   // v54 : couleur légendaire = rayons dorés, halo, étiquette (07_dessin_heros.js)
   const hop = Math.sin(titleHero.hop * Math.PI) * 18;
-  drawHero(titleHero, px, py - hop, 3.7, focOpen ? {} : {tint:'#171032'});
-  if(!focOpen) heading('?', px + 2, py - 150, 30, '#ffd54a');
+  // une couleur à acheter se montre telle quelle (pour donner envie) ; les couleurs secrètes restent en ombre
+  const tryOn = !focOpen && !!foc.price;
+  drawHero(titleHero, px, py - hop, 3.7, focOpen ? {skin:foc} : tryOn ? {skin:foc, alpha:0.9} : {tint:'#171032', skin:foc});
+  if(!focOpen && !tryOn) heading('?', px + 2, py - 150, 30, '#ffd54a');
+  if(tryOn) txt('Aperçu', px, py - 150, 13, '#ffd54a', 700);
   SKINS.forEach((s, j) => {
     const sx = 330 + (j % 5) * 54, sy = 104 + Math.floor(j / 5) * 64, open = skinOpen(s), on = s.id === cur.id, f = j === menu.sel.look;
     if(f){ ctx.strokeStyle = '#ffd54a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx, sy, 24, 0, TAU); ctx.stroke(); }
@@ -1185,9 +1196,11 @@ function drawLook(act){
     ctx.strokeStyle = s.deep; ctx.lineWidth = 1.4; ctx.stroke();
     for(const [ex, ey, r] of [[-5, -4, 4.4], [5, -1, 3.6]]){ ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(sx + ex, sy + ey, r, 0, TAU); ctx.fill(); ctx.fillStyle = '#14033f'; ctx.beginPath(); ctx.arc(sx + ex + 1.2, sy + ey + 0.8, r * 0.45, 0, TAU); ctx.fill(); }
     if(!open){ ctx.fillStyle = 'rgba(14,9,34,0.62)'; ctx.beginPath(); ctx.arc(sx, sy, 17.5, 0, TAU); ctx.fill(); padlock(sx, sy, 0.75); }
+    if(s.legend) legendSwatch(sx, sy, j);
     txt(open || !(s.price || s.gems) ? s.name : s.price ? s.price + ' 🪙' : s.gems + ' 💎', sx, sy + 32, 10.5, open ? '#efe8ff' : s.price ? '#ffd54a' : s.gems ? '#9df0ff' : '#9d95c8', 600);
     if(act) hit(sx - 26, sy - 24, 52, 60, {id:'skin' + j, click:() => lookClick(j), hover:() => { menu.sel.look = j; }});
   });
+  if(foc.desc) txt(foc.desc, 438, 280, 11, '#ffb3e6', 600);
   txt(foc.name, 438, 296, 17, '#ffffff', 700);
   txt(focOpen ? (foc.id === cur.id ? 'La couleur de XELIAX en ce moment' : 'Clique dessus pour la choisir') : skinHint(foc), 438, 314, 11, focOpen ? '#c9c1f0' : '#ffd54a', 500);
   txt(`🪙 ${save.bank} pièces   ·   💎 ${gemCount()} gemmes`, 438, 74, 12, '#ffe58a', 700);
@@ -1200,33 +1213,35 @@ const KEY_ROWS = [
   {id:'dash', label:'Dash', fixed:['Maj'], pad:'»'}, {id:'talk', label:'Parler', fixed:['▼'], pad:'●'},
   {id:'pause', label:'Pause', fixed:['Échap'], pad:'II'},
 ];
+// v54 : keyRows() = seulement les actions déjà reçues (pas de dash avant de l'avoir), voir 02b_pouvoirs_vus.js
 function controlsActivate(j){
-  if(j >= KEY_ROWS.length){   // dernière ligne : remettre les touches de départ
+  const rows = keyRows();
+  if(j >= rows.length){   // dernière ligne : remettre les touches de départ
     SET.keys = Object.assign({}, KEY_DEF); persist(); menu.bindWait = null;
     showToast('Touches de départ remises', 90); SFX.menu(); return;
   }
-  menu.bindWait = KEY_ROWS[j].id; menu.sel.controls = j; SFX.menu();
+  menu.bindWait = rows[j].id; menu.sel.controls = j; SFX.menu();
 }
 // la touche appuyée devient celle de l'action choisie (Échap annule) ; si une autre action l'avait, elles échangent
 function bindKey(key){
   const a = menu.bindWait; menu.bindWait = null;
   if(key === 'Escape'){ SFX.menu(); return; }
-  const k = key.toLowerCase(), name = id => KEY_ROWS.find(r => r.id === id).label;
+  const k = key.toLowerCase(), rows = keyRows(), name = id => (rows.find(r => r.id === id) || {}).label;
   if(k.length !== 1 || k === ' '){ showToast('Choisis une lettre ou un chiffre', 100); SFX.hurt(); return; }
   if(k === 'm'){ showToast('M sert à couper le son : choisis une autre touche', 110); SFX.hurt(); return; }
   const other = Object.keys(SET.keys).find(o => o !== a && SET.keys[o] === k);
   if(other) SET.keys[other] = SET.keys[a];
   SET.keys[a] = k; persist(); SFX.coin();
-  showToast(other ? `${name(a)} : ${k.toUpperCase()} (échangée avec « ${name(other)} »)` : `${name(a)} : touche ${k.toUpperCase()}`, 130);
+  showToast(other && name(other) ? `${name(a)} : ${k.toUpperCase()} (échangée avec « ${name(other)} »)` : `${name(a)} : touche ${k.toUpperCase()}`, 130);
 }
 function drawControls(act){
   navHeader(PAGE_NAME.controls, menu.pauseKeys ? 'Pause' : 'Paramètres', act);
-  const x = 120, y = 84, w = 400, rh = 25, n = KEY_ROWS.length + 1, h = n * rh;
+  const rows = keyRows(), x = 120, y = 84, w = 400, rh = 25, n = rows.length + 1, h = n * rh;
   const fs = clamp(menu.sel.controls || 0, 0, n - 1);
   txt('Clavier (clique pour changer)', x + 228, y - 8, 11, '#c9c1f0', 600); txt('Tactile', x + 362, y - 8, 11, '#c9c1f0', 600);
   rr(x, y, w, h, 14); ctx.fillStyle = 'rgba(20,13,46,0.94)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
   for(let j = 0; j < n; j++){
-    const ry = y + j * rh, cy = ry + rh / 2, r = KEY_ROWS[j];
+    const ry = y + j * rh, cy = ry + rh / 2, r = rows[j];
     if(j > 0){ ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x + 14, ry, w - 28, 1); }
     if(j === fs){
       ctx.save(); rr(x, y, w, h, 14); ctx.clip();
@@ -1444,19 +1459,23 @@ let pauseBtns = [];   // les lignes de la pause sont aussi des boutons : un clic
 function drawPause(){
   overlayDim(0.55);
   ctx.save();
-  const b = panelBox(320, 232, CH_ACCENT[chIndex]);
+  const resume = () => setState('play');
+  // recommencer : la phase (boss) ; dans un bonus, R relance tout le défi et C la salle ; ailleurs R = la salle, C = le chapitre
+  const again = room.boss ? [['R', 'Recommencer la phase', pauseRestart]]
+    : isSpeedrun() ? [['R', 'Recommencer le défi', srRestart], ['C', 'Recommencer la salle', pauseRestartRoom]]
+    : [['R', 'Recommencer la salle', pauseRestartRoom], ['C', 'Recommencer le chapitre', pauseRestart]];
+  const rows = TOUCH ? [['▲', 'Reprendre', resume], ['↺', room.boss ? 'Recommencer la phase' : 'Recommencer la salle', room.boss ? pauseRestart : pauseRestartRoom], ['●', 'Retour au menu', backToMenu]]
+    : [['P', 'Reprendre', resume], ...again, ['T', 'Changer les touches', openPauseKeys],
+       ['Q', 'Retour au menu', backToMenu], ['M', muted ? 'Activer le son' : 'Couper le son', () => setMuted(!muted)]];
+  const b = panelBox(320, 108 + rows.length * 25, CH_ACCENT[chIndex]);
   heading('Pause', W / 2, b.y + 48, 32, '#ffffff');
   txt(`${chName(chIndex)}, salle ${rIndex + 1}, ${score} points`, W / 2, b.y + 70, 12.5, '#bfb6f0', 500);
-  const resume = () => setState('play');
-  const rows = TOUCH ? [['▲', 'Reprendre', resume], ['●', 'Retour au menu', backToMenu]]
-    : [['P', 'Reprendre', resume], ['R', room.boss ? 'Recommencer la phase' : 'Recommencer le chapitre', pauseRestart], ['T', 'Changer les touches', openPauseKeys],
-       ['Q', 'Retour au menu', backToMenu], ['M', muted ? 'Activer le son' : 'Couper le son', () => setMuted(!muted)]];
   pauseBtns = [];
   rows.forEach(([key2, label, act], i) => {
     const ry = b.y + 104 + i * 25;
     const kw = keycap(key2, b.x + 78, ry);
     txt(label, b.x + 78 + kw + 10, ry, 13, '#ffffff', 600, 'left');
-    pauseBtns.push({x:b.x + 70, y:ry - 15, w:b.w - 140, h:24, act});
+    pauseBtns.push({x:b.x + 66, y:ry - 15, w:b.w - 112, h:24, act});
   });
   ctx.restore();
 }
@@ -1478,6 +1497,7 @@ function drawGameOver(){
 }
 
 function drawChapterClear(){
+  if(clearInfo && clearInfo.teaser){ drawTeaser(); return; }
   overlayDim(0.6);
   if(!clearInfo) return;
   ctx.save();

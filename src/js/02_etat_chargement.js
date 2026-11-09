@@ -1,7 +1,7 @@
 // =====================================================================
 //  STATE
 // =====================================================================
-let state = 'title', stateT = 0;   // title (every menu page) | play | talk | pet | pause | over | chapter | win | ending
+let state = 'title', stateT = 0;   // title (every menu page) | play | talk | pet | pause | over | chapter | win | ending | opening
 let menuSel = 0;
 let chIndex = 0, rIndex = 0, chapter = null, room = null;
 let platforms = [], solids = [], enemies = [], bats = [], turrets = [], springs = [], spikes = [];
@@ -20,6 +20,7 @@ let bannerT = 0, toast = {text:'', t:0, max:1}, respawnT = 0;
 let camX = 0, camY = 0, prevCamX = 0, prevCamY = 0, camFocusY = 0, lookX = 0, viewX = 0, viewY = 0;
 let lavaY = 1e9, lavaDelay = 0, phaseT = 0, launch = null;   // launch: the lava throws XELIAX onto a ledge (final escape)
 let collected = new Set();
+let roomEntry = null;                 // ce qu'on avait en entrant dans la salle (pause : « Recommencer la salle »)
 let exitT = 0, exitKind = null, finaleT = 0;
 let steal = null;                     // end of season 1: the magpie that snatches the ficelle
 let ALPHA = 1, fxTick = true, lastRenderFrame = -1;
@@ -208,10 +209,12 @@ function loadRoom(ci, ri){
   if(ri > 0 && CHAPTERS[ci].bonus && state === 'play' && timerRunning) srSplit();   // speedrun: a split at each new room
   chapter = CHAPTERS[ci];
   room = chapter.rooms[ri];
+  roomEntry = {ci, ri, score, bank:save.bank || 0, coins:chCoins, dj:hasDJ, shoot:canShoot, wall:hasWall, dash:hasDash, gem:chGem, got:new Set(collected)};
   room.w = room.width || W;
   room.h = room.height || H;
   // season 2: in the first rooms of the gorges Gaston keeps the double jump (he gives it back in La Faille)
   let djScene = false;
+  djTake = 0;   // v54 : un message « la pie t'a pris ton double saut » en attente ne suit pas XELIAX dans une autre salle
   if(room.noDJ){ if(hasDJ){ if(room.djSteal) djScene = true; else djTake = 100; } if(!djScene) hasDJ = false; }
 
   platforms = room.platforms.map((p, i) => ({
@@ -254,6 +257,7 @@ function loadRoom(ci, ri){
   checkpoint = {x:room.start.x, y:room.start.y, g:gdir};
   particles = []; popups = [];
   exitT = 0; exitKind = null; anim.exit = 0; finaleT = 0; steal = null;
+  djOrb = null;   // v54 : la bulle du double saut d'une cinématique interrompue (pause → menu) ne reste pas dessinée ailleurs
   hud.bossShown = hud.bossTrail = 1;
   makeAmbient();
 
@@ -340,6 +344,9 @@ function chapterClear(){
   clearInfo = {time:t, coins:chCoins, total:chCoinsTotal, gem:chGem, newBest: prev == null || t < prev, bonus:!!chapter.bonus};
   if(clearInfo.newBest) save.bestCh[chIndex] = t;
   if(chGem && !chapter.bonus) save.gems[chIndex] = true;
+  // v54 : 2e étoile = chapitre fini avec toutes les pièces posées dans ses salles (pièces attrapées au tir comprises ;
+  // on compte les pièces différentes ramassées, qui ne réapparaissent pas ; les pièces des ennemis abattus ne comptent pas)
+  if(!chapter.bonus && [...collected].filter(id => id.startsWith(`c${chIndex}-`)).length >= chCoinsTotal) save.allCoins[chIndex] = true;
   if(chapter.bonus){
     timerRunning = false;
     srFinish(t);
@@ -370,6 +377,7 @@ function chapterClear(){
   } else {
     score += 250;
     setState('chapter');
+    startTeaser();   // v54 : un indice du chapitre suivant avant les résultats
   }
   SFX.win();
   persist();

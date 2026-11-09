@@ -219,7 +219,7 @@ function drawBossDemo(){
     const hx = X(hp.x), hy = Y(hp.y), up = !!hp.ex.c;
     if(hp.ex.d){ ctx.fillStyle = 'rgba(160,220,255,0.5)'; for(let i = 1; i < 4; i++){ ctx.beginPath(); ctx.ellipse(hx - Math.sign(hp.vx || 1) * i * 10, hy + (up ? 14 : -14), 9, 7, 0, 0, TAU); ctx.fill(); } }
     ctx.save(); ctx.translate(hx, hy); if(up) ctx.scale(1, -1); if(hp.vx < 0) ctx.scale(-1, 1);
-    drawHero(demoHero, 0, 0, 1, {armed:true});
+    drawHero(demoHero, 0, 0, 1, {armed:canShoot || powerSeen('shoot')});   // v54 : pas d'arme avant de l'avoir reçue
     ctx.restore();
   }
   // shots, hits and words

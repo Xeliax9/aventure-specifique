@@ -83,3 +83,31 @@ function restartRoom(){
   showToast('On recommence la salle', 90);
 }
 
+// pause, « Recommencer la salle » : XELIAX repart du début de la salle en cours, tout est remis comme à
+// l'entrée (ennemis, planches, orbes, gravité, drapeaux, clé, porte), sans rien regagner :
+//  - les cœurs restent ceux qu'on a (ni rendus, ni retirés) ; un cœur bonus déjà pris ne revient pas ;
+//  - les pièces déjà ramassées restent ramassées (elles sont dans la tirelire, elles ne réapparaissent pas) ;
+//  - ce que les ennemis ont rapporté dans la salle (points, pièces) est repris : on peut le regagner une fois ;
+//  - les pouvoirs et la gemme trouvés dans la salle retournent à leur place ;
+//  - le chrono continue de tourner, et ça ne compte pas comme un « continue ».
+function pauseRestartRoom(){
+  transition(() => {
+    const e = roomEntry, l = lives;
+    if(e && e.ci === chIndex && e.ri === rIndex){
+      const got = Math.max(0, chCoins - e.coins);
+      score = e.score + 10 * got;
+      const extra = (save.bank || 0) - e.bank - got;
+      if(extra > 0) addBank(-extra);
+      hasDJ = e.dj; canShoot = e.shoot; hasWall = e.wall; hasDash = e.dash; chGem = e.gem;
+      (room.powerUps || []).forEach((p, i) => { const id = `p${chIndex}-${rIndex}-${i}`; if(p.type !== 'life' && !e.got.has(id)) collected.delete(id); });
+    }
+    loadRoom(chIndex, rIndex);
+    lives = l;
+    respawnT = 0; bannerT = 0;
+    player.invuln = 60;
+    anim.appear = 0;
+    setState('play');
+    showToast('On recommence la salle', 90);
+  });
+}
+

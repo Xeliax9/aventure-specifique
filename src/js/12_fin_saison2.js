@@ -271,6 +271,9 @@ function drawEnding(){
 }
 function drawEndSkip(){
   if(!END.skippable || END.t < 30 || END.t >= END_SHOTS.E) return;
+  drawSkipHint();
+}
+function drawSkipHint(){
   const keyLabel = TOUCH ? '▲' : 'Espace';
   ctx.font = `700 11px ${FU}`;
   const kw = Math.max(19, ctx.measureText(keyLabel).width + 13);

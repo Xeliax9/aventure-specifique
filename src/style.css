@@ -90,6 +90,7 @@ kbd{
 #pad button.alt:active{ box-shadow:0 2px 0 var(--pad-alt-deep); }
 #pad button.dashb{ width:52px; height:52px; font-size:24px; background:#e0a400; box-shadow:0 5px 0 #8a6200; }
 #pad button.dashb:active{ box-shadow:0 2px 0 #8a6200; }
+#pad button[hidden]{ display:none; }   /* v54 : le dash, tant qu'il n'a jamais été reçu */
 #pad button.small:active{ box-shadow:0 1px 0 var(--pad-soft-deep); }
 #pad button:focus-visible{ outline:3px solid var(--bg-glow); outline-offset:3px; }
 @media (hover:none), (pointer:coarse){
@@ -99,11 +100,12 @@ kbd{
 /* Chapter select: a 3D stack of cards (like the recent-apps switcher of a phone), laid over the canvas.
    Everything inside .stage is in game units (640 x 360) and scaled to the canvas size. */
 #chapters{position:fixed; left:0; top:0; width:0; height:0; overflow:hidden; z-index:2;
-  opacity:0; pointer-events:none; transition:opacity .28s ease; touch-action:none; -webkit-user-select:none; user-select:none;}
-#chapters.on{opacity:1; pointer-events:auto;}
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .28s ease, visibility 0s linear .28s; touch-action:none; -webkit-user-select:none; user-select:none;}
+#chapters.on{opacity:1; visibility:visible; pointer-events:auto; transition:opacity .28s ease;}
 #chapters .stage{position:absolute; left:0; top:0; width:640px; height:360px; transform-origin:0 0; font-family:var(--font-ui); color:#fff;}
-#chapters .glow{position:absolute; left:150px; top:50px; width:340px; height:250px; border-radius:50%; background-color:var(--accent, #7b56ff);
-  filter:blur(64px); opacity:.55; transition:background-color .5s ease; pointer-events:none;}
+#chapters .glow{position:absolute; left:150px; top:50px; width:340px; height:250px; border-radius:50%;
+  /* v54 : un dégradé plutôt qu'un flou (filter:blur coûtait très cher à chaque image) */
+  background:radial-gradient(closest-side, var(--accent, #7b56ff), transparent); transform:scale(1.5); opacity:.5; pointer-events:none;}
 #chapters .back{position:absolute; left:14px; top:26px; height:24px; padding:0 12px 0 22px; border:0; border-radius:12px; cursor:pointer;
   font:600 13.5px/24px var(--font-ui); color:#8cc4ff; background:rgba(255,255,255,.09);}
 #chapters .back::before{content:""; position:absolute; left:10px; top:8px; width:6px; height:6px; border:solid #8cc4ff; border-width:0 0 2px 2px; transform:rotate(45deg);}
@@ -122,6 +124,7 @@ kbd{
 #chapters .badge{position:absolute; top:8px; right:8px; padding:2px 7px; border-radius:999px; font-size:9.5px; font-weight:700; line-height:14px;
   background:rgba(14,9,34,.78); color:#e9e2ff; box-shadow:0 2px 6px rgba(0,0,0,.35);}
 #chapters .badge.done{background:#ffd54a; color:#3a2400;}
+#chapters .badge.done.all{background:linear-gradient(#fff2a6, #ffc61f); box-shadow:0 0 8px rgba(255,214,74,.75), 0 2px 6px rgba(0,0,0,.35);}   /* v54 : toutes les pièces */
 #chapters .badge.new{background:#3a9bff; color:#fff;}
 #chapters .body{padding:7px 10px 0;}
 #chapters .kick{font-size:8.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}

@@ -37,13 +37,14 @@ const canvas = document.getElementById('game');
 let ctx = canvas.getContext('2d');      // swapped briefly to paint the chapter cards
 const W = 640, H = 360;
 let SCALE = 1;
+let RES_K = 1;   // v54 : qualité automatique — baisse un peu la résolution si le PC n'arrive pas à suivre
 const MEDIA_REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 let REDUCED = MEDIA_REDUCED;      // also on when « Animations réduites » is ticked in the settings
 const TOUCH = !!(window.matchMedia && matchMedia('(hover: none), (pointer: coarse)').matches);
 function fitCanvas(){
   const r = canvas.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const bw = Math.round(clamp((r.width || W) * dpr, 320, 2240));
+  const bw = Math.round(clamp((r.width || W) * dpr * RES_K, 320, 2240));
   const bh = Math.round(bw * H / W);
   if(canvas.width !== bw || canvas.height !== bh){ canvas.width = bw; canvas.height = bh; }
   SCALE = bw / W;

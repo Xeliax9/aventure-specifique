@@ -19,10 +19,10 @@ function buildDeck(){
     const cv = deckEl('canvas', '', c);
     const badge = deckEl('div', 'badge', c);
     const body = deckEl('div', 'body', c);
-    const kick = deckEl('div', 'kick', body), name = deckEl('div', 'name', body, CHAPTERS[i].name), tag = deckEl('div', 'tag', body, TAGLINE[i] || '');
+    const kick = deckEl('div', 'kick', body), name = deckEl('div', 'name', body, CHAPTERS[i].name), tag = deckEl('div', 'tag', body, tagline(i));
     const stat = deckEl('div', 'stat', c), shade = deckEl('div', 'shade', c), ring = deckEl('div', 'ring', c);
     c.style.setProperty('--c', CH_ACCENT[i]); kick.style.color = CH_ACCENT[i];
-    deck.cards.push({i, el:c, cv, g:cv.getContext('2d'), badge, kick, stat, shade, painted:-99, key:''});
+    deck.cards.push({i, el:c, cv, g:cv.getContext('2d'), badge, kick, tag, stat, shade, painted:-99, key:''});
   }
   deck.play = deckEl('button', 'play', st, 'JOUER'); deck.play.tabIndex = -1;
   deck.hint = deckEl('div', 'hint', st, TOUCH ? 'Glisse les cartes, touche celle du milieu pour jouer' : '◀ ▶ ou glisser : choisir · S : saison · Espace : jouer · Échap : retour');
@@ -95,19 +95,26 @@ adminInput.addEventListener('keydown', ev => {
   else if(ev.key === 'Escape'){ ev.preventDefault(); closeAdmin(); }
 });
 const deckLive = () => state === 'title' && menu.page === 'chapters' && menu.t >= 1 && fade < 0.3;
+// v54 : on ne relit la taille de l'écran qu'au besoin (la relire à chaque image forçait le navigateur à tout recalculer)
 function placeDeck(){
+  if(deck.placed && deck.canvasW === canvas.width) return;
+  deck.canvasW = canvas.width;
   const r = canvas.getBoundingClientRect();
   const s = deck.root.style;
   s.left = r.left + 'px'; s.top = r.top + 'px'; s.width = r.width + 'px'; s.height = r.height + 'px';
   const k = r.width / W;
   if(Math.abs(k - deck.k) > 1e-4 || !deck.placed){
-    deck.k = k; deck.placed = true;
+    deck.k = k;
     // zoom (et non transform: scale) : le navigateur redessine le texte des cartes à la bonne taille, sans flou
     deck.root.querySelector('.stage').style.zoom = k;
     const px = Math.round(136 * k * Math.min(window.devicePixelRatio || 1, 2) * 1.15);
     for(const c of deck.cards){ c.cv.width = px; c.cv.height = Math.round(px * 108 / 136); c.painted = -99; }
   }
+  deck.placed = true;
 }
+// n'écrire un style ou un texte que s'il change (chaque écriture coûte un recalcul de la page)
+function setCss(el, prop, v){ const m = el.__css || (el.__css = {}); if(m[prop] !== v){ m[prop] = v; el.style[prop] = v; } }
+function setText(el, v){ if(el.textContent !== v) el.textContent = v; }
 // the card art reuses the app-icon drawings: point the drawing helpers at the card's canvas for a moment
 function paintCard(c){
   const g = c.g, k = c.cv.width / 136, prev = ctx;
@@ -120,7 +127,7 @@ function paintCard(c){
 function cardInfo(i){
   const ch = CHAPTERS[i], locked = !isUnlocked(i), best = save.bestCh[i];
   const notInDemo = demoOn() && (ch.bonus || ch.season === 2 || i > 1);
-  const badge = locked ? [notInDemo ? 'Démo 🔒' : 'Verrouillé 🔒', ''] : best != null ? ['Complété ⭐', 'done'] : isNewApp(i) ? ['Nouveau', 'new'] : ['Débloqué', ''];
+  const badge = locked ? [notInDemo ? 'Démo 🔒' : 'Verrouillé 🔒', ''] : best != null ? (save.allCoins[i] ? ['Complété ⭐⭐', 'done all'] : ['Complété ⭐', 'done']) : isNewApp(i) ? ['Nouveau', 'new'] : ['Débloqué', ''];
   const kick = ch.season === 2 ? `Saison 2 · Ch. ${ch.num}` : `Saison 1 · Ch. ${i + 1}`;
   const stat = locked ? (notInDemo ? '🔒 Pas dans la démo' : '🔒 Finis le chapitre d\'avant')
     : `${ch.rooms.length} salles · ${best != null ? 'record ' + fmt(best) : 'pas de record'}${save.gems[i] ? ' · 💎' : ''}`;
@@ -133,35 +140,38 @@ function syncDeck(){
   if(!show) return;
   placeDeck();
   const acc = CH_ACCENT[menuSel];
-  deck.root.style.setProperty('--accent', acc);
-  deck.season.textContent = seasonOf(menuSel) === 2 ? 'Saison 2 · La pie voleuse' : 'Saison 1 · La ficelle disparue';
+  if(deck.accent !== acc){ deck.accent = acc; deck.root.style.setProperty('--accent', acc); }
+  setText(deck.season, seasonOf(menuSel) === 2 ? 'Saison 2 · La pie voleuse' : 'Saison 1 · La ficelle disparue');
   if(!TOUCH){ const h = '◀ ▶ ou glisser : choisir · ' + (s2Visible() ? 'S : saison · ' : '') + 'Espace : jouer · Échap : retour'; if(deck.hint.textContent !== h) deck.hint.textContent = h; }
   deck.head.classList.toggle('dim', toast.t > 0);
   const pulse = REDUCED ? 0 : Math.sin(frame * 0.07) * 0.012;
+  let paints = 0;   // v54 : au plus 3 cartes redessinées par image (sinon à-coup quand la page s'ouvre)
   for(const c of deck.cards){
     const k = appIndex(c.i), d = (appPos(k) - menu.scroll) / APP.step, a = Math.abs(d), sg = Math.sign(d), n = Math.min(a, 1);
-    if(k < 0 || a > 3.4){ c.el.style.visibility = 'hidden'; continue; }
-    c.el.style.visibility = 'visible';
+    if(k < 0 || a > 3.4){ setCss(c.el, 'visibility', 'hidden'); continue; }
+    setCss(c.el, 'visibility', 'visible');
     let x = sg * (n * DECK_GAP + Math.max(0, a - 1) * 74);
     if(c.i === menuSel && menu.shakeT > 0) x += Math.sin(menu.shakeT * 1.7) * menu.shakeT * 0.5;
     const z = -n * 100 - Math.max(0, a - 1) * 70;
     const ry = -sg * n * 25;
     const sc = (1.13 + (1 - n) * pulse) * (1 - n) + 0.85 * n - Math.max(0, a - 1) * 0.04;
-    c.el.style.transform = `translateX(${x.toFixed(2)}px) translateZ(${z.toFixed(1)}px) rotateY(${ry.toFixed(2)}deg) scale(${sc.toFixed(4)})`;
-    c.el.style.opacity = (a <= 1 ? 1 - 0.4 * n : Math.max(0, 0.6 - (a - 1) * 0.3)).toFixed(3);
-    c.el.style.zIndex = String(100 - Math.round(a * 10));
-    c.shade.style.opacity = (0.42 * n).toFixed(3);
+    setCss(c.el, 'transform', `translateX(${x.toFixed(2)}px) translateZ(${z.toFixed(1)}px) rotateY(${ry.toFixed(2)}deg) scale(${sc.toFixed(4)})`);
+    setCss(c.el, 'opacity', (a <= 1 ? 1 - 0.4 * n : Math.max(0, 0.6 - (a - 1) * 0.3)).toFixed(3));
+    setCss(c.el, 'zIndex', String(100 - Math.round(a * 10)));
+    setCss(c.shade, 'opacity', (0.42 * n).toFixed(3));
     c.el.classList.toggle('active', c.i === menuSel && a < 0.5);
     const info = cardInfo(c.i), key = info.badge[0] + info.stat + info.locked;
     if(key !== c.key){
       c.key = key; c.badge.textContent = info.badge[0]; c.badge.className = 'badge ' + info.badge[1];
       c.kick.textContent = info.kick; c.stat.textContent = info.stat; c.el.classList.toggle('locked', info.locked);
     }
-    if(frame - c.painted >= (a < 1.5 ? 2 : 8)) paintCard(c);
+    setText(c.tag, tagline(c.i));   // v54 : la phrase change quand le pouvoir du monde est reçu
+    // v54 : la carte du milieu est redessinée 1 image sur 3, ses voisines 1 sur 8, les autres presque jamais
+    if(frame - c.painted >= (a < 0.5 ? 3 : a < 1.5 ? 8 : 30) && (paints < 3 || a < 0.5)){ paintCard(c); paints++; }
   }
   const locked = !isUnlocked(menuSel);
   deck.play.classList.toggle('locked', locked);
-  deck.play.textContent = locked ? (cardInfo(menuSel).badge[0] === 'Démo 🔒' ? 'DÉMO 🔒' : 'VERROUILLÉ 🔒') : 'JOUER';
+  setText(deck.play, locked ? (cardInfo(menuSel).badge[0] === 'Démo 🔒' ? 'DÉMO 🔒' : 'VERROUILLÉ 🔒') : 'JOUER');
 }
 window.addEventListener('resize', () => { deck.placed = false; });
 
@@ -177,8 +187,10 @@ function render(alpha){
   if(!room) return;
   fxTick = frame !== lastRenderFrame; lastRenderFrame = frame;
   syncDeck();
+  syncPowerPad();
   if(state === 'pet'){ drawPet(); drawIris(); return; }
   if(state === 'ending'){ drawEnding(); drawEndSkip(); drawIris(); return; }
+  if(state === 'opening'){ drawOpening(); if(OP.skippable && OP.t >= 30 && OP.t < OP_LEN) drawSkipHint(); drawIris(); return; }
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   if(state === 'title'){ drawMenu(); drawMenuToast(); drawVersion(); drawIris(); return; }
   const cx = lerp(prevCamX, camX, ALPHA), cy = lerp(prevCamY, camY, ALPHA);
@@ -195,6 +207,7 @@ function render(alpha){
   drawAmbient(cx, cy);
   const hx = ix(player) + player.w / 2 - cx, hy = iy(player) + player.h / 2 - cy;
   drawLighting(hx, hy);
+  drawSkinGlowOver();
   ctx.restore();
 
   // the HUD steps aside while a boss makes its entrance
@@ -229,6 +242,7 @@ function confirmAction(){
     else transition(() => { continues++; startChapter(chIndex, false); anim.appear = 0; setState('play'); });
     return true;
   }
+  if(state === 'chapter' && teaserSkip()) return true;
   if((state === 'chapter' || state === 'win') && stateT < 45) return true;
   if(state === 'chapter'){
     if(clearInfo && clearInfo.bonus){ toMenu(); return true; }
@@ -313,7 +327,8 @@ window.addEventListener('keydown', e => {
   if(k === 'm' && !e.repeat) setMuted(!muted);
   if(k === 'q' && !e.repeat) backToMenu();
   if(k === 'c' && !e.repeat && state === 'over') confirmAction();
-  if(k === 'r' && !e.repeat && state === 'pause') pauseRestart();
+  if(k === 'r' && !e.repeat && state === 'pause'){ if(room.boss) pauseRestart(); else pauseRestartRoom(); }   // R : la phase (boss) ou la salle
+  if(k === 'c' && !e.repeat && state === 'pause' && !room.boss){ if(isSpeedrun()) pauseRestartRoom(); else pauseRestart(); }   // C : le chapitre (bonus : la salle, R y relance le défi)
   if(k === 't' && !e.repeat && state === 'pause') openPauseKeys();
 });
 window.addEventListener('keyup', e => {
@@ -388,7 +403,7 @@ canvas.addEventListener('pointerdown', ev => {
   canvas.focus({preventScroll:true});
   const [x, y] = canvasPoint(ev);
   if(state === 'pet'){ if(fadeDir === 0) petPointer(x, y); return; }
-  if(state === 'ending'){ input.jumpPressed = true; return; }
+  if(state === 'ending' || state === 'opening'){ input.jumpPressed = true; return; }
   if(state === 'title'){ try{ canvas.setPointerCapture(ev.pointerId); }catch(e){} menuPointerDown(x, y); return; }
   const fb = feedbackBtn;   // fin de la démo : bouton « Donne ton avis »
   if(state === 'chapter' && fb && x >= fb.x && x <= fb.x + fb.w && y >= fb.y && y <= fb.y + fb.h){ openFeedback(); return; }
@@ -429,14 +444,30 @@ let last = null, acc = 0;
 // physics run at a fixed 60 steps per second; drawing happens on every screen refresh (60, 120, 144 Hz…)
 // with positions interpolated between steps, so a 120 Hz screen shows 120 smooth images per second
 let fpsShown = 0, fpsAcc = 0, fpsN = 0;
+// v54 : qualité automatique. perfQ.ref = durée d'un rafraîchissement de l'écran (≈4,2 ms à 240 Hz, 16,7 ms à 60 Hz),
+// mesurée en continu ; si les images prennent nettement plus longtemps pendant ~1 s, on dessine en plus petit.
+const perfQ = {avg:16.7, slow:0, ref:16.7};
+function autoQuality(dt){
+  if(dt > 100 || document.hidden) return;
+  if(dt > 2.5) perfQ.ref = Math.min(perfQ.ref + 0.002, dt);   // le plus court intervalle vu = la fréquence de l'écran
+  perfQ.avg = perfQ.avg * 0.95 + dt * 0.05;
+  if(perfQ.avg > perfQ.ref * 1.45 && RES_K > 0.5){
+    if(++perfQ.slow > Math.round(1000 / perfQ.ref)){ RES_K = Math.max(0.5, RES_K * 0.85); perfQ.slow = 0; perfQ.avg = perfQ.ref; fitCanvas(); }
+  } else perfQ.slow = 0;
+}
+// v54 : on dessine à chaque rafraîchissement de l'écran (60, 144, 240 Hz…) ; option SET.cap60 pour se limiter à 60 images/s si le PC rame.
+let nextDraw = 0, lastDraw = null;
 function loop(ts){
-  if(last !== null){ fpsAcc += ts - last; fpsN++; if(fpsAcc >= 500){ fpsShown = Math.round(fpsN * 1000 / fpsAcc); fpsAcc = 0; fpsN = 0; } }
   if(last === null) last = ts;
   acc += Math.min(ts - last, 100);
   last = ts;
   while(acc >= STEP){ step(); acc -= STEP; }
+  if(SET.cap60 && ts < nextDraw - 2){ requestAnimationFrame(loop); return; }
+  nextDraw += 1000 / 60; if(nextDraw < ts) nextDraw = ts + 1000 / 60;
+  if(lastDraw !== null){ const dt = ts - lastDraw; autoQuality(dt); fpsAcc += dt; fpsN++; if(fpsAcc >= 500){ fpsShown = Math.round(fpsN * 1000 / fpsAcc); fpsAcc = 0; fpsN = 0; } }
+  lastDraw = ts;
   render(acc / STEP);
-  if(SET.fps){ ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); rr(W - 74, H - 24, 66, 18, 9); ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fill(); txt(`${fpsShown} img/s`, W - 41, H - 11, 11, fpsShown >= 100 ? '#9fe8b0' : '#ffffff', 700); }
+  if(SET.fps){ ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); rr(W - 74, H - 24, 66, 18, 9); ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fill(); txt(`${fpsShown} img/s`, W - 41, H - 11, 11, fpsShown >= 58 ? "#9fe8b0" : "#ffd27a", 700); }
   requestAnimationFrame(loop);
 }
 
