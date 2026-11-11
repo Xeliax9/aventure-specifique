@@ -162,6 +162,7 @@ const SFX = {
   walljump(){ tone(300,.09,'square',.035,620); tone(520,.06,'triangle',.03,null,.03); },
   dash(){ tone(180,.16,'sawtooth',.03,900); tone(1200,.08,'triangle',.025,500,.02); },
   gravity(g){ tone(g < 0 ? 420 : 840,.22,'sine',.06,g < 0 ? 1100 : 300); tone(g < 0 ? 630 : 1260,.14,'triangle',.03,g < 0 ? 1600 : 500,.04); },
+  heart(i){ const f = 587 * Math.pow(1.122, i); tone(f,.1,'triangle',.05,f * 1.5); tone(f * 2,.07,'sine',.025,null,.04); },   // v55 : un cœur se remplit (la note monte à chaque cœur)
   glass(){ tone(2200,.09,'square',.03,900); tone(1400,.2,'triangle',.04,300,.03); tone(3000,.05,'sine',.03,null,.06); },
 };
 

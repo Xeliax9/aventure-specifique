@@ -303,6 +303,26 @@ function drawTalk(){
   ctx.restore();
 }
 
+// v55 : « Prêt ? » pendant que les cœurs se remplissent (le texte arrive en rebondissant, puis s'efface
+// juste avant « Combat ! »), avec une petite ligne sous le titre
+function drawReady(c){
+  const tIn = easeOutBack(clamp(c.t / 14, 0, 1)), a = clamp(c.t / 8, 0, 1) * clamp((c.dur - c.t) / 10, 0, 1);
+  if(a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = a * 0.55;
+  const band = ctx.createLinearGradient(0, 0, W, 0);
+  band.addColorStop(0, 'rgba(10,6,26,0)'); band.addColorStop(0.3, 'rgba(10,6,26,0.6)'); band.addColorStop(0.7, 'rgba(10,6,26,0.6)'); band.addColorStop(1, 'rgba(10,6,26,0)');
+  ctx.fillStyle = band; ctx.fillRect(0, 146, W, 56);
+  ctx.globalAlpha = a;
+  ctx.translate(W / 2, 176); ctx.scale(tIn, tIn);
+  heading('Prêt ?', 0, 0, 36, '#ffffff');
+  ctx.restore();
+  const n = Math.min(8, lives), filled = heartFill === null ? n : Math.min(heartFill, n);
+  ctx.save(); ctx.globalAlpha = a;
+  txt(filled >= n ? 'Cœurs pleins !' : 'Tes cœurs se remplissent…', W / 2, 196, 12.5, filled >= n ? '#ffd0da' : '#e9e2ff', 600);
+  ctx.restore();
+}
+
 // letterbox bars, the boss's name card, and "Combat !" when it starts
 function drawCine(){
   if(!cine){
@@ -315,6 +335,7 @@ function drawCine(){
     }
     return;
   }
+  if(cine.kind === 'ready'){ drawReady(cine); return; }
   const c = cine, k = cineBars(), bar = 22 * k;
   ctx.fillStyle = '#07040f';
   ctx.fillRect(0, 0, W, bar); ctx.fillRect(0, H - bar, W, bar);

@@ -20,7 +20,7 @@
   signs:[
     {x:300, y:320, text:'Touche l\'orbe rose : la gravité s\'inverse !'},
     {x:560, y:40, text:'Tête en bas, sauter fait descendre', ceil:true},
-    {x:1700, y:320, text:'Les planches tombent : ne traîne pas !'},
+    {x:1960, y:320, text:'Les planches tombent : ne traîne pas !'},
   ],
   checkpoints:[{x:900, y:320}, {x:1360, y:40, ceil:true}, {x:1680, y:320}],
   npcs:[{who:'farine2', x:150, y:320}],

@@ -31,7 +31,7 @@ function buildGeo(room, abil, removed = new Set()){
   const hz = [];
   for(const s of (room.spikes || [])){
     if(s.side) hz.push({x:s.side === 'left' ? s.x - 8 : s.x, y:s.y + 3, w:8, h:s.h - 6});
-    else if(s.lava) hz.push({x:s.x, y:s.y - 8, w:s.w, h:30});
+    else if(s.lava) hz.push({x:s.x + 3, y:s.y + 2, w:s.w - 6, h:60});
     else if(s.down) hz.push({x:s.x + 3, y:s.y, w:s.w - 6, h:8});
     else hz.push({x:s.x + 3, y:s.y - 8, w:s.w - 6, h:8});
   }

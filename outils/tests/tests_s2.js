@@ -47,7 +47,7 @@ const { chromium } = require('playwright');
     // ---- the gecko: stomp it when it falls, phase 2 it stays stuck on the wall
     newRun(6); clean(); loadRoom(6, CHAPTERS[6].rooms.length - 1); setState('play'); lives = 99;
     ok(cine && cine.kind === 'intro', 'gecko entrance');
-    run(330); ok(!cine && boss.state === 'crawl', 'gecko crawls on the wall after its entrance (' + boss.state + ')');
+    run(330 + READY_DUR + 10);   /* v55 : + « Prêt ? » */ ok(!cine && boss.state === 'crawl', 'gecko crawls on the wall after its entrance (' + boss.state + ')');
     const states = new Set(); let hits = 0; let dmg = 0; const realDamage = bossDamage; bossDamage = function(){ dmg++; return realDamage.apply(this, arguments); };
     for(let round = 0; round < 20 && boss.alive && !boss.dying; round++){
       // phase 2: it is only dazed after 5 shots while on the walls
@@ -98,7 +98,7 @@ const { chromium } = require('playwright');
     run(40); ok(boss.state === 'stuck' && Math.abs(boss.y - 40) < 2, 'stuck at the top of the wall (y ' + Math.round(boss.y) + ')');
     // ---- the yeti: stomps do nothing, dash when dizzy
     newRun(7); clean(); loadRoom(7, CHAPTERS[7].rooms.length - 1); setState('play'); lives = 99; hasDash = true;
-    run(330); ok(!cine && boss.state === 'walk', 'yeti walks after its entrance');
+    run(330 + READY_DUR + 10); ok(!cine && boss.state === 'walk', 'yeti walks after its entrance');
     until(() => boss.state === 'dizzy' && !cine, 1500);
     ok(boss.state === 'dizzy', 'yeti charges into a wall and gets dizzy');
     const hp0 = boss.hp;
@@ -121,7 +121,7 @@ const { chromium } = require('playwright');
     // icicles in phase 2 appeared?
     // ---- the magpie: floor and ceiling, then the ficelle, then the ending
     newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99;
-    run(330); ok(!cine && boss.state === 'hover', 'magpie hovers after her entrance');
+    run(330 + READY_DUR + 10); ok(!cine && boss.state === 'hover', 'magpie hovers after her entrance');
     // every phase: when she is stuck, dash into her -> slammed against the side -> dazed -> 10 shots = 1 life
     let mhits = 0, pushes = 0, shotsFired = 0, stompHurt = false, ceilP1 = true, carried = false;
     for(let round = 0; round < 80 && boss.alive && !boss.dying; round++){

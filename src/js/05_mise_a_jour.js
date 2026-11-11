@@ -73,7 +73,7 @@ function step(){
     finaleT++;
     updateCamera();
     updatePlayer();           // controls are ignored during the finale
-    stepCharAnim(anim, {vx:player.vx, vy:player.vy, onGround:player.onGround, facing:player.facing, cheer:!steal || finaleT < 200});
+    stepCharAnim(anim, {vx:player.vx, vy:player.vy, onGround:player.onGround, facing:player.facing, cheer:!steal || finaleT < 200, ...(steal ? stealPose(finaleT) : null)});
     anim.sx = player.sx; anim.sy = player.sy;
     if(!room.ending2) updateFireworks(finaleT);
     if(steal) updateSteal(finaleT);
@@ -105,44 +105,7 @@ function step(){
   clearPresses();
 }
 
-// t 1-100 cheering, 100-190 little hops of joy, 200 he's about to eat it, 205-245 the magpie swoops in, 245 snatch, then she's off
-function updateSteal(t){
-  const S = steal, hx = player.x + player.w / 2 + player.facing * 14, hy = player.y + 6;
-  S.px = S.x; S.py = S.y;
-  if(t < 100 && frame % 22 === 0) confetti(player.x + player.w / 2, player.y - 6, 10);
-  if(t >= 100 && t < 190 && (t - 100) % 30 === 0 && player.onGround){
-    player.vy = -6; player.onGround = false; player.standingOn = null; player.sy = 0.8; player.sx = 1.2;
-    tone(660 + (t - 100) * 4, 0.08, 'triangle', 0.04); confetti(player.x + player.w / 2, player.y - 6, 6);
-  }
-  if(t === 200){ setFace(anim, 'smile', 30); showToast('Miam… enfin ma ficelle aux olives !', 70); }
-  if(t === 228){ setFace(anim, 'open', 40); tone(520, 0.08, 'sine', 0.04); }
-  if(t === 205){ S.on = true; S.x0 = camX + W + 70; S.y0 = camY - 60; SFX.warn(); }
-  if(S.on && !S.got){
-    // down from the top right in a curve, straight to the ficelle
-    const q = clamp((t - 205) / 40, 0, 1), e = q * q, cx = hx + 140, cy = hy - 170;
-    S.x = (1 - e) * (1 - e) * S.x0 + 2 * (1 - e) * e * cx + e * e * hx - S.w / 2;
-    S.y = (1 - e) * (1 - e) * S.y0 + 2 * (1 - e) * e * cy + e * e * hy - S.h / 2;
-    S.state = q > 0.55 ? 'dive' : 'hover'; S.vx = -3; S.vy = 3;
-    if(t === 245){
-      S.got = true; S.lost = false; S.state = 'hover'; S.x1 = S.x; S.y1 = S.y;
-      SFX.crack(); addShake(5); setFace(anim, 'o', 140);
-      player.vy = -3.5; player.onGround = false; player.standingOn = null; player.sx = 0.75; player.sy = 1.3;
-      burst(hx, hy, 12, '#1a1430', 2.2, 30, 0.04, 3, 'puff');
-      for(let i = 0; i < 8; i++) particles.push({x:hx, y:hy, vx:(Math.random() - 0.5) * 3, vy:-1 - Math.random() * 2, life:60, max:60, color:'#f4f2ff', grav:0.04, size:3, type:'dot'});
-      showToast('La pie ! Elle a volé la ficelle aux olives !', 85);
-    }
-  } else if(S.got){
-    // and off she goes, up and away to the left, cackling
-    const k = t - 245, q = clamp(k / 70, 0, 1);
-    S.x = S.x1 - k * 4.6 - q * q * 60; S.y = S.y1 - k * 0.9 - Math.sin(k * 0.2) * 8;
-    S.face = -1; S.state = 'hover';
-    if(k % 14 === 0 && k < 60) tone(1200 - k * 6, 0.06, 'square', 0.025, 900 - k * 4);
-    if(k === 1){ hitStop = REDUCED ? 0 : 20; tone(880, 0.12, 'square', 0.04, 220); tone(110, 0.6, 'sawtooth', 0.05, 55); addShake(10); }
-    if(k === 30){ setFace(anim, 'hurt', 120); player.vy = -6.5; player.onGround = false; player.standingOn = null; }
-    if(k === 50){ player.vy = -6.5; player.onGround = false; player.standingOn = null; }
-    if(k > 100) S.on = false;
-  }
-}
+// updateSteal, drawSteal (la ficelle savourée, puis volée par la pie) : voir 05c_fin_saison1.js
 // fireworks over the end of season 1: rockets rise from below the screen and burst into stars
 let fireworks = [];
 const FW_COLORS = ['#ff5c9a', '#ffd54a', '#7df9ff', '#c8ff6a', '#b98cff', '#ff8a3c'];
@@ -179,9 +142,11 @@ function drawFinaleOverlay(cx, cy){
     ctx.restore();
   }
   if(!steal) return;
-  if(t >= 245 && t < 265){ ctx.fillStyle = 'rgba(255,255,255,' + ((265 - t) / 20 * 0.85) + ')'; ctx.fillRect(0, 0, W, H); }
-  if(t >= 247 && t < 335){
-    const a = clamp((t - 247) / 5, 0, 1) * clamp((335 - t) / 12, 0, 1), pop = 1 + 0.5 * Math.max(0, 1 - (t - 247) / 8);
+  // v55 : temps de la scène dans FIN (05c_fin_saison1.js) ; petit flash seulement, pour voir la pie sur l'arrêt sur image
+  const S0 = FIN.snatch, Q0 = S0 + 8, Q1 = FIN.hover + 16;
+  if(t >= S0 && t < S0 + 10){ ctx.fillStyle = 'rgba(255,255,255,' + ((S0 + 10 - t) / 10 * 0.3) + ')'; ctx.fillRect(0, 0, W, H); }
+  if(t >= Q0 && t < Q1){
+    const a = clamp((t - Q0) / 5, 0, 1) * clamp((Q1 - t) / 12, 0, 1), pop = 1 + 0.5 * Math.max(0, 1 - (t - Q0) / 8);
     const px = player.x + player.w / 2 - cx + 30, py = player.y - cy - 34;
     ctx.save(); ctx.globalAlpha = a; ctx.translate(clamp(px, 70, W - 70), clamp(py, 40, H - 40)); ctx.scale(pop, pop); ctx.rotate(-0.12);
     ctx.beginPath();
@@ -190,9 +155,9 @@ function drawFinaleOverlay(cx, cy){
     outlined('QUOI ?!', 0, 8, 26, '#ff3d5a', '#1a1430', 5);
     ctx.restore();
   }
-  if(t >= 330){
+  if(t >= FIN.card){
     // the title card: letterbox, darkness, a big moon with the magpie flying across it
-    const k = clamp((t - 330) / 30, 0, 1), e = k * k * (3 - 2 * k);
+    const C = FIN.card, k = clamp((t - C) / 30, 0, 1), e = k * k * (3 - 2 * k);
     ctx.save();
     ctx.fillStyle = 'rgba(8,4,20,' + (0.62 * e) + ')'; ctx.fillRect(0, 0, W, H);
     const mx = W * 0.72, my = H * 0.38, mr = 64;
@@ -201,20 +166,13 @@ function drawFinaleOverlay(cx, cy){
     g.addColorStop(0, 'rgba(255,240,200,0.5)'); g.addColorStop(1, 'rgba(255,240,200,0)');
     ctx.fillStyle = g; ctx.fillRect(mx - mr * 2, my - mr * 2, mr * 4, mr * 4);
     ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.fillStyle = '#fff3d0'; ctx.fill();
-    // the magpie's silhouette crossing the moon, the ficelle dangling from her beak
-    const q = clamp((t - 340) / 120, 0, 1), bx = mx + 120 - q * 240, by = my + 10 - Math.sin(q * Math.PI) * 30, fl = Math.sin(t * 0.4) * 0.8;
-    ctx.save(); ctx.translate(bx, by); ctx.scale(-1, 1); ctx.fillStyle = '#0c0818';
-    ctx.beginPath(); ctx.ellipse(0, 0, 18, 11, 0, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.arc(15, -7, 8, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-40, -5); ctx.lineTo(-40, 5); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(14, -7); ctx.lineTo(28, -5); ctx.lineTo(14, -3); ctx.fill();
-    ctx.save(); ctx.rotate(-fl); ctx.beginPath(); ctx.ellipse(-6, -10, 18, 6, -0.5, 0, TAU); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = '#0c0818'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(26, -5); ctx.quadraticCurveTo(30, 6, 22, 14); ctx.stroke();
-    ctx.restore();
+    // v55 : la vraie pie (en couleurs, ailes qui battent) passe devant la lune, la ficelle au bec
+    const q = clamp((t - C - 10) / 220, 0, 1), bx = mx + 150 - q * 300, by = my + 10 - Math.sin(q * Math.PI) * 30;
+    if(q > 0 && q < 1) drawPie(bx, by, -1, 1.25, {wing:'flap', flap:t * 0.35, ang:-0.08 + Math.sin(t * 0.35) * 0.05, ficelle:true, tilt:-0.1});
     // bars
     const bh = 26 * e;
     ctx.globalAlpha = 1; ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, W, bh); ctx.fillRect(0, H - bh, W, bh);
-    const ta = clamp((t - 360) / 25, 0, 1);
+    const ta = clamp((t - C - 30) / 25, 0, 1);
     ctx.globalAlpha = ta;
     txt('À suivre…', W * 0.3, H * 0.4, 16, '#e9e2ff', 600);
     heading('Saison 2', W * 0.3, H * 0.4 + 36 + (1 - ta) * 8, 34, '#ffffff');
@@ -223,13 +181,7 @@ function drawFinaleOverlay(cx, cy){
   }
 }
 
-function drawSteal(){
-  drawDJOrb();
-  if(!steal || !steal.on) return;
-  drawMagpie(steal);
-}
-function finaleEnd(){ return room && room.ending2 ? 80 : steal ? STEAL_END : 150; }
-const STEAL_END = 470;
+function finaleEnd(){ return room && room.ending2 ? 80 : steal ? STEAL_END : 150; }   // STEAL_END : voir 05c_fin_saison1.js
 function drawFinalePrompt(){
   if(state !== 'play' || finaleT < finaleEnd() || fadeDir !== 0) return;
   const a = Math.min(1, (finaleT - finaleEnd() + 1) / 14) * (REDUCED ? 1 : 0.88 + 0.12 * Math.sin(frame * 0.12));
@@ -430,7 +382,7 @@ function updateBats(){
 function startLaunch(){
   const t = room.launchTo;
   launch = {t:0, dur:46, x0:player.x, y0:player.y, x1:t.x - player.w / 2, y1:t.y - player.h};
-  lavaY = room.hotFloor ? room.hotFloor.y + 4 : lavaY;
+  lavaY = room.hotFloor ? Math.min(lavaY, room.hotFloor.y + 4) : lavaY;   // v55 : la lave déjà montée pendant la fin du boss ne redescend pas
   player.invuln = Math.max(player.invuln, 90); player.vx = player.vy = 0;
   addShake(10); SFX.thud();
   burst(player.x + player.w / 2, player.y + player.h, 24, '#ff8a3c', 4, 40, 0.1, 4);
@@ -809,7 +761,7 @@ function updateBoss(){
 function updatePlayer(){
   const knocked = idle.phase === 'flip' || idle.phase === 'ko' || idle.phase === 'up';
   if(knocked && input.jumpPressed) idleWake();
-  if(finaleT > 0 || cine || knocked || player.held || player.slam){ input.jumpPressed = false; input.shootPressed = false; input.dashPressed = false; player.buffer = 0; }
+  if(finaleT > 0 || cine || bossOutro() || knocked || player.held || player.slam){ input.jumpPressed = false; input.shootPressed = false; input.dashPressed = false; player.buffer = 0; }
   if(player.held){   // dans les serres du Gardien
     player.x = boss.x + boss.w / 2 - player.w / 2; player.y = boss.y + boss.h - 6;
     player.vx = player.vy = 0; player.onGround = false; player.standingOn = null;
@@ -822,7 +774,7 @@ function updatePlayer(){
     else { player.x += player.standingOn.dx; player.y += player.standingOn.dy; }
   }
 
-  let dir = finaleT > 0 || knocked || player.slam ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  let dir = finaleT > 0 || bossOutro() || knocked || player.slam ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
   if(player.pushT > 0){ player.pushT--; dir = Math.sign(player.vx); }   // poussé sur le côté après un coup sur le Roi Gluant
   if(cine){
     // during a cinematic XELIAX only walks out of danger, then faces the boss
@@ -1039,7 +991,7 @@ function updatePlayer(){
   for(const s of spikes){
     if(s.pending) continue;          // still coming out of the floor
     const hb = s.side ? {x:s.side === 'left' ? s.x - 8 : s.x, y:s.y + 3, w:8, h:s.h - 6}
-             : s.lava ? {x:s.x, y:s.y - 8, w:s.w, h:30}
+             : s.lava ? {x:s.x + 3, y:s.y + 2, w:s.w - 6, h:60}   // la surface dessinée est à y + 1 (drawLavaPool) : on ne meurt qu'en y entrant
              : s.down ? {x:s.x + 3, y:s.y, w:s.w - 6, h:8}
              : {x:s.x + 3, y:s.y - 8, w:s.w - 6, h:8};
     if(overlap(player, hb)){ killPlayer(); return; }

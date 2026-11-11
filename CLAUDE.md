@@ -26,7 +26,7 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
 
 ## Commandes
 - Construire : `node outils/build.js`
-- Tests (Playwright, `npm install` une fois) : `node outils/tests/tests19.js`, `tests_s2.js`, `tests14.js`, `tests_ouverture.js` (a besoin de `dist/demo.html` : `node outils/build.js --demo --out dist/demo.html`)
+- Tests (Playwright, `npm install` une fois) : `node outils/tests/tests19.js`, `tests_s2.js`, `tests14.js`, `tests_lave.js`, `tests_ouverture.js` (a besoin de `dist/demo.html` : `node outils/build.js --demo --out dist/demo.html`)
 - Vérifier qu'une salle saison 2 est faisable (copie exacte de la physique) :
   `node outils/verif/route2.js outils/cache/chapters2.js 2-3 --gates` (avec la variable `NOLONE=1` pour interdire
   l'escalade d'un seul mur). `--gates` dit quels éléments sont obligatoires / évitables, `--verbose` liste les étapes.
@@ -34,6 +34,7 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
   `outils/robot/bot1.js <salle> <parcours.json>` pour le monde 1 (double saut + tir, planches qui bougent) ;
   parcours validés dans `outils/robot/parcours/`. **route2 ne simule pas les planches qui tombent** : pour elles, le robot.
 - Node.js n'est pas installé sur le PC : Claude télécharge un Node portable dans son dossier temporaire.
+  Déjà téléchargé : `AppData/Local/Temp/claude/C--Users-Xeliax9-Documents-MAIN-pas-le-character-hein--STPLEVRAITPS-aventure-specifique/440fb344-7de3-473a-9aa1-78f25ef6d9e6/scratchpad/nodedl/node-v22.11.0-win-x64/node.exe` (s'il existe encore).
 
 ## Physique utile (px, 60 images/s)
 Saut ~102 px de haut, double saut ~178, dash ~95 px à l'horizontale, course 3,6 px/image.
@@ -45,7 +46,13 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v54 = v0.9.54, 9 novembre 2026, publiée ; v53 et v54 sur le même commit, tags v0.9.53 et v0.9.54)
+## État (v60 = v0.9.60, 10 novembre 2026, faite mais pas encore commitée ni publiée ; v55 à v59 n'existent pas)
+- v60 : gemmes cachées hors écran (S1 : 1-4, 2-1, 3-4, 4-2 ; S2 : 1-6, 2-2, 3-1, 4-1), une seule gemme par chapitre.
+  Boss : mort = phase 1 avec 5 cœurs, « Prêt ? » (remplissage des cœurs), le Gardien donne l'arme, cinématique du Seigneur Pourpre, mort dans la fuite = début de la fuite.
+  Fin de saison 1 refaite (`05c_fin_saison1.js`, `FIN`, `STEAL_END`) ; révélation de la saison 2 au menu (`13d_revele_saison2.js`, `save.s2Revealed`).
+  Lave : ne tue qu'au contact de la surface (`tests_lave.js`). Panneaux faux ou répétés corrigés.
+
+## État précédent (v54 = v0.9.54, 9 novembre 2026, publiée ; v53 et v54 sur le même commit, tags v0.9.53 et v0.9.54)
 - v54 : motifs et accessoires des couleurs à acheter (`pat`, `acc`, `desc`, `ghost` dans `SKINS` ; `drawSkinPattern`, `drawSkinAcc` ; `drawHero(..., {skin})` = aperçu boutique).
   Indice de la suite (`12c_indice_suite.js`) : `clearInfo.teaser` avant les résultats, passable après une première vue (`save.teaserSeen`).
   Pause : R = recommencer la salle (`pauseRestartRoom`, `roomEntry`), C = le chapitre. Qualité automatique `RES_K` (00_bases, `autoQuality`) ; page des chapitres sans flou CSS ni recalcul à chaque image (`setCss`, `setText`).

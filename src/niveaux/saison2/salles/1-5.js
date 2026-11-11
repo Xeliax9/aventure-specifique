@@ -25,9 +25,7 @@
   enemies:[{on:0, from:150, to:360, speed:1}, {on:6, from:150, to:380, speed:1.2, ceil:true}, {on:10, from:150, to:340, speed:1.3}],
   bats:[{x:1480, y:270, ax:70, ay:25, speed:0.04}, {x:2520, y:55, ax:70, ay:20, speed:0.045}],
   signs:[
-    {x:150, y:320, text:'Les planches tombent sur les piques : un pont !'},
     {x:960, y:320, text:'Tête en bas, les parachutes montent !'},
-    {x:2000, y:320, text:'Ces planches tombent vite : grimpe sans t\x27arrêter !'},
   ],
   powerUps:[{x:1585, y:220, type:'life'}],
   checkpoints:[{x:940, y:320}, {x:1760, y:40, ceil:true}, {x:2000, y:320}],

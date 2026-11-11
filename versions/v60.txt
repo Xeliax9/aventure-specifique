@@ -1,0 +1,43 @@
+VERSION 60 (v0.9.60) — Des gemmes bien cachées, des boss plus justes et une vraie fin de saison 1
+
+Gemmes secrètes
+- Toutes les gemmes sont maintenant difficiles à trouver : elles sont cachées hors de l'écran, au bout d'un passage
+  qu'on ne remarque pas du premier coup. Une pièce ou un détail du décor sert toujours d'indice.
+- Saison 1, chapitre 1 (salle 1-4) : un petit rebord dépasse en haut de l'écran au-dessus du 2e pilier. On y monte au
+  double saut, puis on marche à gauche à l'aveugle jusqu'à la gemme ; en continuant, on retombe au départ.
+- Saison 1, chapitre 2 (salle 2-1) : une pierre fissurée au-dessus des pointes. Il faut y sauter malgré la chauve-souris
+  et repartir avant qu'elle s'effondre, pour atteindre le toit d'un rocher hors de l'écran.
+- Saison 1, chapitre 4 (salle 4-2) : une fente dans le plafond, avec une porte en bois derrière. On se pose sur une
+  pierre fragile, on casse la porte en 2 tirs avant que la pierre tombe, puis une cheminée cachée monte jusqu'à la gemme.
+- Il ne reste qu'une gemme par chapitre (les anciennes de la 2-3 et de la 4-2 sont retirées).
+- Saison 2 : une nouvelle cachette dans chaque monde.
+  Le Ciel Renversé (1-6) : une orbe rose en trop, puis un double saut au-dessus de l'écran.
+  Les Gorges (2-2) : une cheminée étroite le long d'un poteau, jusqu'au-dessus de l'écran.
+  Le Glacier (3-1) : un grenier caché au-dessus du couloir de départ ; les vitres qui dépassent du plafond sont l'indice.
+  Le Nid de la pie (4-1) : une corniche au fond du gouffre, hors de la vue, qu'on atteint grâce à une 3e orbe.
+
+Boss
+- Mourir pendant un combat fait recommencer à la phase 1 avec 5 cœurs, et le boss est remis à neuf.
+  « Recommencer » (R) dans la pause fait pareil. Le mode speedrun ne change pas.
+- Avant chaque combat, « Prêt ? » : le boss et XELIAX sont figés, les 5 cœurs se remplissent un par un, puis « Combat ! ».
+- Le Gardien laisse tomber l'arme quand il est vaincu, et la porte reste fermée tant qu'on ne l'a pas prise.
+  Le chapitre 4 commence donc toujours armé.
+- Fin du Seigneur Pourpre : gros plan sur lui, il crie « Nonnnn, tu vas le payerrr !! », lève les bras, la lave monte,
+  puis XELIAX est propulsé en l'air et la fuite commence. Mourir pendant la fuite fait repartir du début de la fuite,
+  cœurs pleins, sans refaire le boss.
+
+Fin de la saison 1
+- XELIAX savoure sa ficelle : il la regarde, l'approche, la renifle les yeux fermés, prend son élan, ouvre grand la bouche…
+- Rien n'annonce la pie : elle surgit d'un coup au moment où il croque, arrache la ficelle, et l'image se fige.
+- La pie est maintenant dessinée en couleurs : elle bat des ailes, ouvre le bec, perd des plumes, se moque de XELIAX
+  (« Chac-chac ! » et un clin d'œil), puis s'envole.
+- Espace ne fait rien pendant toute la scène : « Espace continuer » n'apparaît que 3 s après le carton « À suivre… ».
+- De retour au menu, une animation annonce la saison 2 : « SAISON 2 », la pie traverse l'écran et lâche les
+  4 nouveaux chapitres un par un. Elle ne se joue qu'une fois (et jamais dans la démo).
+
+Panneaux
+- Les panneaux qui ne correspondaient pas au jeu sont corrigés (comme le premier de la 3-3), et ceux qui se
+  répétaient sont retirés (par exemple dans la 4-1).
+
+Corrections
+- La lave ne tue plus quand on s'en approche sans la toucher : il faut vraiment toucher sa surface.

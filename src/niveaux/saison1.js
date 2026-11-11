@@ -19,11 +19,8 @@ const CHAPTERS = [
         walls:[{x:1560, y:222, w:80, h:138}], enemies:[{on:1, from:60, to:300, speed:1}, {on:2, from:40, to:200, speed:1.1}],
         signs:[
           {x:60, y:340, text:'{move} pour bouger, {jump} pour sauter'},
-          {x:400, y:340, text:'Saute par-dessus les trous !'},
           {x:600, y:340, text:'Écrase les ennemis en sautant dessus'},
-          {x:850, y:340, text:'Trop loin ? Passe par les plateformes'},
           {x:1320, y:340, text:'Les drapeaux sont des checkpoints'},
-          {x:1420, y:340, text:'Trop haut ? Monte par la marche'},
         ],
         checkpoints:[{x:1272, y:340}],
         npcs:[{who:'farine', x:168, y:340}],
@@ -42,7 +39,7 @@ const CHAPTERS = [
           {x:740, y:200, w:70},
           {x:960, y:130, w:60},
         ],
-        enemies:[{on:1, from:70, to:220, speed:1.2}], signs:[{x:40, y:340, text:'Ramasse le cristal bleu'}, {x:180, y:340, text:'Saute, puis saute encore en l\'air !'}],
+        enemies:[{on:1, from:70, to:220, speed:1.2}], signs:[{x:40, y:340, text:'Cristal bleu : saute, puis saute encore en l\'air !'}],
         powerUps:[{x:110, y:306, type:'doubleJump'}],
         checkpoints:[{x:1180, y:340}],
         coins:[[270, 206], [420, 190], [530, 150], [640, 150], [775, 170], [870, 150], [990, 100], [1090, 200], [1260, 312], [1340, 312]],
@@ -89,11 +86,15 @@ const CHAPTERS = [
           {x:1420, y:170, w:60, h:210, solid:true},
           {x:1610, y:240, w:70},
           {x:1780, y:160, w:140, h:220, solid:true},
+          // v60 : gemme secrète — le rebord qui dépasse en haut de l'écran (y −6) au-dessus du 2e pilier, puis le chemin caché hors champ, vers la gauche
+          {x:620, y:-6, w:90},                          // on n'en voit que 8 px : double saut depuis le pilier pour s'y poser
+          {x:710, y:-44, w:14, h:30, solid:true},       // butée hors écran à droite du rebord : on ne tombe pas dans le trou sans le vouloir
+          {x:150, y:-48, w:470, h:42, solid:true},      // chemin caché (hors écran) : on le longe à l'aveugle vers la gauche ; son flanc droit empêche de tomber du rebord
         ],
         enemies:[{on:9, from:10, to:70, speed:0.9}], bats:[{x:1190, y:170, ax:70, ay:30, speed:0.035}], signs:[{x:200, y:340, text:'Plus de sol : reste en hauteur !'}],
-        powerUps:[{x:680, y:36, type:'gem'}],
+        powerUps:[{x:160, y:-74, type:'gem'}],   // au bout du chemin caché ; les pièces à y −62 tintent pour dire qu'on est sur la bonne voie
         checkpoints:[{x:1075, y:290}],
-        coins:[[370, 250], [535, 150], [610, 140], [690, 110], [880, 195], [1000, 240], [1095, 260], [1295, 190], [1370, 170], [1450, 140], [1645, 210], [1730, 190], [1820, 130]],
+        coins:[[370, 250], [535, 150], [610, 140], [690, 110], [880, 195], [1000, 240], [1095, 260], [1295, 190], [1370, 170], [1450, 140], [1645, 210], [1730, 190], [1820, 130], [520, -62], [400, -62], [280, -62]],
         door:{x:1870, y:120},
       },
     ],
@@ -110,6 +111,7 @@ const CHAPTERS = [
           {x:575, y:262, w:70},
           {x:1065, y:250, w:60},
           {x:1500, y:262, w:60},
+          {x:1670, y:150, w:46, crumble:true},   // v60 : gemme secrète — pierre fissurée au-dessus des pointes : double saut à droite jusque sur le toit du rocher (hors écran)
         ],
         walls:[{x:1760, y:0, w:100, h:268}],
         spikes:[
@@ -124,10 +126,11 @@ const CHAPTERS = [
           {on:0, from:1262, to:1388, speed:1.4},
           {on:0, from:1735, to:1840, speed:1.1},
         ],
-        bats:[{x:1095, y:170, ax:80, ay:25, speed:0.035}, {x:1560, y:175, ax:90, ay:25, speed:0.04}], signs:[{x:120, y:340, text:'Attention aux pointes !'}, {x:880, y:340, text:'Les chauves-souris s\'écrasent aussi'}],
+        bats:[{x:1095, y:170, ax:80, ay:25, speed:0.035}, {x:1560, y:175, ax:90, ay:25, speed:0.04}], signs:[{x:120, y:340, text:'Attention aux pointes !'}],
         checkpoints:[{x:812, y:340}, {x:1262, y:340}],
         npcs:[{who:'gaston', x:186, y:340}],
-        coins:[[150, 312], [290, 280], [400, 312], [520, 280], [610, 232], [740, 280], [1000, 280], [1095, 220], [1200, 280], [1450, 280], [1530, 232], [1660, 280], [1810, 312]],
+        powerUps:[{x:1832, y:-26, type:'gem'}],   // v60 : sur le toit du rocher qui pend du plafond (hors écran) ; seuls indices : la pierre fissurée et les 2 pièces qui montent vers la droite
+        coins:[[150, 312], [290, 280], [400, 312], [520, 280], [610, 232], [740, 280], [1000, 280], [1095, 220], [1200, 280], [1450, 280], [1530, 232], [1660, 280], [1810, 312], [1693, 112], [1730, 44]],
         door:{x:1870, y:300},
       },
       {
@@ -183,8 +186,7 @@ const CHAPTERS = [
           {x:100, y:740, ax:60, ay:40, speed:0.04},
           {x:540, y:900, ax:50, ay:40, speed:0.035},
         ],
-        signs:[{x:150, y:140, text:'Descends, étage par étage'}],
-        powerUps:[{x:145, y:208, type:'gem'}],
+        signs:[],
         checkpoints:[{x:30, y:480}, {x:30, y:820}],
         coins:[[200, 110], [285, 110], [540, 230], [370, 280], [100, 400], [225, 450], [540, 560], [425, 620], [100, 740], [240, 790], [540, 920], [320, 970], [160, 970]],
         door:{x:60, y:960},
@@ -222,7 +224,7 @@ const CHAPTERS = [
           {x:850, y:270, w:70},
           {x:1390, y:255, w:60},
         ],
-        walls:[{x:980, y:150, w:80, h:210}, {x:1500, y:160, w:80, h:200}], turrets:[{x:1280, y:316, dir:'aim', rate:140}, {x:1470, y:316, dir:'left', rate:115}], enemies:[{on:1, from:40, to:240, speed:1.3}, {on:2, from:40, to:220, speed:1.4}], bats:[{x:760, y:150, ax:60, ay:35, speed:0.04}, {x:1700, y:200, ax:70, ay:30, speed:0.035}], signs:[{x:80, y:340, text:'Les tourelles tirent : saute par-dessus !'}],
+        walls:[{x:980, y:150, w:80, h:210}, {x:1500, y:160, w:80, h:200}], turrets:[{x:1280, y:316, dir:'aim', rate:140}, {x:1470, y:316, dir:'left', rate:115}], enemies:[{on:1, from:40, to:240, speed:1.3}, {on:2, from:40, to:220, speed:1.4}], bats:[{x:760, y:150, ax:60, ay:35, speed:0.04}, {x:1700, y:200, ax:70, ay:30, speed:0.035}], signs:[{x:1110, y:340, text:'Les tourelles tirent : saute par-dessus !'}],
         checkpoints:[{x:1078, y:340}, {x:1600, y:340}],
         npcs:[{who:'olivia', x:250, y:340}],
         coins:[[200, 312], [505, 255], [580, 220], [675, 170], [760, 220], [885, 240], [950, 200], [1020, 125], [1150, 312], [1350, 312], [1420, 225], [1480, 140], [1680, 312], [1790, 312]],
@@ -248,7 +250,7 @@ const CHAPTERS = [
         spikes:[{x:240, y:800, w:60}],
         turrets:[{x:240, y:496, dir:'right', rate:150}],
         enemies:[{on:7, from:90, to:300, speed:1.1}],
-        signs:[{x:120, y:1140, text:'L\'escalier monte dans la tour : prends ton temps.'}],        checkpoints:[{x:360, y:800}, {x:400, y:280}],
+        signs:[],        checkpoints:[{x:360, y:800}, {x:400, y:280}],
         coins:[[245, 1030], [385, 950], [525, 850], [320, 770], [165, 700], [165, 620], [300, 490], [430, 490], [590, 400], [330, 250], [200, 250], [75, 165], [120, 80]],
         door:{x:40, y:70},
       },
@@ -268,7 +270,7 @@ const CHAPTERS = [
           {x:2100, y:230, w:60, crumble:true},
           {x:2290, y:180, w:110, h:200, solid:true},
         ],
-        spikes:[{x:840, y:220, w:70}], turrets:[{x:976, y:196, dir:'left', rate:105}, {x:1940, y:166, dir:'aim', rate:130}], enemies:[{on:5, from:30, to:160, speed:1.4}, {on:9, from:10, to:60, speed:1}], bats:[{x:1190, y:150, ax:55, ay:25, speed:0.035}, {x:2130, y:140, ax:70, ay:30, speed:0.04}], signs:[{x:240, y:340, text:'Le rempart s\'est effondré : grimpe !'}],
+        spikes:[{x:840, y:220, w:70}], turrets:[{x:976, y:196, dir:'left', rate:105}, {x:1940, y:166, dir:'aim', rate:130}], enemies:[{on:5, from:30, to:160, speed:1.4}, {on:9, from:10, to:60, speed:1}], bats:[{x:1190, y:150, ax:55, ay:25, speed:0.035}, {x:2130, y:140, ax:70, ay:30, speed:0.04}], signs:[],
         powerUps:[{x:1600, y:140, type:'life'}],
         checkpoints:[{x:775, y:220}, {x:1316, y:200}, {x:1835, y:190}],
         coins:[[150, 312], [340, 250], [595, 150], [690, 170], [790, 190], [835, 170], [930, 190], [1040, 210], [1160, 220], [1245, 200], [1370, 170], [1520, 210], [1600, 220], [1720, 180], [1900, 160], [2050, 200], [2130, 200], [2180, 170], [2330, 150]],
@@ -294,7 +296,7 @@ const CHAPTERS = [
         turrets:[{x:2076, y:196, dir:'left', rate:130}],
         enemies:[{on:4, from:40, to:180, speed:1.2}],
         bats:[{x:1150, y:170, ax:50, ay:25, speed:0.035}],
-        signs:[{x:240, y:340, text:'Ces pierres sont fragiles : ne traîne pas dessus !'}],
+        signs:[],
         powerUps:[{x:680, y:-68, type:'gem'}],   // au-dessus de l'écran : double saut tout droit depuis la 3e pierre ; la pièce à y 30 est le seul indice
         checkpoints:[{x:810, y:200}, {x:1336, y:200}],
         coins:[[150, 312], [430, 240], [560, 180], [690, 120], [690, 30], [850, 170], [950, 170], [1125, 220], [1240, 200], [1370, 170], [1425, 150], [1620, 220], [1720, 200], [1860, 190], [1940, 190]],
@@ -310,17 +312,18 @@ const CHAPTERS = [
           {x:456, y:250, w:118, p2crumble:true},
           {x:262, y:176, w:116},
         ],
-        signs:[{x:30, y:340, text:'Quand il s\'écrase au sol, saute-lui dessus !'}, {x:420, y:340, text:'Il rase le sol ? Monte sur une plateforme… et saute-lui dessus !'}],
+        signs:[{x:30, y:340, text:'Il s\'écrase ? Saute-lui dessus ! Il rase le sol ? Monte sur une plateforme !'}],
         powerUps:[{x:310, y:146, type:'life'}],
         coins:[[125, 220], [515, 220]],
         boss:{mode:'swoop', name:'Le Gardien', hp:5, hp2:5, x:300, y:55, w:56, h:40},
         needsBoss:true,
+        bossReward:'shoot',   // v55 : le Gardien vaincu laisse tomber l'arme (la porte attend qu'on la prenne)
         door:{x:600, y:300},
       },
     ],
   },
   {
-    name:'La Forteresse', color:'#ff6b5c', sky:['#16070f', '#5a1a2a'], deco:'fortress', tint:'#2a0d17', grants:{dj:true},
+    name:'La Forteresse', color:'#ff6b5c', sky:['#16070f', '#5a1a2a'], deco:'fortress', tint:'#2a0d17', grants:{dj:true, shoot:true},
     rooms:[
       {
         name:'Les Portes',
@@ -344,11 +347,8 @@ const CHAPTERS = [
         ],
         spikes:[{x:530, y:345, w:640, lava:true}], turrets:[{x:1408, y:156, dir:'aim', rate:110, hp:2}, {x:1860, y:316, dir:'left', rate:95, hp:2}], enemies:[{on:2, from:20, to:210, speed:1.5}], bats:[{x:880, y:160, ax:90, ay:30, speed:0.04}],
         signs:[
-          {x:110, y:340, text:'Ramasse l\'arme : {shoot} pour tirer'},
-          {x:300, y:340, text:'Tu peux détruire les tourelles'},
-          {x:420, y:340, text:'Une porte en bois ? Tire dessus !'},
+          {x:110, y:340, text:'{shoot} pour tirer : tourelles et portes en bois y passent !'},
         ],
-        powerUps:[{x:200, y:306, type:'shoot'}],
         checkpoints:[{x:1200, y:340}, {x:1480, y:340}],
         coins:[[100, 312], [440, 312], [645, 255], [720, 230], [820, 185], [920, 230], [1025, 255], [1110, 280], [1320, 232], [1420, 126], [1560, 312], [1650, 312], [1780, 312]],
         door:{x:1800, y:300},
@@ -366,19 +366,28 @@ const CHAPTERS = [
           {x:1010, y:225, w:70},
           {x:1210, y:285, w:60, crumble:true},
           {x:1400, y:240, w:60, move:{axis:'y', min:210, max:290, speed:1}},
-          {x:1020, y:140, w:50, opt:true},
+          {x:1000, y:80, w:60, crumble:true},   // v60 : gemme secrète — pierre fragile dans la fente du plafond, au-dessus de la plateforme du drapeau
         ],
-        walls:[{x:240, y:-200, w:1440, h:290}],
+        // v60 : le plafond est percé d'une fente (x 1000-1060) ; derrière une porte en bois, un couloir mène à une cheminée qui monte hors de l'écran
+        walls:[
+          {x:240, y:-200, w:760, h:290},             // plafond, à gauche de la fente
+          {x:1000, y:-200, w:60, h:210},             // haut de la fente (y 10)
+          {x:1060, y:20, w:24, h:60, hp:2},          // porte en bois : 2 tirs depuis la pierre fragile (vite, avant qu'elle tombe ; les coups restent)
+          {x:1060, y:80, w:180, h:10},               // sol du couloir caché
+          {x:1060, y:-200, w:120, h:220},            // toit du couloir (y 20)
+          {x:1180, y:-200, w:60, h:50},              // haut de la cheminée (y −150)
+          {x:1240, y:-200, w:440, h:290},            // plafond, à droite
+        ],
         spikes:[
           {x:220, y:345, w:1480, lava:true},
           {x:520, y:90, w:160, down:true},
           {x:1180, y:90, w:150, down:true},
         ],
         turrets:[{x:1820, y:316, dir:'left', rate:85, hp:2}], bats:[{x:690, y:175, ax:70, ay:22, speed:0.035}, {x:1310, y:175, ax:70, ay:22, speed:0.04}],
-        powerUps:[{x:1035, y:108, type:'gem'}],
+        powerUps:[{x:1200, y:-136, type:'gem'}],   // tout en haut de la cheminée (hors écran) : le plus grand double saut possible depuis le sol du couloir
         checkpoints:[{x:1025, y:225}],
         npcs:[{who:'levain', x:132, y:340}],
-        coins:[[100, 312], [290, 270], [380, 255], [460, 220], [575, 200], [680, 230], [790, 250], [920, 230], [1045, 195], [1150, 240], [1240, 255], [1330, 240], [1430, 200], [1560, 260], [1640, 300], [1780, 312]],
+        coins:[[100, 312], [290, 270], [380, 255], [460, 220], [575, 200], [680, 230], [790, 250], [920, 230], [1045, 195], [1150, 240], [1240, 255], [1330, 240], [1430, 200], [1560, 260], [1640, 300], [1780, 312], [1130, 60], [1210, 50], [1210, -20], [1210, -80]],
         door:{x:1760, y:300},
       },
       {
@@ -483,7 +492,7 @@ const CHAPTERS = [
         turrets:[{x:2690, y:60, dir:'aim', rate:95, hp:3}],
         enemies:[{on:8, from:150, to:300, speed:1.6}],
         bats:[{x:3190, y:230, ax:30, ay:40, speed:0.06}],
-        signs:[{x:60, y:340, text:'Défi : finis le plus vite possible !'}, {x:1550, y:340, text:'Plafond piquant : petits sauts et tirs !'}],
+        signs:[{x:1550, y:340, text:'Plafond piquant : petits sauts et tirs !'}],
         checkpoints:[{x:1550, y:340}, {x:3650, y:270}],
         coins:[[90, 310], [312, 260], [477, 215], [642, 260], [807, 220], [1050, 270], [1225, 170], [1395, 130], [1790, 310], [2205, 270], [2380, 220], [2555, 270], [2735, 190], [3010, 270], [3190, 200], [3345, 270], [3505, 200], [3660, 240], [3860, 260], [4190, 230], [4490, 310], [4662, 270], [4782, 220], [4902, 170], [5022, 120], [5473, 230], [5659, 270], [5855, 220], [6061, 260], [6324, 310]],
         door:{x:6354, y:300},

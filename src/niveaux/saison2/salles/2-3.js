@@ -26,7 +26,7 @@
   enemies:[{on:4, from:20, to:200, speed:1.1}, {on:6, from:20, to:150, speed:1.2}, {on:8, from:120, to:280, speed:1.3}],
   bats:[{x:330, y:900, ax:70, ay:30, speed:0.04}, {x:300, y:220, ax:70, ay:30, speed:0.045}],
   signs:[
-    {x:300, y:1400, text:'Piques partout : saute du poteau et reviens dessus au double saut !'},
+    {x:260, y:1400, text:'Piques partout : saute du poteau et reviens dessus au double saut !'},
     {x:420, y:700, text:'Le canon tire sous le pilier : vise le bon moment'},
   ],
   powerUps:[{x:220, y:1366, type:'doubleJump'}, {x:440, y:666, type:'life'}],

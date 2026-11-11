@@ -25,7 +25,7 @@
   bats:[{x:1970, y:220, ax:40, ay:30, speed:0.04}],
   signs:[
     {x:110, y:320, text:'Descends assez bas pour passer sous le mur, puis double saut !'},
-    {x:1410, y:300, text:'Grand saut, puis laisse-toi porter'},
+    {x:1590, y:300, text:'Double saut sur le parachute, puis laisse-toi porter'},
   ],
   powerUps:[{x:1470, y:260, type:'life'}],
   checkpoints:[{x:1360, y:300}, {x:1710, y:225}, {x:2250, y:320}],

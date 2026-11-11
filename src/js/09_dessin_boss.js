@@ -427,6 +427,7 @@ function drawWorld(){
   drawPopups();
   if(state === 'play'){ for(const s of signs) drawSignBubble(s); for(const n of npcs) drawNpcPrompt(n); }
   drawIdleBubble();
+  drawBossShout();   // v55 : « Nonnnn, tu vas le payerrr !! »
   PL_M = null;
 }
 

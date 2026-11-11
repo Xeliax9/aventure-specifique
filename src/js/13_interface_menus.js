@@ -39,13 +39,24 @@ function drawHUD(){
   const top = 8, hh = 24;
   const slots = Math.min(8, Math.max(startLives(), lives));
   const heartsW = 14 + slots * 15 + (lives > 8 ? 24 : 0);
+  // v55 : « Prêt ? » avant un boss : seuls les cœurs déjà remplis sont pleins (heartFill), la pilule brille
+  const filling = !!cine && heartFill !== null, shown = filling ? Math.min(heartFill, lives) : lives;
+  if(filling && cine.kind === 'ready'){
+    const g = 0.35 + Math.sin(frame * 0.2) * 0.15;
+    ctx.save(); ctx.shadowColor = '#ff4d6d'; ctx.shadowBlur = 14 * g; rr(8, top, heartsW, hh, hh / 2); ctx.strokeStyle = `rgba(255,120,150,${g})`; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+  }
   pill(8, top, heartsW, hh);
   for(let i = 0; i < slots; i++){
     const cx = 22 + i * 15, cy = top + 6;
     let s = 12;
     if(i === hud.gainIdx && hud.gainT > 0) s *= 1 + Math.sin(hud.gainT * Math.PI) * 0.6;
     if(lives === 1 && i === 0) s *= 1 + Math.max(0, Math.sin(frame * 0.2)) * 0.18;
-    const full = i < lives;
+    const full = i < shown;
+    if(filling && i === hud.gainIdx && hud.gainT > 0){   // le cœur qui vient de se remplir : un anneau qui s'ouvre
+      const k = 1 - hud.gainT;
+      ctx.save(); ctx.globalAlpha = hud.gainT * 0.8; ctx.strokeStyle = '#ffd0da'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy + 6, 6 + k * 12, 0, TAU); ctx.stroke(); ctx.restore();
+    }
     heartIcon(cx, cy + (12 - s) / 2, s, full ? '#ff4d6d' : 'rgba(255,255,255,0.14)', full ? '#5a0d24' : 'rgba(255,255,255,0.18)');
     if(full){ ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.ellipse(cx - 2.6, cy + 2.4, 1.5, 1, -0.5, 0, TAU); ctx.fill(); }
     if(i === hud.lostIdx && hud.lostT > 0){
@@ -56,7 +67,7 @@ function drawHUD(){
       ctx.restore();
     }
   }
-  if(lives > 8) txt('x' + lives, 22 + slots * 15, top + 16.5, 12, '#ffffff', 700, 'left');
+  if(lives > 8 && shown > 8) txt('x' + lives, 22 + slots * 15, top + 16.5, 12, '#ffffff', 700, 'left');
 
   let x = 8 + heartsW + 6;
   ctx.font = `700 12.5px ${FU}`;
@@ -585,12 +596,14 @@ function updateMenu(){
   else if(--menu.flyT <= 0){ if(s2Visible()) menu.fly = {x:W + 70, y:44 + Math.random() * 46, vx:-1.6 - Math.random() * 0.6, t:0}; menu.flyT = 1100 + Math.random() * 900; }
   for(const f of menu.fx){ f.x += f.vx; f.y += f.vy; f.vy += f.g; f.vx *= 0.98; f.rot += f.vr; f.life--; }
   menu.fx = menu.fx.filter(f => f.life > 0);
+  updateReveal();   // v55 : la révélation de la saison 2 (13d_revele_saison2.js)
 }
 
 // ---------------------------------------------------------------- input
 function menuKey(k, rep = false){
   if(fadeDir !== 0) return;
   if(menu.splash){ if(!menu.splash.open && !rep && (k === ' ' || k === 'enter')) openSplash(); return; }
+  if(menu.reveal){ if(!rep) revealPress(); return; }   // révélation de la saison 2 : toute touche la passe (après 1,5 s)
   const up = k === 'w' || k === 'arrowup', down = k === 's' || k === 'arrowdown';
   const left = k === 'a' || k === 'arrowleft', right = k === 'd' || k === 'arrowright';
   const ok = k === ' ' || k === 'enter', back = k === 'escape' || k === 'q' || k === 'backspace' || k === 'p';
@@ -633,7 +646,7 @@ function menuKey(k, rep = false){
   else if(ok && !rep) rowActivate(rows[s]);
 }
 function menuWheel(d){
-  if(fadeDir !== 0 || menu.t < 1) return;
+  if(fadeDir !== 0 || menu.t < 1 || menu.reveal) return;
   if(menu.page === 'credits'){ menu.credY = clamp(menu.credY + d * 0.5, -60, credMax()); return; }
   menu.wheel += d;
   if(Math.abs(menu.wheel) < 30 || frame - menu.wheelT < 7) return;
@@ -651,6 +664,7 @@ const inCarousel = y => menu.page === 'chapters' && y > 96 && y < 254;
 function menuPointerDown(x, y){
   menu.mx = x; menu.my = y; menu.pointerT = 0;
   if(menu.splash){ if(!menu.splash.open) openSplash(); return; }
+  if(menu.reveal){ revealPress(); return; }
   if(fadeDir !== 0 || menu.t < 1) return;
   const h = hitAt(x, y);
   menu.down = {x, y, id:h ? h.id : null, moved:false, sliding:false};
@@ -1432,6 +1446,7 @@ function drawMenu(){
   drawMenuFx();
   ctx.restore();
   drawSplash();
+  drawReveal();
 }
 
 function overlayDim(a=0.55){
@@ -1461,10 +1476,10 @@ function drawPause(){
   ctx.save();
   const resume = () => setState('play');
   // recommencer : la phase (boss) ; dans un bonus, R relance tout le défi et C la salle ; ailleurs R = la salle, C = le chapitre
-  const again = room.boss ? [['R', 'Recommencer la phase', pauseRestart]]
+  const again = room.boss ? [['R', 'Recommencer le combat', pauseRestart]]
     : isSpeedrun() ? [['R', 'Recommencer le défi', srRestart], ['C', 'Recommencer la salle', pauseRestartRoom]]
     : [['R', 'Recommencer la salle', pauseRestartRoom], ['C', 'Recommencer le chapitre', pauseRestart]];
-  const rows = TOUCH ? [['▲', 'Reprendre', resume], ['↺', room.boss ? 'Recommencer la phase' : 'Recommencer la salle', room.boss ? pauseRestart : pauseRestartRoom], ['●', 'Retour au menu', backToMenu]]
+  const rows = TOUCH ? [['▲', 'Reprendre', resume], ['↺', room.boss ? 'Recommencer le combat' : 'Recommencer la salle', room.boss ? pauseRestart : pauseRestartRoom], ['●', 'Retour au menu', backToMenu]]
     : [['P', 'Reprendre', resume], ...again, ['T', 'Changer les touches', openPauseKeys],
        ['Q', 'Retour au menu', backToMenu], ['M', muted ? 'Activer le son' : 'Couper le son', () => setMuted(!muted)]];
   const b = panelBox(320, 108 + rows.length * 25, CH_ACCENT[chIndex]);
@@ -1490,7 +1505,7 @@ function drawGameOver(){
   drawHero(uiHero, W / 2, b.y + 4 + Math.sin(frame * 0.04) * 1.5, 1.8, {});
   heading('Game over', W / 2, b.y + 72, 34, '#ff8aa0');
   txt(chapter.bonus ? `XELIAX est tombé dans le bonus « ${chapter.name} », salle ${rIndex + 1}` : `XELIAX est tombé au chapitre ${chNum(chIndex)}${chapter.season === 2 ? ' (saison 2)' : ''}, salle ${rIndex + 1}`, W / 2, b.y + 94, 12.5, '#bfb6f0', 500);
-  const again = room.boss ? 'recommencer la phase' : chapter.bonus ? 'recommencer la salle' : 'recommencer le chapitre';
+  const again = room.boss ? (boss && boss.mode === 'ascent' && currentPhase() === 'escape' ? 'reprendre la fuite' : 'recommencer le combat') : chapter.bonus ? 'recommencer la salle' : 'recommencer le chapitre';
   if(TOUCH){ promptLine([{key:'▲'}, {text:again}], b.y + 134); promptLine([{key:'●'}, {text:'menu'}], b.y + 162, '#bfb6f0'); }
   else { promptLine([{key:'Espace'}, {text:again}], b.y + 134); promptLine([{key:'Q'}, {text:'menu'}], b.y + 162, '#bfb6f0'); }
   ctx.restore();

@@ -181,6 +181,7 @@ function stepCharAnim(a, s){
     L0 = {a:1.05, c:0.2, amp:0.15, spd:0.5}; L1 = {a:1.25, c:0.1, amp:0.15, spd:0.5};
   }
   if(s.phone) A1 = {a:-1.3, c:1.85, amp:0.03, spd:0.06};
+  if(s.eat > 0) A1 = {a:-0.15 + 0.3 * s.eat, c:0.25 + 0.9 * s.eat, amp:0.03, spd:0.05};   // fin de la saison 1 : la ficelle tenue devant la bouche
   if(s.ko){
     A0 = {a:0.2, c:0.5, amp:0.25, spd:0.08}; A1 = {a:0.4, c:-0.5, amp:0.25, spd:0.09};
     L0 = {a:-0.5, c:1.2, amp:0.55, spd:0.22}; L1 = {a:0.5, c:-1.2, amp:0.55, spd:0.25};
@@ -236,7 +237,7 @@ function loadRoom(ci, ri){
   checkpoints = (room.checkpoints || []).map(c => ({x:c.x, y:c.y, active:false, raise:0, ceil:!!c.ceil}));
   signs = (room.signs || []).map(s => ({...s, show:0}));
   npcs = (room.npcs || []).map(n => ({...n, t:Math.random() * 6, blink:0, near:0}));
-  nearNpc = null; talk = null; cine = null; fightPop = 0;
+  nearNpc = null; talk = null; cine = null; fightPop = 0; heartFill = null; camZoom.z = 1;
   // already-collected coins / power-ups stay collected when a room is reloaded after a game over
   coins = (room.coins || []).map(([x, y], i) => ({x, y, id:`c${ci}-${ri}-${i}`, got:collected.has(`c${ci}-${ri}-${i}`), t:Math.random()*6}));
   powerUps = (room.powerUps || [])
@@ -256,7 +257,7 @@ function loadRoom(ci, ri){
   gdir = room.startG || 1;
   checkpoint = {x:room.start.x, y:room.start.y, g:gdir};
   particles = []; popups = [];
-  exitT = 0; exitKind = null; anim.exit = 0; finaleT = 0; steal = null;
+  exitT = 0; exitKind = null; anim.exit = 0; finaleT = 0; steal = null; anim.lid = 0;
   djOrb = null;   // v54 : la bulle du double saut d'une cinématique interrompue (pause → menu) ne reste pas dessinée ailleurs
   hud.bossShown = hud.bossTrail = 1;
   makeAmbient();
@@ -266,6 +267,7 @@ function loadRoom(ci, ri){
   bannerT = ri === 0 ? 240 : 150;
   if(room.shootUp && !room.boss) showToast('Tes tirs partent vers le haut !', 170);
   if(boss) startCine('intro');   // every boss makes an entrance before the fight starts
+  if(boss && !isSpeedrun()) heartFill = 0;   // v55 : cœurs vides pendant la présentation, ils se remplissent juste après (startReady)
   if(boss && state === 'play') maybeBossDemo(false);   // the first time: how to beat it
   if(djScene){ bannerT = 0; startCine('dj'); }    // the magpie snatches the double jump and drops it into the gorge
 }

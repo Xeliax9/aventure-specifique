@@ -94,7 +94,7 @@ adminInput.addEventListener('keydown', ev => {
   if(ev.key === 'Enter'){ ev.preventDefault(); adminTry(); }
   else if(ev.key === 'Escape'){ ev.preventDefault(); closeAdmin(); }
 });
-const deckLive = () => state === 'title' && menu.page === 'chapters' && menu.t >= 1 && fade < 0.3;
+const deckLive = () => state === 'title' && menu.page === 'chapters' && menu.t >= 1 && fade < 0.3 && !menu.reveal;   // v55 : caché pendant la révélation de la saison 2
 // v54 : on ne relit la taille de l'écran qu'au besoin (la relire à chaque image forçait le navigateur à tout recalculer)
 function placeDeck(){
   if(deck.placed && deck.canvasW === canvas.width) return;
@@ -201,11 +201,11 @@ function render(alpha){
   ctx.translate(sx, sy);
   drawBackground(cx, cy);
   ctx.save();
-  ctx.translate(-cx, -cy);
+  worldCam(cx, cy);   // v55 : ctx.translate(-cx, -cy), ou le gros plan de la fin du Seigneur Pourpre
   drawWorld();
   ctx.restore();
   drawAmbient(cx, cy);
-  const hx = ix(player) + player.w / 2 - cx, hy = iy(player) + player.h / 2 - cy;
+  const [hx, hy] = camPoint(ix(player) + player.w / 2, iy(player) + player.h / 2, cx, cy);   // v55 : suit le gros plan (worldCam)
   drawLighting(hx, hy);
   drawSkinGlowOver();
   ctx.restore();
@@ -236,7 +236,7 @@ function confirmAction(){
   if(bossDemo && state === 'play'){ input.demoNext = true; return true; }
   if(state === 'title'){ menuKey('enter'); return true; }
   if(state === 'over'){
-    // boss rooms: retry the current phase; anywhere else: back to the start of the chapter
+    // boss rooms: the whole fight again, from phase 1 (v55); anywhere else: back to the start of the chapter
     if(room.boss) transition(restartPhase);
     else if(chapter.bonus) transition(restartRoom);
     else transition(() => { continues++; startChapter(chIndex, false); anim.appear = 0; setState('play'); });
@@ -271,10 +271,11 @@ function pressJump(){
 
 function backToMenu(){ if(state === 'pause' || state === 'over') toMenu(); else if(state === 'pet') closePet(); }
 
-// pause : dans une salle de boss on reprend la phase en cours (sans regagner de cœurs ni compter un « continue »)
+// pause : dans une salle de boss on recommence tout le combat (phase 1, cœurs pleins, comme après une mort ;
+// v55 : avant, on reprenait la phase en cours sans rendre de cœurs) ; ça ne compte pas comme un « continue »
 function pauseRestart(){
   transition(() => {
-    if(room.boss){ const l = lives; restartPhase(); lives = l; continues--; }
+    if(room.boss) restartPhase(false);
     else { startChapter(chIndex, false); anim.appear = 0; setState('play'); }
   });
 }
@@ -327,7 +328,7 @@ window.addEventListener('keydown', e => {
   if(k === 'm' && !e.repeat) setMuted(!muted);
   if(k === 'q' && !e.repeat) backToMenu();
   if(k === 'c' && !e.repeat && state === 'over') confirmAction();
-  if(k === 'r' && !e.repeat && state === 'pause'){ if(room.boss) pauseRestart(); else pauseRestartRoom(); }   // R : la phase (boss) ou la salle
+  if(k === 'r' && !e.repeat && state === 'pause'){ if(room.boss) pauseRestart(); else pauseRestartRoom(); }   // R : le combat (boss) ou la salle
   if(k === 'c' && !e.repeat && state === 'pause' && !room.boss){ if(isSpeedrun()) pauseRestartRoom(); else pauseRestart(); }   // C : le chapitre (bonus : la salle, R y relance le défi)
   if(k === 't' && !e.repeat && state === 'pause') openPauseKeys();
 });
@@ -481,6 +482,8 @@ function restoreFrom(d){
     if(!['play', 'pause', 'over', 'talk'].includes(d.state)) return false;
     score = d.score | 0; lives = Math.max(1, d.lives | 0); elapsed = +d.elapsed || 0;
     hasDJ = !!d.hasDJ; canShoot = !!d.canShoot; hasWall = !!d.hasWall; hasDash = !!d.hasDash; runFromStart = !!d.runFromStart; continues = d.continues | 0;
+    const g = CHAPTERS[d.chIndex].grants || {};   // v55 : ce que le chapitre donne d'office (ex. l'arme dès la Forteresse) est rendu aux anciennes reprises
+    if(g.dj) hasDJ = true; if(g.shoot) canShoot = true; if(g.wall) hasWall = true; if(g.dash) hasDash = true;
     chStartTime = +d.chStartTime || 0; chCoins = d.chCoins | 0; chGem = !!d.chGem;
     collected = new Set(Array.isArray(d.collected) ? d.collected : []);
     chCoinsTotal = CHAPTERS[d.chIndex].rooms.reduce((a, r) => a + (r.coins || []).length, 0);

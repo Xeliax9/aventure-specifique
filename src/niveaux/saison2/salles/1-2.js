@@ -21,7 +21,7 @@
   bats:[{x:820, y:140, ax:40, ay:20, speed:0.04}, {x:1420, y:95, ax:90, ay:15, speed:0.035}, {x:2380, y:150, ax:70, ay:25, speed:0.045}],
   signs:[
     {x:120, y:320, text:'Saute dans l\'orbe au bon moment : vise le nuage !'},
-    {x:1010, y:40, text:'Plonge dans l\'orbe… et tombe entre les poteaux', ceil:true},
+    {x:1630, y:40, text:'Plonge dans l\'orbe… et tombe entre les poteaux', ceil:true},
     {x:2050, y:320, text:'Les nuages s\'effritent : ne traîne pas'},
   ],
   powerUps:[{x:1734, y:270, type:'life'}],

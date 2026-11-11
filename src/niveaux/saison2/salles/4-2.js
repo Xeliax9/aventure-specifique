@@ -22,9 +22,7 @@
   enemies:[{on:4, from:20, to:200, speed:1.2}, {on:8, from:40, to:260, speed:1.2}, {on:9, from:40, to:300, speed:1.3, ceil:true}],
   bats:[{x:500, y:1200, ax:80, ay:40, speed:0.04}, {x:420, y:700, ax:100, ay:40, speed:0.04}, {x:260, y:330, ax:100, ay:40, speed:0.045}],
   signs:[
-    {x:150, y:1400, text:'Un nœud gelé : dash pour entrer dans l\'arbre'},
     {x:420, y:1000, text:'Les branches fragiles cassent : grimpe vite !'},
-    {x:420, y:520, text:'L\'orbe t\'envoie dans le feuillage'},
   ],
   powerUps:[{x:470, y:966, type:'life'}],
   checkpoints:[{x:420, y:1400}, {x:400, y:1000}, {x:300, y:520}, {x:700, y:264, ceil:true}],

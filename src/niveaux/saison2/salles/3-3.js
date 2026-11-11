@@ -28,9 +28,8 @@
   turrets:[{x:160, y:1290, dir:'right', rate:120}],
   bats:[{x:600, y:610, ax:70, ay:20, speed:0.04}, {x:620, y:320, ax:70, ay:20, speed:0.045}],
   signs:[
-    {x:220, y:1500, text:'Trop large ? Saut de mur, puis dash !'},
-    {x:440, y:940, text:'Plafond de glace : dash au ras du sol'},
-    {x:700, y:940, text:'Rebondis de bloc en bloc'},
+    {x:220, y:1500, text:'D\'un mur à l\'autre : saut de mur, puis double saut ! Gare au canon'},
+    {x:440, y:940, text:'Plafond piquant : ne saute pas, dash dans la glace !'},
   ],
   checkpoints:[{x:450, y:940}, {x:700, y:940}],
   coins:[[100, 1470], [290, 1440], [290, 1320], [290, 1200], [290, 1080], [380, 920], [520, 910], [560, 900], [700, 800], [730, 720], [640, 640], [570, 580], [660, 500], [730, 440], [640, 360], [570, 300], [560, 220], [600, 130], [680, 130]],

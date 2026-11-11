@@ -293,7 +293,7 @@ function drawHero(a, x, y, sc=1, o={}){
   }
   if(o.armed && !o.ficelle) drawBlaster(tip, a);
   if(o.phone) drawHandset(tip);
-  if(o.ficelle) drawFicelle(tip.x + 7, tip.y - 3, 26, -0.45, false, 5.5, o.ficelle === true ? false : o.ficelle);
+  if(o.ficelle){ const fp = finEatPos(o.eat || 0, tip, by); drawFicelle(fp.x, fp.y, 26, fp.rot, false, 5.5, o.ficelle === true ? false : o.ficelle); }   // o.eat : il l'approche de sa bouche (fin de la saison 1)
   ctx.restore();
   if(keep){ HERO.body = keep[0]; HERO.deep = keep[1]; HERO.light = keep[2]; }
   heroFill = HERO.body;
@@ -873,7 +873,7 @@ function drawPlayerBody(x, y){
   if(player.invuln > 0 && player.hurtT <= 0 && finaleT === 0) alpha = 0.55 + 0.45 * Math.abs(Math.cos(player.invuln * 0.22));
   const flash = player.hurtT > 0 && Math.floor(player.hurtT / 3) % 2 === 0;
   const knocked = idle.phase === 'ko' || idle.phase === 'up';
-  drawHero(anim, x, y + 0.5, 1, {alpha, flash, armed:canShoot && !knocked, ficelle:finaleT > 0 && !(steal && steal.got) ? (key && key.gold ? key.gold : true) : false,
+  drawHero(anim, x, y + 0.5, 1, {alpha, flash, armed:canShoot && !knocked && !(finaleT > 0 && steal), ficelle:finaleT > 0 && !(steal && steal.got) ? (key && key.gold ? key.gold : true) : false, eat:finaleT > 0 && steal ? steal.eat || 0 : 0,
     rot:idle.rot, rest:idle.phase === 'ko' && player.onGround, bandage:idle.bandage > 0 || idle.phase === 'up'});
 }
 

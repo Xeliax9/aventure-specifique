@@ -15,7 +15,7 @@ function powerSeen(k){
   if(seenPowers()[k]) return true;
   const s2 = !!(save.s2Seen || save.unlocked2 > 1 || save.s2Done);
   if(k === 'dj') return s2 || save.unlocked > 1 || save.bestCh.some(v => v != null);   // chapitre 1 fini = double saut ramassé
-  if(k === 'shoot') return s2 || save.bestCh[STORY_END] != null;                      // saison 1 finie = arme ramassée
+  if(k === 'shoot') return s2 || save.bestCh.some((v, i) => v != null && i >= 2 && i <= STORY_END);   // v55 : chapitre 3 fini = arme reçue du Gardien
   if(k === 'gravity') return s2;                                                        // la saison 2 commence tête en bas
   if(k === 'wall' || k === 'dash') return save.unlocked2 > 2 || !!save.s2Done;          // monde 2 fini : ventouses (2-1) et dash (Gecko)
   return false;

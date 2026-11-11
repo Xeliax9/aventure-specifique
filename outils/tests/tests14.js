@@ -7,6 +7,8 @@ const { chromium } = require('playwright');
     const o=[]; const run=(n,r=7)=>{for(let i=0;i<n;i++){step(); if(i%r===0) render(0.5);}};
     const ok = (c, msg) => o.push((c ? 'PASS ' : 'FAIL ') + msg);
     const clean = () => { fade=0; fadeDir=0; pendingAction=null; };
+    // v55 : après la présentation d'un boss vient « Prêt ? » (les cœurs se remplissent) : on passe les deux
+    const skipIntro = () => { finishCine(); if(cine && cine.kind === 'ready') finishCine(); };
     input.left = input.right = false;
     save.demoSeen = {slime:1, swoop:1, arena:1, ascent:1, gecko:1, yeti:1, magpie:1};
     // ---- random play in every room (no exceptions allowed)
@@ -39,16 +41,23 @@ const { chromium } = require('playwright');
     ok(elapsed === t0, 'timer paused during the cinematic');
     ok(bullets.length === 0, 'boss does not attack during the cinematic');
     run(170);
-    ok(cine === null && boss.onGround && boss.y + boss.h === FLOOR, 'intro ends after ~5 s with the slime on the floor');
-    ok(fightPop > 0 || true, '"Combat !" pop shown');
+    ok(cine && cine.kind === 'ready' && boss.onGround && boss.y + boss.h === FLOOR, 'intro ends after ~5 s with the slime on the floor, then « Prêt ? »');
+    { const bx = boss.x, by = boss.y, hop = boss.hopT, px = player.x; input.right = true; const fills = [];
+      let moved = false;
+      for(let i = 0; cine && i < 200; i++){ step(); if(cine){ fills.push(heartFill); if(boss.x !== bx || boss.y !== by || Math.abs(player.x - px) > 1) moved = true; } }
+      input.right = false;
+      ok(!moved && fills.length > 60, '« Prêt ? » : the boss and XELIAX do not move');
+      ok(fills.includes(1) && fills.includes(2) && fills.includes(4) && lives === 5, '« Prêt ? » : the hearts fill one by one (' + [...new Set(fills)].join(',') + ')');
+      ok(cine === null && heartFill === null && fightPop > 0, 'then « Combat ! »');
+      run(80); ok(boss.hopT !== hop || boss.x !== bx || boss.y !== by, 'the boss moves again after « Combat ! »'); }
     run(10); ok(elapsed > t0, 'timer runs again after the cinematic');
     // second time: skippable
     loadRoom(1,3); setState('play'); ok(cine && cine.skippable, 'intro skippable the second time');
     run(25); input.jumpPressed = true; run(1); run(25);
-    ok(cine === null, 'skip with jump ends it quickly');
+    ok(cine && cine.kind === 'ready', 'skip with jump ends it quickly (then « Prêt ? »)');
 
     // ---- owl: stomping while it flies back up, or landing on its head while it hovers, never hurts
-    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); lives=5; player.invuln=0; powerUps = [];
+    newRun(2); clean(); loadRoom(2,4); setState('play'); skipIntro(); lives=5; player.invuln=0; powerUps = [];
     boss.state='rise'; boss.inv=0; boss.x=300; boss.y=220; const hpA = boss.hp;
     player.x = boss.x + 17; player.y = boss.y - player.h - 1; player.vy = 3; player.onGround=false; player.standingOn=null;
     step();
@@ -69,7 +78,7 @@ const { chromium } = require('playwright');
     ok(boss.hp === hpB - 1 && boss.state === 'rise', 'stomping the stunned owl hits it');
 
     // ---- owl phase 2 (v52): no spikes, the side platforms turn fragile
-    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); lives=5; powerUps = [];
+    newRun(2); clean(); loadRoom(2,4); setState('play'); skipIntro(); lives=5; powerUps = [];
     boss.hp=1; boss.state='stunned'; boss.stT=999; boss.inv=0; boss.x=292; boss.y=FLOOR-boss.h;
     player.invuln=0; player.x = boss.x + 17; player.y = boss.y - player.h - 1; player.vy = 3; player.onGround=false;
     step();
@@ -92,7 +101,7 @@ const { chromium } = require('playwright');
 
     // ---- owl sweep (v52): random attacks, never three of a kind, both sides, U-turn in phase 2 only
     const sides = new Set(); let seq = '', maxRun = 0, curRun = 0, last = '';
-    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); bossDemo = null; powerUps = []; player.x = 20; player.y = FLOOR - player.h;
+    newRun(2); clean(); loadRoom(2,4); setState('play'); skipIntro(); bossDemo = null; powerUps = []; player.x = 20; player.y = FLOOR - player.h;
     for(let i = 0; i < 300; i++){
       boss.state = 'hover'; boss.stT = 1; boss.fireT = 999; step();
       const a = boss.state === 'warn' ? 'd' : 's';
@@ -131,7 +140,7 @@ const { chromium } = require('playwright');
     o.push('npcs: ' + where.join(', '));
 
     // ---- final boss rules still hold (shield), escape + finale
-    newRun(3); clean(); loadRoom(3,2); setState('play'); finishCine(); lives=99; canShoot=true;
+    newRun(3); clean(); loadRoom(3,2); setState('play'); skipIntro(); lives=99; canShoot=true;
     o.push(`arena hp=${boss.maxHp}`);
     { let minX = 1e9; for(let i = 0; i < 700; i++){ player.invuln = 99; step(); minX = Math.min(minX, boss.x); } ok(minX < 160, 'phase 1: he changes side (min x ' + Math.round(minX) + ')'); }
     const shootAt = () => shots.push({x:boss.x + 10, y:boss.y + 10, w:10, h:5, vx:0, vy:0});
@@ -142,28 +151,65 @@ const { chromium } = require('playwright');
     for(let i=0;i<300 && !(rIndex===3);i++){ step(); }
     for(let i=0;i<40;i++) step();
     ok(rIndex === 3 && cine && cine.kind === 'intro', 'ascent room starts with its own entrance');
-    run(320);
+    run(320 + READY_DUR + 10);
     ok(cine === null && Math.abs(boss.y - 880) < 60, `ascent intro done, boss at y ${boss.y.toFixed(0)}`);
     ok(Math.abs(player.x - 309) < 40 && player.y > 950 && room.hotFloor.x0 === 0 && room.hotFloor.lava, 'phase 2: XELIAX starts on the small central ledge, the whole floor is lava (x ' + Math.round(player.x) + ')');
-    lives=99; for(let i=0;i<30 && boss.alive;i++){ boss.inv=0; bossDamage(); step(); }
-    { let launched = false; for(let i = 0; i < 200 && !(launched && !launch); i++){ step(); if(launch) launched = true; }
+    lives=99; for(let i=0;i<30 && boss.alive && !boss.dying;i++){ boss.inv=0; bossDamage(); step(); }
+    // v55 : sa fin : gros plan, « Nonnnn, tu vas le payerrr !! », la lave monte, XELIAX ne bouge pas, puis l'envol
+    { const seen = {z:false, shout:false, lava:1e9, px:null, moved:false}; let launched = false;
+      input.right = true;
+      for(let i = 0; i < 260 + ASCENT_OUTRO && !(launched && !launch); i++){
+        if(bossOutro()){ if(camZoom.z > 1.5) seen.z = true; if(boss.shout) seen.shout = true; seen.lava = Math.min(seen.lava, lavaY); if(seen.px === null) seen.px = player.x; else if(Math.abs(player.x - seen.px) > 1) seen.moved = true; }
+        step(); if(i % 9 === 0) render(0.5); if(launch) launched = true; }
+      input.right = false;
+      ok(seen.z && seen.shout, 'final boss beaten: close-up and his shout');
+      ok(seen.lava < room.hotFloor.y - 10, 'the lava starts rising during the scene (y ' + Math.round(seen.lava) + ')');
+      ok(!seen.moved, 'XELIAX cannot move during the scene');
+      ok(camZoom.z === 1, 'the camera is back to normal');
       run(10); ok(launched && player.onGround && Math.abs(player.y + player.h - 805) < 3, 'escape: the lava throws XELIAX onto a ledge (y ' + Math.round(player.y + player.h) + ')');
       const lv = lavaY; run(60); ok(lv - lavaY > 35, 'the lava rises fast (' + (lv - lavaY).toFixed(0) + ' px in 1 s)'); }
+    // v55 : mort pendant la fuite : on reprend au début de la fuite (pas le boss), cœurs pleins, pas de « Prêt ? »
+    { const c0 = continues; lives = 1; player.invuln = 0; killPlayer(); ok(state === 'over', 'game over during the escape');
+      confirmAction(); run(30);
+      ok(rIndex === 3 && !boss.alive && currentPhase() === 'escape' && lives === 5 && !cine && heartFill === null && continues === c0 + 1, `escape retry: the escape again, not the boss (room ${rIndex + 1}, lives ${lives})`);
+      for(let i = 0; i < 120 && launch; i++) step(); run(5);
+      ok(Math.abs(player.y + player.h - 805) < 3, 'escape retry: thrown onto the ledge again'); }
     run(130); ok(!boss.alive, 'the death scene ends'); ok(key && key.kind === 'ficelle', 'escape: ficelle waits at the top');
     player.x = key.x + 6; player.y = key.y - 10; player.vy = 0; run(3);
-    ok(finaleT > 0, 'finale started'); run(520); ok(state === 'play' && finaleT >= finaleEnd() && steal && steal.got, 'the magpie steals the ficelle, then the finale waits for Space'); pressJump(); step(); ok(state === 'win', 'win screen');
+    ok(finaleT > 0, 'finale started'); run(STEAL_END - 30); pressJump(); step(); ok(state === 'play', 'Space does nothing before the end of the scene'); run(60); ok(state === 'play' && finaleT >= finaleEnd() && steal && steal.got, 'the magpie steals the ficelle, then the finale waits for Space'); pressJump(); step(); ok(state === 'win', 'win screen');
     render(1);
-    // game over rules
+    // game over rules (v55 : dans une salle de boss, tout le combat recommence, à la phase 1, cœurs pleins)
     newRun(0); clean(); loadRoom(0,2); setState('play'); lives=1; killPlayer(); confirmAction(); run(60); ok(chIndex===0 && rIndex===0, 'normal game over -> start of chapter');
-    newRun(1); clean(); loadRoom(1,3); setState('play'); finishCine(); lives=99;
+    newRun(1); clean(); loadRoom(1,3); setState('play'); skipIntro(); lives=99;
     for(let i=0;i<3;i++){ boss.inv=0; bossDamage(); run(3); }
     ok(boss.phase === 2 && cine && cine.kind === 'phase2', 'slime phase 2 has its cinematic');
-    finishCine(); lives=1; player.invuln=0; hurt(0); ok(state === 'over', 'game over in phase 2');
+    skipIntro(); lives=1; player.invuln=0; hurt(0); ok(state === 'over', 'game over in phase 2');
     confirmAction(); run(60);
-    ok(boss.phase === 2 && cine && cine.kind === 'phase2' && cine.skippable, 'retry restarts phase 2 (its cinematic can be skipped)');
-    newRun(2); clean(); loadRoom(2,4); setState('play'); finishCine(); boss.hp=1; boss.inv=0; bossDamage(); finishCine();
+    ok(boss.phase === 1 && boss.hp === room.boss.hp && lives === 5 && cine && cine.kind === 'intro' && cine.skippable && heartFill === 0, `slime retry: phase 1, full hp (${boss.hp}), 5 hearts (shown empty until « Prêt ? »)`);
+    skipIntro(); ok(boss.phase === 1 && lives === 5 && !cine, 'slime retry: the fight starts at phase 1');
+    // the Gardien: death in phase 2 -> phase 1, fragile platforms solid again, no phase-2 spikes
+    newRun(2); clean(); loadRoom(2,4); setState('play'); skipIntro(); boss.hp=1; boss.inv=0; bossDamage(); skipIntro();
+    ok(boss.phase === 2 && platforms.filter(p => p.p2crumble).every(p => p.crumble), 'owl phase 2: side platforms fragile');
     lives=1; player.invuln=0; hurt(0); confirmAction(); run(60);
-    ok(boss.phase === 2 && spikes.length === 0 && platforms.filter(p => p.p2crumble).every(p => p.crumble), 'owl retry: phase 2, side platforms still fragile');
+    ok(boss.phase === 1 && boss.hp === 5 && boss.maxHp === 5 && lives === 5 && platforms.filter(p => p.p2crumble).every(p => !p.crumble && !p.gone), `owl retry: phase 1, ${boss.hp}/${boss.maxHp} hp, 5 hearts, side platforms solid again`);
+    { skipIntro(); const bx = boss.x; run(30); ok(cine === null && boss.phase === 1, 'owl retry: the fight is on again'); }
+    // pause, R in a boss room: the same (phase 1, full hearts), and it is not a « continue »
+    newRun(2); clean(); loadRoom(2,4); setState('play'); skipIntro(); boss.hp=1; boss.inv=0; bossDamage(); skipIntro();
+    lives = 2; { const c0 = continues; setState('pause'); pauseRestart(); for(let i = 0; i < 40 && fadeDir !== 0; i++) step(); run(5);
+      ok(boss.phase === 1 && boss.hp === 5 && lives === 5 && continues === c0 && cine && cine.kind === 'intro', `pause restart: whole fight again, 5 hearts (continues ${continues - c0})`); }
+    // the final boss: death in L'Ascension (his phase 2) -> back to phase 1 (the arena room)
+    newRun(3); clean(); loadRoom(3,3); setState('play'); skipIntro(); lives=1; player.invuln=0; hurt(0); ok(state === 'over', 'game over in the ascent');
+    confirmAction(); run(60);
+    ok(rIndex === 2 && boss && boss.mode === 'arena' && boss.hp === boss.maxHp && lives === 5, `final boss retry: back to phase 1 (room ${rIndex + 1}, ${boss && boss.mode})`);
+    // v55 : the Gardien drops the weapon, the door waits until XELIAX takes it, chapter 4 starts armed
+    newRun(2); clean(); loadRoom(2,4); setState('play'); skipIntro(); canShoot = false; lives = 99; player.invuln = 9999;
+    boss.hp = 1; boss.inv = 0; bossDamage(); skipIntro(); boss.hp = 1; boss.inv = 0; bossDamage();
+    for(let i = 0; i < 300 && boss.alive; i++) step();
+    { const r = powerUps.find(p => p.id === 'boss-reward');
+      ok(!boss.alive && r && r.type === 'shoot' && doorLocked(), 'Gardien beaten: he drops the weapon, the door waits');
+      player.x = r.x; player.y = r.y; player.vy = 0; step(); step();
+      ok(canShoot && !doorLocked(), 'weapon taken: XELIAX can shoot, the door opens'); }
+    newRun(3); ok(canShoot && !(CHAPTERS[3].rooms[0].powerUps || []).some(p => p.type === 'shoot'), 'chapter 4 starts armed, no weapon to pick up in 4-1');
     return o;
   });
   console.log(out.join('\n')); console.log('errors', errs);

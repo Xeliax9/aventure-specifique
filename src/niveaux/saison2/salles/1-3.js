@@ -31,7 +31,7 @@
   signs:[
     {x:150, y:320, text:'Les planches tombent… et restent : fais-toi un pont !'},
     {x:640, y:320, text:'Le hérisson pique ! Fais-lui tomber la planche dessus'},
-    {x:1290, y:320, text:'La planche à parachute descend doucement : saute au bon moment'},
+    {x:1290, y:320, text:'Planche à parachute : elle descend doucement, saute au bon moment'},
     {x:1960, y:320, text:'L\'orbe retourne aussi les planches !'},
   ],
   powerUps:[{x:1150, y:295, type:'life'}],

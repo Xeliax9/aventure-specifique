@@ -34,7 +34,6 @@
   enemies:[{on:0, from:60, to:380, speed:1}],
   signs:[
     {x:200, y:1660, text:'Saut de mur, puis dash vers le même mur : tu montes !'},
-    {x:520, y:1190, text:'Le canon tire tout droit : attends ton tour'},
   ],
   powerUps:[{x:520, y:780, type:'life'}],
   checkpoints:[{x:90, y:1300}, {x:530, y:850}, {x:90, y:730}],

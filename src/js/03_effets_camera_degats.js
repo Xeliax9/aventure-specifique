@@ -171,7 +171,7 @@ function bossDefeated(){
   b.dying = 1; b.inv = 0; b.hitT = 0; b.vy = 0;
   hitStop = REDUCED ? 0 : 16;
   fires = [];
-  player.invuln = Math.max(player.invuln, 150);
+  player.invuln = Math.max(player.invuln, b.mode === 'ascent' ? ASCENT_OUTRO + 120 : 150);
   if(b.mode === 'magpie' && gdir < 0) setGravity(1);   // the nest settles: XELIAX falls back onto the hay
   if(b.mode === 'gecko' && b.state !== 'stun') b.state = 'drop';
   SFX.bossFlee();
@@ -179,8 +179,71 @@ function bossDefeated(){
 
 const BOSS_DIE = 100;
 const DIE_FX = {slime:['#b45be3', 'goo'], swoop:['#8da2ff', 'crumb'], gecko:['#5fd36a', 'goo'], yeti:['#e8f6ff', 'crumb'], ascent:['#ff6b6b', 'goo']};
+// v55 : la fin du Seigneur Pourpre (L'Ascension). Gros plan sur lui, il crie « Nonnnn, tu vas le payerrr !! »,
+// lève les bras : la lave commence à monter pendant que la caméra recule ; puis il disparaît, la lave propulse
+// XELIAX sur sa corniche (startEscape → startLaunch) et la fuite commence. XELIAX ne bouge pas pendant ce temps.
+// Mort pendant la fuite : on reprend au début de la fuite (restartPhase, phase 'escape'), sans revoir tout ça.
+const ASCENT_OUTRO = 200, OUTRO_ZOOM = 1.8;
+const ASCENT_SHOUT = 'Nonnnn, tu vas le payerrr !!';
+const camZoom = {z:1, fx:0, fy:0};
+const bossOutro = () => !!(boss && boss.dying && boss.mode === 'ascent');
+function updateAscentOutro(b, k){
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  b.hitT = k < 36 && Math.floor(k / 4) % 2 ? 2 : 0;
+  const zin = easeInOutCubic(clamp(k / 34, 0, 1)), zout = easeInOutCubic(clamp((k - 128) / 44, 0, 1));
+  camZoom.z = REDUCED ? 1 : 1 + (OUTRO_ZOOM - 1) * zin * (1 - zout);
+  camZoom.fx = cx; camZoom.fy = cy - 14;
+  b.x += Math.sin(k * 0.9) * (k > 30 && k < 120 ? 0.6 : 0);   // il tremble de rage
+  if(k === 34){ b.shout = 1; SFX.bossFlee(); addShake(5); }
+  if(b.shout) b.shout++;
+  if(k > 34 && k < 112 && k % 9 === 0) tone(140 + (k % 18) * 6, 0.12, 'sawtooth', 0.03, 90);   // il gronde
+  if(k === 112){ b.shout = 0; SFX.thud(); addShake(12); ring(cx, cy, '#ff8a3c', 8, 110, 32); burst(cx, cy, 26, '#ff6a3c', 5, 45); }
+  // les bras levés : la lave du sol se met à monter (assez peu pour ne toucher personne sur les corniches)
+  if(k >= 112 && room.hotFloor){
+    const base = room.hotFloor.y + 4;
+    if(k === 112) lavaY = Math.min(lavaY, base);
+    lavaY = Math.max(base - 30, lavaY - 0.4);
+    if(k % 3 === 0) particles.push({x:Math.random() * W, y:lavaY - 2, vx:(Math.random() - 0.5) * 0.6, vy:-1.2 - Math.random() * 1.5, life:34, max:34, color:Math.random() < 0.5 ? '#ffb347' : '#ff5a2a', grav:0.02, size:3, type:'dot'});
+    if(k % 20 === 0) tone(70, 0.3, 'sawtooth', 0.035, 50);
+  }
+  if(k % 6 === 0) burst(b.x + Math.random() * b.w, b.y + Math.random() * b.h, 3, Math.random() < 0.5 ? '#ff6b6b' : '#ffd54a', 1.6, 18, 0, 2.6, 'star');
+  if(k >= ASCENT_OUTRO){ camZoom.z = 1; finishBoss(b); }
+}
+// la caméra du monde, avec le gros plan (z > 1 : on zoome vers fx, fy et on le ramène au centre de l'écran)
+function worldCam(cx, cy){
+  const z = camZoom.z;
+  if(z <= 1.001){ ctx.translate(-cx, -cy); return; }
+  const a = clamp((z - 1) / (OUTRO_ZOOM - 1), 0, 1);
+  ctx.translate(lerp(camZoom.fx - cx, W / 2, a), lerp(camZoom.fy - cy, H / 2, a)); ctx.scale(z, z); ctx.translate(-camZoom.fx, -camZoom.fy);
+}
+// un point du monde → l'écran (pour la lumière autour de XELIAX pendant le gros plan)
+function camPoint(wx, wy, cx, cy){
+  const z = camZoom.z;
+  if(z <= 1.001) return [wx - cx, wy - cy];
+  const a = clamp((z - 1) / (OUTRO_ZOOM - 1), 0, 1);
+  return [lerp(camZoom.fx - cx, W / 2, a) + (wx - camZoom.fx) * z, lerp(camZoom.fy - cy, H / 2, a) + (wy - camZoom.fy) * z];
+}
+// sa bulle (dans le monde, donc agrandie par le gros plan)
+function drawBossShout(){
+  const b = boss;
+  if(!b || !b.shout || b.mode !== 'ascent') return;
+  const pop = easeOutBack(clamp(b.shout / 12, 0, 1)), cx = b.x + b.w / 2, y = b.y - 12;
+  const shown = ASCENT_SHOUT.slice(0, Math.min(ASCENT_SHOUT.length, Math.floor(b.shout * 0.6) + 1));
+  ctx.save();
+  ctx.font = `700 12px ${FU}`;
+  const tw = ctx.measureText(ASCENT_SHOUT).width + 22, th = 26;
+  ctx.translate(cx, y); ctx.scale(pop, pop); ctx.translate(-cx, -y);
+  rr(cx - tw / 2, y - th - 8, tw, th, 12); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = '#5a0d24'; ctx.lineWidth = 1.8; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 8, y - 9); ctx.lineTo(cx, y); ctx.lineTo(cx + 8, y - 9); ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - 8, y - 8); ctx.lineTo(cx, y); ctx.lineTo(cx + 8, y - 8); ctx.strokeStyle = '#5a0d24'; ctx.lineWidth = 1.8; ctx.stroke();
+  const shk = b.shout > 30 ? 0 : Math.sin(b.shout * 1.3);
+  txt(shown, cx - tw / 2 + 11 + shk, y - th / 2 - 4, 12, '#b0102e', 700, 'left');
+  ctx.restore();
+}
+
 function updateBossDeath(b){
   const k = ++b.dying, cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  if(b.mode === 'ascent'){ updateAscentOutro(b, k); return; }
   b.hitT = Math.floor(k / 4) % 2 ? 2 : 0;          // flashes white
   if(b.mode === 'magpie'){
     // dizzy, she spins in place, lets go of the ficelle, then flutters away for good
@@ -297,26 +360,33 @@ function barrierOn(){ return !!(room && room.barrierY && boss && boss.alive); }
 
 function currentPhase(){
   if(!boss) return 1;
-  if(boss.mode === 'ascent') return boss.alive ? 1 : 'escape';
+  if(boss.mode === 'ascent') return boss.alive && !boss.dying ? 1 : 'escape';   // v55 : sa fin (gros plan, lave) compte déjà comme la fuite
   return boss.phase;
 }
 
-// game over in a boss room: retry only the phase you were on
-function restartPhase(){
-  continues++;
+// v55 : game over dans une salle de boss : on recommence TOUT le combat, à la phase 1, avec tous ses cœurs
+// (boss remis à neuf : PV, phase, plateformes fragiles, pics, sol brûlant… ; la présentation du boss puis
+// le remplissage des cœurs rejouent). Le Seigneur Pourpre : mort dans L'Ascension (sa phase 2) = retour à
+// sa phase 1 (la salle d'avant) ; mort pendant la fuite (il est déjà vaincu) = on reprend seulement la fuite.
+// count = false : depuis la pause (ça ne compte pas comme un « continue »).
+function restartPhase(count){
+  if(count !== false) continues++;
   const ph = currentPhase();
-  lives = startLives();
-  loadRoom(chIndex, rIndex);          // the boss entrance plays again (it can be skipped by now)
-  if((ph === 2 || ph === 3) && boss.mode === "magpie"){ boss.x = boss.tx = room.boss.x; boss.y = 150; }   // back in the arena, not off-screen
-  if(ph === 2){ cine = null; enterPhase2(false); }
-  if(ph === 3){ cine = null; enterPhase2(false); cine = null; enterPhase3(false); }
-  if(ph === 'escape'){ cine = null; boss.alive = false; startEscape(false); }
+  lives = startLives(); hud.lastLives = lives;
+  let ri = rIndex;
+  if(ph !== 'escape' && boss && boss.mode === 'ascent'){
+    const a = chapter.rooms.findIndex(r => r.boss && r.boss.mode === 'arena');
+    if(a >= 0) ri = a;
+  }
+  loadRoom(chIndex, ri);              // the boss entrance plays again (it can be skipped by now)
+  if(ph === 'escape'){ cine = null; heartFill = null; boss.alive = false; startEscape(false); }
   bannerT = 0;
   player.invuln = 60;
   anim.appear = 0;
   setState('play');
-  showToast(ph === 'escape' ? 'Reprends la fuite !' : ph === 3 ? 'On reprend la phase 3' : ph === 2 ? 'On reprend la phase 2' : 'On reprend le combat', 100);
+  showToast(ph === 'escape' ? 'Reprends la fuite !' : 'On recommence le combat !', 100);
 }
+
 
 // =====================================================================
 //  IDLE: leave XELIAX alone for 30 s and he starts wondering about things;
@@ -493,6 +563,31 @@ const BOSS_EPITHET = {
 let cine = null, fightPop = 0;
 const seenCine = new Set();
 
+// v55 : « Prêt ? » — juste après la présentation d'un boss (et après chaque game over, qui la rejoue), une courte
+// pause (~1,6 s) : le boss et XELIAX attendent, les cœurs du HUD se remplissent un par un (petit « pop » et une
+// note qui monte), puis « Combat ! ». À l'entrée de la salle les cœurs s'affichent vides (heartFill = 0) et
+// XELIAX repart avec tous ses cœurs (au moins START_LIVES ; un cœur bonus en plus est gardé). Pas en speedrun.
+let heartFill = null;                 // null : le HUD montre les vrais cœurs ; un nombre : seulement ceux-là (pendant une cinématique)
+const READY_DUR = 96, READY_START = 12;
+function readyStep(){ return Math.max(5, Math.min(10, Math.floor(56 / Math.max(1, Math.min(8, lives))))); }
+function startReady(){
+  lives = Math.max(lives, startLives()); hud.lastLives = lives;
+  heartFill = 0;
+  cine = {kind:'ready', t:0, dur:Math.max(READY_DUR, READY_START + Math.min(8, lives) * readyStep() + 34), skippable:false, skip:false, walkTo:null, bandY:238};
+  bullets = []; shots = [];
+  fightPop = 0;
+}
+function updateReady(c){
+  const n = Math.min(8, lives), step = readyStep();
+  const i = (c.t - READY_START) / step;
+  if(i >= 0 && i < n && Number.isInteger(i)){
+    heartFill = i + 1;
+    hud.gainIdx = i; hud.gainT = 1;
+    SFX.heart(i);
+    if(i === n - 1) heartFill = lives;   // plus de 8 cœurs : le compteur « x N » arrive d'un coup avec le dernier
+  }
+}
+
 function startCine(kind){
   const id = `${chIndex}-${rIndex}-${kind}`;
   const b = boss;
@@ -523,7 +618,8 @@ function updateCine(){
   if(c.skippable && !c.skip && c.t > 20 && input.jumpPressed){ c.skip = true; c.dur = Math.min(c.dur, c.t + 18); }
   input.jumpPressed = false;
   if(c.kind === 'dj') updateDJScene(c);
-  if(b && b.alive && c.kind === 'intro'){
+  if(c.kind === 'ready') updateReady(c);   // le boss ne bouge pas : rien d'autre à faire
+  else if(b && b.alive && c.kind === 'intro'){
     if(b.mode === 'slime'){
       if(!b.onGround){
         if(c.t > 40){
@@ -599,7 +695,8 @@ function updateCine(){
 function finishCine(){
   const b = boss, k = cine ? cine.kind : null;
   cine = null;
-  if(b && b.alive){
+  if(k === 'ready') heartFill = null;
+  if(b && b.alive && k !== 'ready'){
     b.appear = 1; b.cineGlow = false; b.hitT = 0;
     if(k === 'intro'){
       if(b.mode === 'slime'){ b.y = FLOOR - b.h; b.onGround = true; b.vx = 0; b.vy = 0; b.squash = 0; b.hopT = 50; }
@@ -618,9 +715,11 @@ function finishCine(){
   }
   for(const s of spikes) if(s.pending) s.pending = false;
   if(k === 'dj'){ steal = null; djOrb = null; hasDJ = false; bannerT = 240; showToast('Sans double saut… Gaston saura peut-être quoi faire !', 170); return; }
+  // v55 : après la présentation, « Prêt ? » et les cœurs qui se remplissent, puis seulement « Combat ! »
+  if(k === 'intro' && b && b.alive && !b.dying && !isSpeedrun()){ startReady(); return; }
   fightPop = 60;
   SFX.power();
-  if(k === 'intro' && room.shootUp) showToast('Tes tirs partent vers le haut !', 170);
+  if((k === 'intro' || k === 'ready') && room.shootUp) showToast('Tes tirs partent vers le haut !', 170);
 }
 
 // season 2, start of the gorges: the double jump floats above XELIAX like a glowing bubble; the magpie dives,
@@ -677,7 +776,7 @@ function drawDJOrb(){
 
 // how far the letterbox bars are in (0 to 1)
 function cineBars(){
-  if(!cine) return 0;
+  if(!cine || cine.kind === 'ready') return 0;   // « Prêt ? » : pas de bandes noires
   return easeOutCubic(clamp(Math.min(cine.t / 18, (cine.dur - cine.t) / 18), 0, 1));
 }
 
