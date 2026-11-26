@@ -1521,7 +1521,7 @@ function drawChapterClear(){
   ctx.save();
   panelContent(b);
   drawHero(uiHero, W / 2, b.y + 2 - Math.abs(Math.sin(frame * 0.16)) * 10, 1.8, {});
-  heading(clearInfo.bonus ? 'Défi bonus réussi !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, 27, CH_ACCENT[chIndex]);
+  drawClearStamp(clearInfo.bonus ? 'Défi bonus réussi !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, CH_ACCENT[chIndex]);
   txt(clearInfo.bonus ? (!clearInfo.fast ? 'Trop lent pour la ficelle : R pour retenter !' : clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
   const rows = [
     ['Temps', fmt(counted(clearInfo.time, 10)), clearInfo.newBest && stateT > 50 ? 'Record !' : ''],
@@ -1550,6 +1550,38 @@ function drawChapterClear(){
     ctx.strokeStyle = '#b4841f'; ctx.lineWidth = 1.5; ctx.stroke();
     txt(label, W / 2, by + 18.5, 13, '#3a2400', 700);
     feedbackBtn = {x:bx, y:by, w:bw, h:bh};
+  }
+  ctx.restore();
+}
+// v62 : le titre de fin de chapitre se pose comme un tampon (1,6 → 1), puis un anneau et des confettis partent de lui.
+// Tout est calculé d'après stateT (aucune particule ni tableau créé ici) ; animations réduites : le titre est posé d'emblée.
+const STAMP_T = 12, STAMP_COLS = ['#ffd54a', '#2ee6ff', '#ff6fa5', '#8cff7a', '#ff8a3d', '#b48cff'];
+function drawClearStamp(text, x, y, col){
+  const t = REDUCED ? 99 : stateT + ALPHA;
+  if(t < STAMP_T){
+    const e = easeOutBack(clamp(t / STAMP_T, 0, 1)), s = 1.6 - 0.6 * e;
+    ctx.save(); ctx.globalAlpha *= clamp(t / 4, 0, 1);
+    ctx.translate(x, y - 9); ctx.scale(s, s); heading(text, 0, 9, 27, col);
+    ctx.restore();
+    return;
+  }
+  const u = t - STAMP_T;
+  if(u < 22){   // l'anneau part de derrière le titre
+    const k = u / 22;
+    ctx.save(); ctx.globalAlpha *= 1 - k; ctx.strokeStyle = col; ctx.lineWidth = 3 * (1 - k) + 0.5;
+    ctx.beginPath(); ctx.ellipse(x, y - 9, 120 + 70 * easeOutCubic(k), 24 + 26 * easeOutCubic(k), 0, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
+  heading(text, x, y, 27, col);
+  if(u > 70) return;
+  ctx.save();
+  for(let i = 0; i < 26; i++){
+    const a = -Math.PI / 2 + (hash(i * 7 + 3) - 0.5) * 2.6, sp = 2.2 + hash(i * 13 + 1) * 3.4;
+    const px = x + (hash(i * 5) - 0.5) * 120 + Math.cos(a) * sp * u * 1.6, py = y - 9 + Math.sin(a) * sp * u * 0.9 + 0.045 * u * u;
+    ctx.globalAlpha = clamp((70 - u) / 25, 0, 1);
+    ctx.fillStyle = STAMP_COLS[i % 6];
+    ctx.save(); ctx.translate(px, py); ctx.rotate(u * 0.15 * (hash(i) - 0.5) * 4 + i);
+    ctx.fillRect(-1.5, -2.5, 3, 5); ctx.restore();
   }
   ctx.restore();
 }
@@ -1609,11 +1641,20 @@ function drawIris(){
   const e = easeInOutCubic(clamp(fade, 0, 1));
   const r = (1 - e) * 760;
   let cx = W / 2, cy = H / 2;
-  if(state === 'play' && room && !player.dead){ cx = clamp(ix(player) + player.w / 2 - viewX, 0, W); cy = clamp(iy(player) + player.h / 2 - viewY - 4, 0, H); }
+  // v62 : en sortie de salle (XELIAX entre dans la porte), l'iris se ferme sur la porte
+  if(state === 'play' && room && fadeDir > 0 && exitT > 0 && door && camZoom.z === 1){ cx = clamp(door.x + door.w / 2 - viewX, 0, W); cy = clamp(door.y + door.h / 2 + (door.ceil ? -4 : 4) - viewY, 0, H); }
+  else if(state === 'play' && room && !player.dead){ cx = clamp(ix(player) + player.w / 2 - viewX, 0, W); cy = clamp(iy(player) + player.h / 2 - viewY - 4, 0, H); }
   ctx.fillStyle = '#0d0820';
   ctx.beginPath(); ctx.rect(0, 0, W, H);
   if(r > 0.5) ctx.arc(cx, cy, r, 0, TAU, true);
   ctx.fill('evenodd');
-  if(r > 0.5 && r < 200){ ctx.strokeStyle = 'rgba(123,86,255,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke(); }
+  if(r > 0.5 && r < 200){ ctx.strokeStyle = irisColor(); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke(); }
+}
+// v62 : le liseré de l'iris prend la couleur du chapitre (chaîne gardée en cache, pas recréée à chaque image)
+let IRIS_CH = -2, IRIS_COL = 'rgba(123,86,255,0.6)';
+function irisColor(){
+  const ci = state === 'title' ? -1 : chIndex;
+  if(ci !== IRIS_CH){ IRIS_CH = ci; IRIS_COL = ci >= 0 && CH_ACCENT[ci] ? rgba(CH_ACCENT[ci], 0.7) : 'rgba(123,86,255,0.6)'; }
+  return IRIS_COL;
 }
 

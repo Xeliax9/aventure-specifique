@@ -7,6 +7,7 @@ let chIndex = 0, rIndex = 0, chapter = null, room = null;
 let platforms = [], solids = [], enemies = [], bats = [], turrets = [], springs = [], spikes = [];
 let fires = [], fireTold = false;     // the owl's bombs set the floor alight for a few seconds
 let hitStop = 0;                      // a short freeze on the final blow
+let stompStop = 0;                    // v62 : 3 images d'arrêt quand XELIAX écrase un ennemi (les touches appuyées comptent toujours)
 let djTake = 0;                       // Gaston takes the double jump away (season 2, gorges): countdown to the message
 let checkpoints = [], signs = [], coins = [], powerUps = [];
 let boss = null, bullets = [], shots = [], key = null, door = null, checkpoint = null;
