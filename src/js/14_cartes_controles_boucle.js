@@ -25,6 +25,8 @@ function buildDeck(){
     deck.cards.push({i, el:c, cv, g:cv.getContext('2d'), badge, kick, tag, stat, shade, painted:-99, key:''});
   }
   deck.play = deckEl('button', 'play', st, 'JOUER'); deck.play.tabIndex = -1;
+  deck.tt = deckEl('button', 'tt', st, '⏱ Contre-la-montre'); deck.tt.tabIndex = -1;   // v62 : monde de la saison 2 déjà fini
+  deck.tt.addEventListener('click', () => { if(deckLive()){ startTimeTrial(menuSel); canvas.focus({preventScroll:true}); } });
   deck.hint = deckEl('div', 'hint', st, TOUCH ? 'Glisse les cartes, touche celle du milieu pour jouer' : '◀ ▶ ou glisser : choisir · S : saison · Espace : jouer · Échap : retour');
   deck.back.addEventListener('click', () => { if(deckLive()){ goBack(); canvas.focus({preventScroll:true}); } });
   deck.play.addEventListener('click', () => { if(deckLive()){ playChapter(menuSel); canvas.focus({preventScroll:true}); } });
@@ -142,7 +144,9 @@ function syncDeck(){
   const acc = CH_ACCENT[menuSel];
   if(deck.accent !== acc){ deck.accent = acc; deck.root.style.setProperty('--accent', acc); }
   setText(deck.season, seasonOf(menuSel) === 2 ? 'Saison 2 · La pie voleuse' : 'Saison 1 · La ficelle disparue');
-  if(!TOUCH){ const h = '◀ ▶ ou glisser : choisir · ' + (s2Visible() ? 'S : saison · ' : '') + 'Espace : jouer · Échap : retour'; if(deck.hint.textContent !== h) deck.hint.textContent = h; }
+  const tt = ttOpen(menuSel);
+  deck.tt.classList.toggle('on', tt);
+  if(!TOUCH){ const h = '◀ ▶ ou glisser : choisir · ' + (s2Visible() ? 'S : saison · ' : '') + 'Espace : jouer · ' + (tt ? 'C : contre-la-montre · ' : '') + 'Échap : retour'; if(deck.hint.textContent !== h) deck.hint.textContent = h; }
   deck.head.classList.toggle('dim', toast.t > 0);
   const pulse = REDUCED ? 0 : Math.sin(frame * 0.07) * 0.012;
   let paints = 0;   // v54 : au plus 3 cartes redessinées par image (sinon à-coup quand la page s'ouvre)
@@ -238,14 +242,14 @@ function confirmAction(){
   if(state === 'over'){
     // boss rooms: the whole fight again, from phase 1 (v55); anywhere else: back to the start of the chapter
     if(room.boss) transition(restartPhase);
-    else if(chapter.bonus) transition(restartRoom);
+    else if(chapter.bonus || timeTrial) transition(restartRoom);   // contre-la-montre : la salle, le chrono continue
     else transition(() => { continues++; startChapter(chIndex, false); anim.appear = 0; setState('play'); });
     return true;
   }
   if(state === 'chapter' && teaserSkip()) return true;
   if((state === 'chapter' || state === 'win') && stateT < 45) return true;
   if(state === 'chapter'){
-    if(clearInfo && clearInfo.bonus){ toMenu(); return true; }
+    if(clearInfo && (clearInfo.bonus || clearInfo.tt)){ toMenu(); return true; }
     if(demoOn() && !isUnlocked(chIndex + 1)){ toMenu(); showToast('Fin de la démo : merci d\'avoir joué ! La suite arrive bientôt', 260); return true; }
     transition(() => { startChapter(chIndex + 1, true); anim.appear = 0; setState('play'); });
     return true;

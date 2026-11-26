@@ -147,6 +147,10 @@ kbd{
 #chapters .play:active{transform:translateX(-50%) translateY(3px); box-shadow:0 1px 0 #b4541f;}
 #chapters .play.locked{filter:grayscale(1) brightness(.75); box-shadow:0 4px 0 #444; }
 #chapters .play.locked::after{display:none;}
+#chapters .tt{position:absolute; left:calc(50% + 110px); top:294px; height:26px; padding:0 12px; border:0; border-radius:13px; cursor:pointer; display:none;
+  font:700 12px/26px var(--font-ui); color:#fff; background:rgba(14,9,34,.82); box-shadow:inset 0 0 0 1.5px #ffd54a, 0 3px 0 rgba(0,0,0,.35);}
+#chapters .tt.on{display:block;}
+#chapters .tt:hover{background:#2a1d5e;}
 #chapters .hint{position:absolute; left:0; right:0; bottom:7px; text-align:center; font-size:10.5px; color:#c9c1f0; pointer-events:none;}
 /* admin login: a small password box over the game */
 #admin{position:fixed; z-index:3; display:none; align-items:center; justify-content:center; background:rgba(10,6,28,.72); font-family:var(--font-ui);}

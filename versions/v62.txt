@@ -1,0 +1,26 @@
+VERSION 62 (v0.9.62) — Planches lentes, contre-la-montre et boss plus vivants
+
+Gameplay
+
+Option « Planches lentes » (Paramètres, Jeu)
+- Nouvelle option, désactivée au départ : les planches qui tombent tremblent une fois et demie plus longtemps avant
+  de lâcher, et tombent moins vite (0,7 fois la vitesse normale). Les planches-parachutes aussi.
+- Pour ceux qui ont du mal avec les salles à planches : les niveaux ne changent pas, seulement le rythme.
+
+La pie (saison 2, salle 4-3)
+- Un tir de XELIAX éclate une babiole lancée par la pie : petit éclat et +1 pièce, comme un ennemi abattu.
+  Un tir n'éclate qu'une babiole. Le reste du combat ne change pas.
+
+Gecko Géant (saison 2, salle 2-4)
+- En phase 2, la plateforme du milieu devient fragile (on la voit se fissurer) : elle casse si on reste dessus,
+  puis revient au bout de 10 secondes. En phase 1, elle reste solide. Les plateformes des côtés ne changent pas.
+
+Contre-la-montre (saison 2)
+- Un monde de la saison 2 déjà fini peut se rejouer en contre-la-montre : sur sa carte, bouton « ⏱ Contre-la-montre »
+  (ou touche C).
+- Comme les bonus : chrono, temps intermédiaire à chaque salle (vert = plus rapide que ton record, rouge = plus lent),
+  médaille (or, argent, bronze) et fantôme de ta meilleure course. R recommence tout le monde.
+- Mais on garde ses cœurs (pas de « un coup = mort ») et le chrono s'arrête pendant les cinématiques.
+  Le vol du double saut (2-1) et la grande fin de la saison 2 ne se rejouent pas.
+- Temps de l'or : monde 1 : 2 min 30 ; monde 2 : 3 min ; mondes 3 et 4 : 3 min 30 (argent +25 %, bronze +50 %).
+  Ces temps sont des estimations, à régler en jouant.

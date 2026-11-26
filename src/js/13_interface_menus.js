@@ -35,7 +35,8 @@ function pill(x, y, w, h){
 }
 
 function drawHUD(){
-  if(isSpeedrun() && state === 'play'){ drawSrHud(); return; }   // speedrun: the big timer, no hearts
+  if(isSpeedrun() && state === 'play' && !timeTrial){ drawSrHud(); return; }   // speedrun: the big timer, no hearts
+  if(timeTrial) drawTtHud();   // v62 : contre-la-montre : un petit chrono en plus, les cœurs restent
   const top = 8, hh = 24;
   const slots = Math.min(8, Math.max(startLives(), lives));
   const heartsW = 14 + slots * 15 + (lives > 8 ? 24 : 0);
@@ -426,6 +427,7 @@ function jeuRows(){
     {kind:'toggle', id:'timer', label:'Chronomètre à l\'écran', get:() => SET.timer, set:v => setSetting('timer', v)},
     {kind:'toggle', id:'shake', label:'L\'écran tremble', get:() => SET.shake, set:v => { setSetting('shake', v); if(v) addShake(5); }},
     {kind:'toggle', id:'reduced', label:'Animations réduites', get:() => SET.reduced, set:v => setSetting('reduced', v)},
+    {kind:'toggle', id:'slowPlanks', label:'Planches lentes : tombent moins vite', get:() => !!SET.slowPlanks, set:v => setSetting('slowPlanks', v)},
     {kind:'toggle', id:'fps', label:'Afficher les images par seconde', get:() => !!SET.fps, set:v => setSetting('fps', v)},
     {kind:'toggle', id:'cap60', label:'Limiter à 60 images/s (si ça rame)', get:() => !!SET.cap60, set:v => setSetting('cap60', v)},
     {kind:'toggle', id:'autoJump', label:'Garder le saut appuyé : saute en boucle', get:() => !!SET.autoJump, set:v => setSetting('autoJump', v)},
@@ -619,6 +621,7 @@ function menuKey(k, rep = false){
     if(rep) return;
     if(left) menuMove(-1); else if(right) menuMove(1);
     else if(ok || up) playChapter(menuSel);
+    else if(k === 'c'){ if(ttOpen(menuSel)) startTimeTrial(menuSel); }   // v62 : contre-la-montre d'un monde de la saison 2 fini
     else if(down || k === 'e') switchSeason(seasonOf(menuSel) === 1 ? 2 : 1);
     return;
   }
@@ -1166,7 +1169,7 @@ function drawRow(r, x, y, w, h){
 function drawListPage(p, act){
   const rows = pageRows(p);
   navHeader(PAGE_NAME[p], PAGE_NAME[PAGE_PARENT[p]], act);
-  const {x, y, w} = LIST, rh = rows.length > 6 ? 31 : LIST.rh, h = rows.length * rh;
+  const {x, y, w} = LIST, rh = rows.length > 8 ? 28 : rows.length > 6 ? 31 : LIST.rh, h = rows.length * rh;   // v62 : 9 lignes (Planches lentes + mode créateur) tiennent au-dessus des touches
   ctx.fillStyle = 'rgba(0,0,0,0.25)'; rr(x, y + 4, w, h, 14); ctx.fill();
   rr(x, y, w, h, 14); ctx.fillStyle = 'rgba(20,13,46,0.94)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
   const fs = clamp(menu.sel[p] || 0, 0, rows.length - 1);
@@ -1505,7 +1508,7 @@ function drawGameOver(){
   drawHero(uiHero, W / 2, b.y + 4 + Math.sin(frame * 0.04) * 1.5, 1.8, {});
   heading('Game over', W / 2, b.y + 72, 34, '#ff8aa0');
   txt(chapter.bonus ? `XELIAX est tombé dans le bonus « ${chapter.name} », salle ${rIndex + 1}` : `XELIAX est tombé au chapitre ${chNum(chIndex)}${chapter.season === 2 ? ' (saison 2)' : ''}, salle ${rIndex + 1}`, W / 2, b.y + 94, 12.5, '#bfb6f0', 500);
-  const again = room.boss ? (boss && boss.mode === 'ascent' && currentPhase() === 'escape' ? 'reprendre la fuite' : 'recommencer le combat') : chapter.bonus ? 'recommencer la salle' : 'recommencer le chapitre';
+  const again = room.boss ? (boss && boss.mode === 'ascent' && currentPhase() === 'escape' ? 'reprendre la fuite' : 'recommencer le combat') : chapter.bonus || timeTrial ? 'recommencer la salle' : 'recommencer le chapitre';
   if(TOUCH){ promptLine([{key:'▲'}, {text:again}], b.y + 134); promptLine([{key:'●'}, {text:'menu'}], b.y + 162, '#bfb6f0'); }
   else { promptLine([{key:'Espace'}, {text:again}], b.y + 134); promptLine([{key:'Q'}, {text:'menu'}], b.y + 162, '#bfb6f0'); }
   ctx.restore();
@@ -1521,11 +1524,11 @@ function drawChapterClear(){
   ctx.save();
   panelContent(b);
   drawHero(uiHero, W / 2, b.y + 2 - Math.abs(Math.sin(frame * 0.16)) * 10, 1.8, {});
-  heading(clearInfo.bonus ? 'Défi bonus réussi !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, 27, CH_ACCENT[chIndex]);
+  heading(clearInfo.bonus ? 'Défi bonus réussi !' : clearInfo.tt ? 'Contre-la-montre fini !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, 27, CH_ACCENT[chIndex]);
   txt(clearInfo.bonus ? (!clearInfo.fast ? 'Trop lent pour la ficelle : R pour retenter !' : clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
   const rows = [
     ['Temps', fmt(counted(clearInfo.time, 10)), clearInfo.newBest && stateT > 50 ? 'Record !' : ''],
-    clearInfo.bonus ? ['Médaille', stateT > 40 ? (clearInfo.medal ? clearInfo.medal[0].toUpperCase() + clearInfo.medal.slice(1) : 'aucune') : '', clearInfo.medal === 'or' && stateT > 55 ? 'Or !' : '']
+    clearInfo.bonus || clearInfo.tt ? ['Médaille', stateT > 40 ? (clearInfo.medal ? clearInfo.medal[0].toUpperCase() + clearInfo.medal.slice(1) : 'aucune') : '', clearInfo.medal === 'or' && stateT > 55 ? 'Or !' : '']
       : ['Pièces', `${Math.round(counted(clearInfo.coins, 20))} sur ${clearInfo.total}`, clearInfo.coins === clearInfo.total && stateT > 60 ? 'Toutes !' : ''],
     [clearInfo.bonus ? (clearInfo.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée') : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus ? (clearInfo.fast ? 'gagnée' : 'trop lent') : clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
     chapter.season === 2 || chapter.bonus2 ? ['Pouvoirs', stateT > 45 ? ['gravité', hasWall && 'murs', hasDash && 'dash'].filter(Boolean).join(', ') : '', ''] : ['Recette', stateT > 45 ? recipeShort() : '', ''],
@@ -1537,7 +1540,7 @@ function drawChapterClear(){
     txt(v, b.x + b.w - 58, ry, 13.5, '#ffffff', 700, 'right');
     if(tag){ ctx.font = `700 10px ${FU}`; const tw = ctx.measureText(tag).width + 12; rr(b.x + b.w - 58 - 112 - tw, ry - 11, tw, 15, 7); ctx.fillStyle = '#ffd54a'; ctx.fill(); txt(tag, b.x + b.w - 58 - 112 - tw / 2, ry, 10, '#3a2400', 700); }
   });
-  const nextTxt = clearInfo.bonus ? 'retour au menu' : demoOn() && !isUnlocked(chIndex + 1) ? 'fin de la démo' : 'chapitre suivant';
+  const nextTxt = clearInfo.bonus || clearInfo.tt ? 'retour au menu' : demoOn() && !isUnlocked(chIndex + 1) ? 'fin de la démo' : 'chapitre suivant';
   if(stateT >= 45 && (Math.floor(frame / 30) % 2 === 0 || REDUCED)) promptLine(TOUCH ? [{key:'▲'}, {text:nextTxt}] : [{key:'Espace'}, {text:nextTxt}], b.y + b.h - 15);
   // fin de la démo : un bouton pour donner son avis (page GitHub des retours, comme les amis l'ont fait)
   feedbackBtn = null;

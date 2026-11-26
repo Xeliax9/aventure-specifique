@@ -59,7 +59,7 @@ function step(){
   }
   if(cine) updateCine();
   if(launch){ updateLaunch(); clearPresses(); return; }
-  if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)){ timerRunning = true; if(chapter.bonus && chapter.parTime && rIndex === 0 && elapsed - chStartTime < 100) showToast(`Temps à battre : ${fmt(chapter.parTime)} — fonce !`, 200); }
+  if(!timerRunning && !cine && (input.left || input.right || input.jumpPressed || input.shootPressed)){ timerRunning = true; if((chapter.bonus || timeTrial) && chapter.parTime && rIndex === 0 && elapsed - chStartTime < 100) showToast(`Temps à battre : ${fmt(chapter.parTime)} — fonce !`, 200); }
   if(timerRunning && !cine) elapsed += STEP;        // the clock waits during cinematics
   if(phaseT > 0 && --phaseT === 0) transition(() => loadRoom(chIndex, rIndex + 1));
 
@@ -78,7 +78,7 @@ function step(){
     if(!room.ending2) updateFireworks(finaleT);
     if(steal) updateSteal(finaleT);
     else if(frame % 22 === 0) confetti(player.x + player.w / 2, player.y - 6, finaleT < finaleEnd() ? 12 : 4);
-    if(go){ SFX.menu(); if(room.ending2) startEnding(); else chapterClear(); }
+    if(go){ SFX.menu(); if(room.ending2 && !timeTrial) startEnding(); else chapterClear(); }
     clearPresses();
     return;
   }
@@ -299,6 +299,9 @@ function updateAscentSpecial(b){
 const PLANK_SHAKE = 26, PLANK_G = 0.42, PLANK_MAX = 9;
 // lift planks (lift:true) hang from a little parachute: they let go almost at once and drift down slowly, carrying XELIAX
 const LIFT_SHAKE = 10, LIFT_G = 0.1, LIFT_MAX = 2.2;
+// option « Planches lentes » (Paramètres > Jeu) : tremblent 1,5 fois plus longtemps, tombent 0,7 fois moins vite
+const slowK = () => SET.slowPlanks ? 0.7 : 1;
+const plankShake = p => (p.lift ? LIFT_SHAKE : PLANK_SHAKE) * (SET.slowPlanks ? 1.5 : 1);
 function updatePlank(p){
   p.px = p.x; p.py = p.y;
   // again:true planks drift back home a little after they have landed (so a missed throw can be tried again)
@@ -315,13 +318,13 @@ function updatePlank(p){
   if(!p.loose){
     if(p.fT > 0){
       if(frame % 5 === 0) crumbs(p.x + Math.random() * p.w, gdir > 0 ? p.y + p.h : p.y, 1, '#9a6234');
-      if(++p.fT > (p.lift ? LIFT_SHAKE : PLANK_SHAKE)){ p.loose = true; p.fvy = 0; tone(p.lift ? 260 : 140, 0.12, p.lift ? 'triangle' : 'sawtooth', 0.03, p.lift ? 200 : 90); }
+      if(++p.fT > plankShake(p)){ p.loose = true; p.fvy = 0; tone(p.lift ? 260 : 140, 0.12, p.lift ? 'triangle' : 'sawtooth', 0.03, p.lift ? 200 : 90); }
     }
     return;
   }
   // loose: it falls the way gravity pulls, and lands on whatever is in the way
-  const g = gdir, y0 = p.y, top = p.lift ? LIFT_MAX : PLANK_MAX;
-  p.fvy = clamp(p.fvy + (p.lift ? LIFT_G : PLANK_G) * g, -top, top);
+  const g = gdir, y0 = p.y, top = (p.lift ? LIFT_MAX : PLANK_MAX) * slowK();
+  p.fvy = clamp(p.fvy + (p.lift ? LIFT_G : PLANK_G) * slowK() * g, -top, top);
   let ny = p.y + p.fvy, hit = null;
   const across = q => p.x + p.w > q.x + 2 && p.x < q.x + q.w - 2;
   if(p.fvy > 0){
@@ -1127,6 +1130,13 @@ function updatePlayer(){
       if(!s.dead && !bl.dead && bl.kind === 'boss' && overlap(s, bl)){
         s.dead = true; bl.dead = true;
         burst(bl.x + bl.w / 2, bl.y + bl.h / 2, 8, '#ffb0d0', 2, 18, 0, 2.6, 'star');
+        SFX.ting();
+      }
+      // v62 : un tir éclate une babiole lancée par la pie (un tir = une babiole, +1 pièce comme un ennemi abattu)
+      if(!s.dead && !bl.dead && bl.kind === 'trinket' && overlap(s, bl)){
+        s.dead = true; bl.dead = true; score += 25; addBank(1);
+        popup(bl.x + bl.w / 2, bl.y - 6, '+1 🪙', '#ffe066');
+        burst(bl.x + bl.w / 2, bl.y + bl.h / 2, 8, '#ffd54a', 2, 18, 0, 2.6, 'star');
         SFX.ting();
       }
     }

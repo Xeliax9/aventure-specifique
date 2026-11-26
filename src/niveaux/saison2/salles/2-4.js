@@ -6,7 +6,7 @@
     {x:0, y:340, w:640, h:20},
     {x:140, y:236, w:90},
     {x:410, y:236, w:90},
-    {x:270, y:150, w:100},
+    {x:270, y:150, w:100, p2crumble:true},   // v62 : fragile en phase 2 (revient après 10 s)
   ],
   walls:[{x:0, y:-300, w:40, h:300, slick:true}, {x:0, y:0, w:40, h:340}, {x:600, y:-300, w:40, h:300, slick:true}, {x:600, y:0, w:40, h:340}],
   signs:[{x:80, y:340, text:'Il tombe ? Saute-lui dessus ! Il court ? Monte ! Au mur ? Tire !'}],

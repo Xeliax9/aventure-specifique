@@ -6,7 +6,18 @@
 // =====================================================================
 const SR_GHOST_STEP = 2;           // the ghost keeps one position every 2 frames
 const srun = {f:0, splits:[], ghost:[], pop:null, popT:0, gAnim:null};
-function isSpeedrun(){ return !!(chapter && chapter.bonus); }
+// v62 : contre-la-montre d'un monde de la saison 2 déjà fini (timeTrial, 02_etat_chargement.js) : même chrono, temps
+// intermédiaires, médailles et fantôme que les bonus, mais on garde ses cœurs (pas de « un coup = mort »)
+function isSpeedrun(){ return !!(chapter && (chapter.bonus || timeTrial)); }
+function srOneHit(){ return !!(chapter && chapter.bonus); }   // bonus seulement : un coup et on repart du drapeau
+// un monde de la saison 2 se rejoue en contre-la-montre une fois fini une première fois (hors démo)
+function ttOpen(ci){ const c = CHAPTERS[ci]; return !!(c && c.season === 2 && c.parTime && save.bestCh[ci] != null && !demoOn()); }
+function startTimeTrial(ci){
+  if(fadeDir !== 0 || !ttOpen(ci)) return false;
+  initAudio();
+  newRun(ci, true);
+  return true;
+}
 function srData(){ save.speed = save.speed || {}; return save.speed[chIndex] || null; }
 // medals: gold = the time to beat, silver = +25 %, bronze = +50 %
 function srMedal(ci, t){
@@ -43,7 +54,7 @@ function srRestart(){
   if(state === 'pause' || state === 'over' || state === 'play' || state === 'chapter'){
     startChapter(chIndex, false);
     elapsed = 0; chStartTime = 0; timerRunning = false; finaleT = 0; steal = null;
-    lives = 99; srReset(); setState('play'); fade = 0; fadeDir = 0; bannerT = 0;
+    lives = timeTrial ? startLives() : 99; hud.lastLives = lives; srReset(); setState('play'); fade = 0; fadeDir = 0; bannerT = 0;
     anim.appear = 0; SFX.bloop(); showToast('C\'est reparti !', 50);
   }
 }
@@ -70,6 +81,26 @@ function drawSrGhost(){
   const cy = y + player.h / 2;
   if(up){ ctx.translate(0, cy); ctx.scale(1, -1); ctx.translate(0, -cy); }
   drawHero(srun.gAnim, x + player.w / 2, y + player.h, 1, {alpha:0.35});
+  ctx.restore();
+}
+// ---- drawing (contre-la-montre) : un petit chrono sous la pilule de droite, les cœurs restent à leur place
+function drawTtHud(){
+  if(!timeTrial || state !== 'play') return;
+  const t = elapsed - chStartTime, best = srData(), medal = srMedal(chIndex, t);
+  ctx.save();
+  const w = 132, x = W - 8 - w, y = 38;
+  rr(x, y, w, 40, 12); ctx.fillStyle = 'rgba(14,9,34,0.78)'; ctx.fill();
+  ctx.strokeStyle = medal ? SR_MEDAL_COL[medal] : '#ff6a6a'; ctx.lineWidth = 2; ctx.stroke();
+  outlined(fmt(t), x + w / 2, y + 21, 16, '#ffffff', '#1d1442', 3, FU, 700, 'center');
+  txt(best ? 'record ' + fmt(best.t) : 'pas encore de record', x + w / 2, y + 34, 9.5, '#d6ceff', 600, 'center');
+  if(srun.pop && srun.popT > 0){
+    const p = srun.pop;
+    ctx.globalAlpha = Math.min(1, srun.popT / 20);
+    const s = p.d == null ? 'Étape ' + srun.splits.length + ' · ' + fmt(p.t) : (p.d <= 0 ? '−' : '+') + (Math.abs(p.d) / 1000).toFixed(2) + ' s';
+    outlined(s, x + w / 2, y + 58, 13, p.d == null ? '#ffffff' : p.d <= 0 ? '#5dff8a' : '#ff6a6a', '#1d1442', 3, FU, 700, 'center');
+    ctx.globalAlpha = 1;
+  }
+  txt('R : recommencer le monde', W - 12, H - 10, 10.5, 'rgba(255,255,255,0.55)', 600, 'right');
   ctx.restore();
 }
 // ---- drawing: the big timer, the last split, the medal you're on track for (screen)
