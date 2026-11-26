@@ -48,7 +48,7 @@ const { chromium } = require('playwright');
     newRun(6); clean(); loadRoom(6, CHAPTERS[6].rooms.length - 1); setState('play'); lives = 99;
     ok(cine && cine.kind === 'intro', 'gecko entrance');
     run(330 + READY_DUR + 10);   /* v55 : + « Prêt ? » */ ok(!cine && boss.state === 'crawl', 'gecko crawls on the wall after its entrance (' + boss.state + ')');
-    const states = new Set(); let hits = 0; let dmg = 0; const realDamage = bossDamage; bossDamage = function(){ dmg++; return realDamage.apply(this, arguments); };
+    const states = new Set(), geckoHearts = new Set(); let hits = 0; let dmg = 0; const realDamage = bossDamage; bossDamage = function(){ dmg++; return realDamage.apply(this, arguments); };
     for(let round = 0; round < 20 && boss.alive && !boss.dying; round++){
       // phase 2: it is only dazed after 5 shots while on the walls
       const t = until(() => { if(boss.phase === 2 && (boss.state === 'crawl' || boss.state === 'climb') && boss.inv <= 0 && frame % 20 === 0) geckoShot(boss, 1); return (boss.state === 'stun' || boss.state === 'stuck') && boss.inv <= 0 && !cine; }, 2500);
@@ -58,9 +58,11 @@ const { chromium } = require('playwright');
       const hp = boss.hp, ph = boss.phase;
       run(14);
       if(boss.hp < hp || boss.phase > ph || !boss.alive || boss.dying) hits++;
+      powerUps.forEach(p => { if(String(p.id).startsWith('gecko-heart')) geckoHearts.add(p.id); });
       if(cine){ finishCine(); }
     }
     ok(boss.dying > 0, 'gecko: a death scene plays'); run(130);
+    ok(geckoHearts.size === 3, 'gecko: a heart appears every 2 hits (' + [...geckoHearts].join(', ') + ')');
     bossDamage = realDamage;
     ok(!boss.alive && dmg === 8, `gecko beaten with 8 hits (${dmg} hits, states seen: ${[...states].join(', ')})`);
     ok(states.has('stun') && states.has('stuck'), 'phase 1 it falls on the floor, phase 2 it is stuck on the wall');
@@ -119,12 +121,36 @@ const { chromium } = require('playwright');
     run(130);
     ok(!boss.alive && yhits === 8, `yeti beaten with 8 dashes (${yhits})`);
     // icicles in phase 2 appeared?
+    // ---- v61 : la pie vole un pouvoir (phase 2 : le double saut), le lâche de l'autre côté, on le reprend
+    newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99; run(330 + READY_DUR + 10);
+    { boss.phase = 2; boss.hp = boss.maxHp = 3; boss.state = 'hover'; boss.stT = 1; boss.cyc = 1; boss.fireT = 9999; hasDJ = true; hasDash = true; if(gdir < 0) setGravity(1);
+      player.x = 100; player.y = FLOOR - player.h; player.vy = 0; player.invuln = 0;
+      const l0 = lives; step(); ok(boss.state === 'swoopAim' && boss.want === 'doubleJump', 'magpie phase 2: a thief dive is announced (' + boss.state + ')');
+      for(let i = 0; i < 200 && boss.state !== 'carry' && boss.state !== 'rise'; i++){ player.invuln = 0; player.x = 100; player.y = FLOOR - player.h; player.vy = 0; boss.fireT = 9999; step(); }
+      ok(boss.state === 'carry' && !hasDJ && hasDash && lives === l0, 'touched: she takes the double jump, no heart lost (dj ' + hasDJ + ')');
+      run(60); const pu = powerUps.find(p => p.back && !p.got);
+      ok(pu && pu.type === 'doubleJump' && pu.y < 100 && pu.x > 320, 'she drops it on the other side of the nest (' + (pu && pu.x + ',' + pu.y) + ')');
+      player.x = pu.x; player.y = pu.y; step(); ok(hasDJ && pu.got, 'picking it up gives the double jump back'); run(2); ok(!boss.stolen, 'then she may steal again later');
+      // esquivé : rien n'est volé ; mort avec un pouvoir volé : il est rendu au nouveau combat
+      bullets = []; boss.state = 'hover'; boss.stT = 1; boss.cyc = 1; boss.y = 150; player.x = 100; player.y = FLOOR - player.h; step();
+      for(let i = 0; i < 200 && boss.state !== 'rise'; i++){ player.invuln = 0; player.x = boss.x < 320 ? 560 : 60; player.y = FLOOR - player.h; player.vy = 0; boss.fireT = 9999; bullets = []; step(); }
+      ok(hasDJ && hasDash && boss.state === 'rise', 'dodged: nothing is stolen');
+      // la pluie de trésor après un coup : des fourchettes et 2 pièces à attraper
+      bullets = []; boss.state = 'hover'; boss.y = 150; boss.stT = 9999; boss.fireT = 9999; boss.nestT = 1; player.invuln = 9999; step();
+      ok(boss.rain && boss.rain.filter(r => r.kind === 'fork').length === 4 && boss.rain.filter(r => r.kind === 'goldfall').length === 2, 'nest shaken in phase 2: 4 forks and 2 gold coins are about to fall');
+      let gold = null; for(let i = 0; i < 120 && !gold; i++){ boss.fireT = 9999; boss.stT = 9999; step(); gold = bullets.find(q => q.kind === 'goldfall'); }
+      for(const q of powerUps) if(q.type === 'life') q.got = true;   // le cœur de la salle (x 310) est dans une colonne de la pluie
+      const bank0 = save.bank || 0, lv = lives; player.invuln = 0; player.x = gold.x; player.y = gold.y; player.vy = 0; bullets = [gold]; step();
+      ok((save.bank || 0) === bank0 + 1 && lives === lv, 'a falling gold coin is caught (+1), it does not hurt (banque ' + bank0 + '→' + (save.bank || 0) + ', cœurs ' + lv + '→' + lives + ', pie ' + boss.state + ' ' + Math.round(boss.x) + ',' + Math.round(boss.y) + ', or ' + Math.round(gold.x) + ',' + Math.round(gold.y) + ', état ' + state + ')');
+      const fork = {x:player.x, y:player.y, w:12, h:12, vx:0, vy:1, kind:'fork', fallDie:true}; bullets = [fork]; player.invuln = 0; step(); ok(lives === lv - 1, 'a falling fork hurts (cœurs ' + lv + '→' + lives + ', invuln ' + player.invuln + ', mort ' + player.dead + ')');
+      hasDash = false; boss.stolen = 'dash'; restartPhase(false); ok(hasDash && hasDJ, 'fight restarted: the stolen power is given back'); }
     // ---- the magpie: floor and ceiling, then the ficelle, then the ending
     newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99;
     run(330 + READY_DUR + 10); ok(!cine && boss.state === 'hover', 'magpie hovers after her entrance');
     // every phase: when she is stuck, dash into her -> slammed against the side -> dazed -> 10 shots = 1 life
     let mhits = 0, pushes = 0, shotsFired = 0, stompHurt = false, ceilP1 = true, carried = false;
     for(let round = 0; round < 80 && boss.alive && !boss.dying; round++){
+      hasDJ = true; hasDash = true;   // v61 : ce robot ne va pas reprendre un pouvoir volé (testé à part, plus haut)
       until(() => !boss.nestT, 300);
       if(boss.phase === 1 && gdir > 0){ setGravity(-1); run(40); }
       if(until(() => boss.state === 'stuck' && boss.inv <= 0 && !cine, 2500) < 0) break;

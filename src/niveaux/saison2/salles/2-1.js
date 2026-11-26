@@ -8,13 +8,14 @@
     {x:0, y:440, w:570, h:40, solid:true},
     {x:470, y:120, w:24, h:270, solid:true, hang:true},
     {x:570, y:280, w:330, h:200, solid:true},
-    {x:930, y:0, w:24, h:240, solid:true, hang:true},
+    {x:930, y:-200, w:24, h:440, solid:true, hang:true},   // v61 : les piliers montent jusqu'au plafond caché (plus de raccourci par le haut)
     {x:900, y:440, w:130, h:40, solid:true},
     {x:1030, y:160, w:300, h:320, solid:true},
-    {x:1400, y:0, w:24, h:340, solid:true, hang:true},
+    {x:1400, y:-200, w:24, h:540, solid:true, hang:true},
     {x:1330, y:440, w:670, h:40, solid:true},
-    {x:1700, y:0, w:24, h:390, solid:true, hang:true},
+    {x:1700, y:-200, w:24, h:590, solid:true, hang:true},
     {x:1780, y:200, w:220, h:280, solid:true},
+    {x:0, y:-400, w:2000, h:200, solid:true},   // v61 : plafond hors écran, comme en 2-2
   ],
   spikes:[{x:900, y:440, w:130}, {x:1330, y:250, h:110, side:'right'}, {x:1560, y:440, w:50}],
   enemies:[{on:2, from:120, to:300, speed:1.1}, {on:5, from:60, to:260, speed:1.3}, {on:7, from:300, to:360, speed:1.2}],

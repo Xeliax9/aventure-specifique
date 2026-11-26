@@ -1,0 +1,63 @@
+VERSION 61 (v0.9.61) — La lave ne pardonne plus, la pie se pose, et trois bugs corrigés
+
+Seigneur Pourpre (la fuite finale)
+- Pendant la fuite, toucher la lave fait perdre tous les cœurs d'un coup (avant : un seul cœur et un rebond).
+- Après cette mort, on reprend au moment où il crie « Nonnnn, tu vas le payerrr !! » : la lave se remet à monter,
+  elle propulse XELIAX sur sa corniche et la fuite repart, avec 5 cœurs.
+
+Révélation de la saison 2 (au menu)
+- La pie ne traverse plus tout l'écran : après avoir lâché les 4 chapitres, elle fait demi-tour et vient se poser
+  sur le titre « SAISON 2 », ailes repliées.
+
+Bugs corrigés
+- Après avoir attrapé la ficelle à la fin de la saison 1, XELIAX restait invincible (et clignotait) pendant près de
+  3 minutes dans le chapitre suivant : il ne perdait donc plus de cœurs. L'invincibilité s'arrête maintenant à chaque
+  nouvelle salle.
+- Saison 2, salle 2-1 : la pie qui vole le double saut était devenue invisible depuis la version 60. Elle est revenue.
+
+Saison 2, salle 2-1 (Les Ventouses)
+- On ne peut plus sauter toute la salle en grimpant par-dessus les piliers, au-dessus de l'écran : les piliers montent
+  maintenant jusqu'à un plafond caché, comme dans la salle 2-2.
+- Si XELIAX essaie de monter sans avoir parlé à Gaston, un message revient toutes les 6 secondes :
+  « Tu n'arrives pas à monter ? Retourne parler à Gaston : il te donnera ses ventouses ! »
+
+Gecko Géant (saison 2, salle 2-4)
+- Un cœur apparaît sur une plateforme tous les 2 points de vie enlevés au Gecko (3 cœurs en tout pendant le combat).
+
+Reprendre un chapitre là où on l'a quitté
+- Quand on quitte un chapitre en cours (pause, puis « Retour au menu »), le jeu retient la salle. En relançant ce
+  chapitre, on revient au début de cette salle, avec ses pièces et ses pouvoirs.
+- Si on a quitté pendant un boss, on revient au début du combat (phase 1).
+- Pour repartir du début du chapitre : pause, puis C (« recommencer le chapitre »).
+- Quitter après un « game over » hors boss ne garde rien : le chapitre repart du début, comme avant.
+- Les bonus (mode chrono) ne sont pas concernés.
+
+Glacier, salle 3-1 (Le Dash)
+- Deux tireurs sont accrochés au grand pilier de glace de la dernière montée : il faut passer entre leurs tirs.
+  Le milieu du pilier reste libre pour s'y accrocher.
+
+La Pie Voleuse (boss final de la saison 2)
+- Nouveau : en phases 2 et 3, un plongeon sur trois est un « piqué de voleuse ». Elle vise XELIAX lui-même (trait
+  bleu clair au lieu de rouge, et un message « Elle veut ton double saut ! » ou « Elle veut ton dash ! »).
+- Si elle le touche, il ne perd pas de cœur : elle lui vole un pouvoir (le double saut en phase 2, le dash en
+  phase 3) et va le lâcher de l'autre côté du nid. Il faut retourner la gravité pour aller le reprendre.
+- Sans le dash, on ne peut plus l'écraser contre le bord : il faut le récupérer avant de pouvoir la blesser.
+- Elle ne vole jamais deux pouvoirs à la fois, et elle rend tout si le combat recommence ou quand elle est vaincue.
+- Ce piqué de voleuse est très dur à esquiver : annonce plus courte, elle vise jusqu'au dernier moment, fonce plus
+  vite et tourne vers XELIAX en plein vol. Rester sur place ne marche jamais ; un dash bien placé, si.
+- À partir de la phase 2, elle se laisse toucher beaucoup moins longtemps : coincée moins de 2 secondes (avant presque
+  3 secondes), et sonnée 2 secondes en phase 2 et 1,6 seconde en phase 3 (avant plus de 3 secondes). Les tirs déjà
+  placés comptent toujours pour la fois suivante.
+- Nouveau : après chaque coup, le nid secoué fait pleuvoir son trésor. Les fourchettes argentées piquent, les 2 pièces
+  d'or se ramassent (+1 pièce chacune). Chaque objet scintille un instant à l'endroit d'où il va tomber.
+
+Caméra et gemmes cachées
+- Quand XELIAX dépasse le haut de l'écran (passages cachés des gemmes), la caméra monte maintenant avec lui : on voit
+  enfin où l'on marche et où est la gemme. Depuis le bas de la salle, la cachette reste invisible.
+
+Les deux salles avant la pie (4-1 L'Orage et 4-2)
+- 4-1 : la vitre est maintenant trop haute pour être sautée, il faut le dash. À la fin, une fosse à piques sous un
+  rocher : on ne peut pas passer par-dessus, il faut faire tomber les planches pour s'en faire un pont (un panneau le rappelle).
+  La salle est un peu plus longue et la porte est plus loin.
+- 4-2 : les deux cheminées sont plus larges (80 px) pour grimper plus facilement, et il n'y a plus de piques au plafond
+  près de la porte : un moment calme avant d'affronter la pie.

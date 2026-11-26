@@ -267,7 +267,8 @@ function drawSteal(){
   drawDJOrb();
   if(!steal) return;
   for(const f of finFeathers) drawFinFeather(f);
-  if(!steal.on || steal.sc === undefined) return;
+  if(!steal.on) return;
+  if(steal.sc === undefined){ drawMagpie(steal); return; }   // v61 : la pie de la cinématique de 2-1 (vol du double saut) n'était plus dessinée depuis la v60
   const S = steal, al = typeof ALPHA === 'number' ? ALPHA : 1;
   const x = S.pX === undefined ? S.x : S.pX + (S.x - S.pX) * al, y = S.pY === undefined ? S.y : S.pY + (S.y - S.pY) * al;
   const o = {wing:S.wing, flap:S.flap, ang:S.ang, beak:S.beak, legs:S.legs, tilt:S.tilt, wink:S.wink, ficelle:S.got};

@@ -1676,6 +1676,24 @@ function drawBullet(b){
     ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(x + 3, y + 2, 2, b.h * 0.5);
     return;
   }
+  if(b.kind === 'fork'){
+    const cx = x + 6, cy = y + 6, d = b.vy < 0 ? -1 : 1;   // les dents pointent dans le sens de la chute
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(1, d);
+    ctx.strokeStyle = '#ff3d5a'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(0, 2); ctx.moveTo(-4, 2); ctx.lineTo(-4, 9); ctx.moveTo(0, 2); ctx.lineTo(0, 9); ctx.moveTo(4, 2); ctx.lineTo(4, 9); ctx.moveTo(-4, 2); ctx.lineTo(4, 2); ctx.stroke();
+    ctx.strokeStyle = '#eef2fa'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(0, 2); ctx.moveTo(-4, 2); ctx.lineTo(-4, 9); ctx.moveTo(0, 2); ctx.lineTo(0, 9); ctx.moveTo(4, 2); ctx.lineTo(4, 9); ctx.moveTo(-4, 2); ctx.lineTo(4, 2); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  if(b.kind === 'goldfall'){
+    const cx = x + 6, cy = y + 6, sq = Math.abs(Math.cos(frame * 0.12));
+    softGlow(cx, cy, 16, 16, '255,224,102', 0.4);
+    ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#7a5200'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 2 + 5 * sq, 7, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    if(frame % 12 < 5){ ctx.fillStyle = '#ffffff'; star(cx + 4, cy - 5, 2.5, 0); }
+    return;
+  }
   if(b.kind === 'trinket'){
     // shiny loot from the magpie's hoard: a spoon, a ring, a coin
     const cx = x + 6, cy = y + 6, kind = (b.seed = b.seed || 1 + Math.floor(Math.random() * 3));

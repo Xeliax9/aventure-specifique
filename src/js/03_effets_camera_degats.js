@@ -55,7 +55,11 @@ function camTargets(){
   const tx = player.x + player.w/2 - W/2 + lookX;
   let ty = camFocusY - H * camOff;
   if(barrierOn()) ty = room.h - H;   // camera stays on the arena until the boss is beaten
-  return [clamp(tx, 0, room.w - W), clamp(ty, 0, room.h - H)];
+  // v61 : XELIAX dépasse le haut de la salle (passages cachés des gemmes) : la caméra monte avec lui pour qu'on voie où il va.
+  // Depuis le bas de la salle on ne voit toujours rien : la cachette reste secrète tant qu'on n'y est pas monté.
+  let lo = 0;
+  if(player.y < 0 && !player.dead && !barrierOn()){ lo = player.y * 2.2; ty = Math.min(ty, lo); }
+  return [clamp(tx, 0, room.w - W), clamp(ty, lo, room.h - H)];
 }
 let camOff = 0.56;
 function snapCamera(){
@@ -142,6 +146,17 @@ function bossDamage(){
   popup(b.x + b.w/2, b.y - 6, 'Touché !', '#ffd54a');
   if(b.hp <= 0) bossDefeated();
   else if(b.hp === b.enrage) showToast(b.name + ' enrage !', 90);
+  // v61 : le Gecko Géant : un cœur apparaît tous les 2 points de vie qu'on lui enlève (sur une plateforme libre)
+  if(b.mode === 'gecko'){
+    b.hits = (b.hits || 0) + 1;
+    if(b.hits % 2 === 0 && !b.dying){
+      const spots = [[310, 120], [175, 206], [445, 206]];
+      const s = spots.find(([x, y]) => !powerUps.some(p => p.type === 'life' && !p.got && p.x === x && p.y === y)) || spots[0];
+      powerUps.push({x:s[0], y:s[1], type:'life', id:'gecko-heart-' + b.hits, w:20, h:20, got:false});
+      sparkle(s[0] + 10, s[1] + 10, 16, POWER_COLORS.life); ring(s[0] + 10, s[1] + 10, POWER_COLORS.life, 5, 40, 22);
+      showToast('Un cœur est apparu !', 110);
+    }
+  }
   // halfway through the first fight against the Seigneur Pourpre, a heart appears on the high ledge
   if(b.mode === 'arena' && b.hp === 4 && !b.heart){
     b.heart = true;
@@ -173,6 +188,7 @@ function bossDefeated(){
   fires = [];
   player.invuln = Math.max(player.invuln, b.mode === 'ascent' ? ASCENT_OUTRO + 120 : 150);
   if(b.mode === 'magpie' && gdir < 0) setGravity(1);   // the nest settles: XELIAX falls back onto the hay
+  magpieGiveBack(b);
   if(b.mode === 'gecko' && b.state !== 'stun') b.state = 'drop';
   SFX.bossFlee();
 }
@@ -182,7 +198,7 @@ const DIE_FX = {slime:['#b45be3', 'goo'], swoop:['#8da2ff', 'crumb'], gecko:['#5
 // v55 : la fin du Seigneur Pourpre (L'Ascension). Gros plan sur lui, il crie « Nonnnn, tu vas le payerrr !! »,
 // lève les bras : la lave commence à monter pendant que la caméra recule ; puis il disparaît, la lave propulse
 // XELIAX sur sa corniche (startEscape → startLaunch) et la fuite commence. XELIAX ne bouge pas pendant ce temps.
-// Mort pendant la fuite : on reprend au début de la fuite (restartPhase, phase 'escape'), sans revoir tout ça.
+// Mort pendant la fuite : on reprend à son cri (restartPhase, phase 'escape') : la scène rejoue, puis la fuite (v61).
 const ASCENT_OUTRO = 200, OUTRO_ZOOM = 1.8;
 const ASCENT_SHOUT = 'Nonnnn, tu vas le payerrr !!';
 const camZoom = {z:1, fx:0, fy:0};
@@ -378,10 +394,17 @@ function restartPhase(count){
     const a = chapter.rooms.findIndex(r => r.boss && r.boss.mode === 'arena');
     if(a >= 0) ri = a;
   }
+  magpieGiveBack(boss);               // v61 : un pouvoir volé par la pie est rendu avant de recommencer
   loadRoom(chIndex, ri);              // the boss entrance plays again (it can be skipped by now)
-  if(ph === 'escape'){ cine = null; heartFill = null; boss.alive = false; startEscape(false); }
+  // v61 : mort pendant la fuite : on reprend à son cri (« Nonnnn, tu vas le payerrr !! »), puis la lave monte et la fuite repart
+  if(ph === 'escape'){
+    cine = null; heartFill = null; fires = []; bullets = [];
+    const b = boss;
+    b.x = room.boss.x; b.y = room.boss.y; b.px = b.x; b.py = b.y;
+    b.hp = 0; b.inv = 0; b.hitT = 0; b.vy = 0; b.dying = 1;
+  }
   bannerT = 0;
-  player.invuln = 60;
+  player.invuln = ph === 'escape' ? ASCENT_OUTRO + 120 : 60;
   anim.appear = 0;
   setState('play');
   showToast(ph === 'escape' ? 'Reprends la fuite !' : 'On recommence le combat !', 100);

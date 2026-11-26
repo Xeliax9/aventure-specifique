@@ -169,16 +169,29 @@ const { chromium } = require('playwright');
       run(10); ok(launched && player.onGround && Math.abs(player.y + player.h - 805) < 3, 'escape: the lava throws XELIAX onto a ledge (y ' + Math.round(player.y + player.h) + ')');
       const lv = lavaY; run(60); ok(lv - lavaY > 35, 'the lava rises fast (' + (lv - lavaY).toFixed(0) + ' px in 1 s)'); }
     // v55 : mort pendant la fuite : on reprend au début de la fuite (pas le boss), cœurs pleins, pas de « Prêt ? »
-    { const c0 = continues; lives = 1; player.invuln = 0; killPlayer(); ok(state === 'over', 'game over during the escape');
+    // v61 : toucher la lave pendant la fuite = tous les cœurs perdus ; on reprend à son cri, puis la fuite repart
+    { const c0 = continues; lives = 5; player.invuln = 0; player.y = lavaY + 20; player.vy = 0; step(); ok(state === 'over' && lives === 0, `escape: touching the lava takes every heart (lives ${lives})`);
       confirmAction(); run(30);
-      ok(rIndex === 3 && !boss.alive && currentPhase() === 'escape' && lives === 5 && !cine && heartFill === null && continues === c0 + 1, `escape retry: the escape again, not the boss (room ${rIndex + 1}, lives ${lives})`);
-      for(let i = 0; i < 120 && launch; i++) step(); run(5);
+      ok(rIndex === 3 && bossOutro() && currentPhase() === 'escape' && lives === 5 && !cine && heartFill === null && continues === c0 + 1, `escape retry: his shout again, not the fight (room ${rIndex + 1}, lives ${lives})`);
+      let shout = false, launched = false;
+      for(let i = 0; i < 260 + ASCENT_OUTRO && !(launched && !launch); i++){ if(boss.shout) shout = true; step(); if(launch) launched = true; }
+      run(10);
+      ok(shout && launched && !boss.alive && camZoom.z === 1, 'escape retry: the shout plays, then the lava throws XELIAX');
       ok(Math.abs(player.y + player.h - 805) < 3, 'escape retry: thrown onto the ledge again'); }
     run(130); ok(!boss.alive, 'the death scene ends'); ok(key && key.kind === 'ficelle', 'escape: ficelle waits at the top');
     player.x = key.x + 6; player.y = key.y - 10; player.vy = 0; run(3);
     ok(finaleT > 0, 'finale started'); run(STEAL_END - 30); pressJump(); step(); ok(state === 'play', 'Space does nothing before the end of the scene'); run(60); ok(state === 'play' && finaleT >= finaleEnd() && steal && steal.got, 'the magpie steals the ficelle, then the finale waits for Space'); pressJump(); step(); ok(state === 'win', 'win screen');
     render(1);
     // game over rules (v55 : dans une salle de boss, tout le combat recommence, à la phase 1, cœurs pleins)
+    // v61 : quitter un chapitre en cours (pause → menu) puis le relancer : on revient dans la salle quittée
+    newRun(1); clean(); loadRoom(1,2); setState('pause'); backToMenu(); fade = 0; fadeDir = 0;
+    ok(state === 'title' && save.resume && save.resume[1] && save.resume[1].ri === 2, 'quitting a chapter remembers the room');
+    playChapter(1); ok(state === 'play' && chIndex === 1 && rIndex === 2, `playing it again resumes there (room ${rIndex + 1})`);
+    fade = 0; fadeDir = 0; loadRoom(1,3); setState('pause'); backToMenu(); fade = 0; fadeDir = 0; playChapter(1);
+    ok(rIndex === 3 && boss && boss.phase === 1 && boss.hp === boss.maxHp && cine && cine.kind === 'intro', 'quitting a boss room resumes at the start of the fight');
+    fade = 0; fadeDir = 0; skipIntro(); loadRoom(1,2); setState('over'); backToMenu(); fade = 0; fadeDir = 0;
+    ok(!save.resume[1], 'quitting after a game over forgets the room (the chapter starts over)');
+    playChapter(1); ok(chIndex === 1 && rIndex === 0, 'then the chapter starts at its first room'); fade = 0; fadeDir = 0;
     newRun(0); clean(); loadRoom(0,2); setState('play'); lives=1; killPlayer(); confirmAction(); run(60); ok(chIndex===0 && rIndex===0, 'normal game over -> start of chapter');
     newRun(1); clean(); loadRoom(1,3); setState('play'); skipIntro(); lives=99;
     for(let i=0;i<3;i++){ boss.inv=0; bossDamage(); run(3); }

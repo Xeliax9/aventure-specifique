@@ -436,7 +436,11 @@ function updateWorld(){
   for(const s of spikes) if(s.appear !== undefined && s.appear < 1 && !s.pending) s.appear = Math.min(1, s.appear + 0.05);
   // people: the closest one within reach can be talked to
   animNpcs();
-  for(const n of npcs) if(n.gives === 'wall' && !hasWall && player.x > n.x + 110 && !n.told){ n.told = true; showToast('Parle d\'abord à Gaston (touche ' + KEYS_TXT.talk + ') : il a quelque chose pour toi !', 170); }
+  for(const n of npcs) if(n.gives === 'wall' && !hasWall && player.x > n.x + 110 && !cine && !talk){
+    if(!n.told){ n.told = true; n.stuckT = 0; showToast('Parle d\'abord à Gaston (touche ' + KEYS_TXT.talk + ') : il a quelque chose pour toi !', 170); }
+    // v61 : XELIAX galère à monter sans les ventouses : on le redit toutes les 6 s
+    else if(++n.stuckT >= 360){ n.stuckT = 0; showToast('Tu n\'arrives pas à monter ? Retourne parler à Gaston (touche ' + KEYS_TXT.talk + ') : il te donnera ses ventouses !', 200); }
+  }
   nearNpc = null;
   if(!player.dead && !cine){
     let bn = 34;
@@ -497,6 +501,7 @@ function updateWorld(){
     if(b.grav) b.vy += b.grav;
     b.x += b.vx; b.y += b.vy;
     if(solids.some(w => overlap(b, w))){ b.dead = true; burst(b.x + b.w / 2, b.y + b.h / 2, 6, '#ffd27a', 1.5, 16, 0.05, 2.4, 'puff'); continue; }
+    if(b.fallDie && b.vy > 0 && b.y + b.h >= FLOOR){ b.dead = true; burst(b.x + b.w / 2, FLOOR - 2, 5, b.kind === 'goldfall' ? '#ffe066' : '#dfe6f2', 1.6, 16, 0.08, 2.4, 'puff'); continue; }
     if((b.kind === 'acid' || b.kind === 'snow' || b.kind === 'icicle') && b.y + b.h >= FLOOR){
       b.dead = true;
       const col = b.kind === 'acid' ? '#7ae04a' : '#e8f6ff';
@@ -1010,6 +1015,12 @@ function updatePlayer(){
   // rising lava bounces you back up
   if(room.lava && player.y + player.h > lavaY + 6){
     if(player.invuln <= 0){
+      // v61 : la fuite du Seigneur Pourpre : toucher la lave = tous les cœurs perdus (on reprend à son cri, restartPhase)
+      if(boss && boss.mode === 'ascent' && !isSpeedrun() && !player.dead){
+        lives = 0; hud.flash = 1; addShake(10); SFX.hurt();
+        burst(player.x + player.w/2, lavaY, 22, '#ff8a3c', 4, 34);
+        die(); return;
+      }
       hurt(player.x + player.w/2 + player.facing);
       if(state !== 'play') return;
     }
@@ -1242,6 +1253,10 @@ function updatePlayer(){
   }
   // enemy bullets
   for(const b of bullets){
+    if(b.kind === 'goldfall'){   // v61 : une pièce du trésor de la pie : on l'attrape (hitbox généreuse)
+      if(!b.dead && overlap(player, {x:b.x - 3, y:b.y - 3, w:b.w + 6, h:b.h + 6})){ b.dead = true; addBank(1); score += 10; SFX.coin(); popup(b.x + 6, b.y, '+1 🪙', '#ffd54a'); sparkle(b.x + 6, b.y + 6, 6, '#ffe066'); }
+      continue;
+    }
     if(overlap(player, {x:b.x + 2, y:b.y + 2, w:b.w - 4, h:b.h - 4})){
       b.dead = true; hurt(b.x + b.w/2);
       if(state !== 'play') return;
@@ -1273,7 +1288,8 @@ function updatePlayer(){
     if(p.type === 'shoot'){ canShoot = true; showToast('Arme débloquée ! Touche ' + KEYS_TXT.shoot, 140); }
     if(p.type === 'gem'){ chGem = true; score += 100; popup(p.x + 10, p.y, '+100', '#9fe8ff'); showToast('Gemme secrète trouvée !', 130); }
     if(p.type === 'wall'){ hasWall = true; showToast('Tentacules-ventouses ! Saute contre un mur', 170); }
-    if(p.type === 'dash'){ hasDash = true; hasDJ = true; player.dashReady = true; showToast('Le dash ! Touche ' + KEYS_TXT.dash + ' : fonce et brise la glace', 200); }
+    if(p.type === 'dash' && p.back){ hasDash = true; player.dashReady = true; showToast('Dash récupéré !', 110); }
+    else if(p.type === 'dash'){ hasDash = true; hasDJ = true; player.dashReady = true; showToast('Le dash ! Touche ' + KEYS_TXT.dash + ' : fonce et brise la glace', 200); }
   }
 
   // key, or the ficelle aux olives in the very last room

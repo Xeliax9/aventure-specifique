@@ -17,6 +17,8 @@
   walls:[{x:400, y:280, w:30, h:240, glass:true}, {x:1200, y:440, w:30, h:80, glass:true}, {x:440, y:196, w:24, h:44, glass:true}, {x:290, y:196, w:24, h:44, glass:true}],
   spikes:[{x:960, y:440, w:400, down:true}, {x:150, y:196, w:420, down:true}],
   enemies:[{on:2, from:20, to:220, speed:1}],
+  // v61 : deux tireurs sur le pilier de la grande cheminée (l'un sous la zone où l'on s'accroche, l'autre au-dessus : y 144 à 300 reste libre)
+  turrets:[{x:1300, y:300, dir:'right', rate:120}, {x:1300, y:120, dir:'right', rate:150}],
   signs:[
     {x:300, y:520, text:'{dash} : dash ! Fonce dans le mur de glace'},
     {x:890, y:520, text:'Plafond piquant : dash au ras du sol'},

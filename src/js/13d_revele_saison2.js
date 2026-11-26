@@ -1,7 +1,7 @@
 // =====================================================================
 //  RÉVÉLATION DE LA SAISON 2 (v55) : la première fois qu'on ouvre les chapitres
 //  après avoir fini la saison 1, l'écran s'assombrit, « SAISON 2 » surgit, la pie
-//  traverse l'écran en semant ses plumes et lâche les 4 nouveaux chapitres un par un.
+//  arrive en semant ses plumes, lâche les 4 nouveaux chapitres un par un, puis se pose sur « SAISON 2 » (v61).
 //  Jouée une seule fois (save.s2Revealed) ; jamais dans la démo.
 //  Bloquée 1,5 s, puis Espace / clic pour passer ; seule au bout de 9 s.
 // =====================================================================
@@ -13,6 +13,16 @@ function rvCardX(j){
   return W / 2 - total / 2 + j * (w + RV_CARD.gap) + w / 2;
 }
 const rvPieX = t => rvCardX(0) + (t - RV_POP[0]) * (rvCardX(1) - rvCardX(0)) / (RV_POP[1] - RV_POP[0]);
+// v61 : la pie ne traverse plus tout l'écran : après la 4e carte elle fait demi-tour et se pose sur « SAISON 2 »
+const RV_TURN = 150, RV_LAND = 200, RV_PERCH = {x:W / 2 + 76, y:15};
+function rvPie(t){
+  if(t <= RV_TURN) return {x:rvPieX(t), y:86 + Math.sin(t * 0.25) * 5, face:1, perch:false};
+  if(t >= RV_LAND) return {x:RV_PERCH.x, y:RV_PERCH.y, face:-1, perch:true};
+  const k = easeInOutCubic((t - RV_TURN) / (RV_LAND - RV_TURN)), u = 1 - k;
+  const x0 = rvPieX(RV_TURN), y0 = 86 + Math.sin(RV_TURN * 0.25) * 5, cx = W + 10, cy = 4;   // une boucle par la droite, puis elle redescend
+  const x = u * u * x0 + 2 * u * k * cx + k * k * RV_PERCH.x, y = u * u * y0 + 2 * u * k * cy + k * k * RV_PERCH.y;
+  return {x, y, face:u * (cx - x0) + k * (RV_PERCH.x - cx) >= 0 ? 1 : -1, perch:false};
+}
 
 // la saison 1 est finie et la saison 2 n'a jamais été montrée ; un joueur qui l'a déjà commencée ne la revoit pas
 function revealDue(){
@@ -72,9 +82,10 @@ function updateReveal(){
   });
   if(t === 166){ endTune([523, 659, 784, 1047, 1319], 0.09, 'triangle', 0.05); addShake(3); }
   // la pie sème ses plumes en passant
-  const px = rvPieX(t);
-  if(px > -40 && px < W + 40 && t % 3 === 0)
-    rvPart({type:'feather', x:px + (Math.random() - 0.5) * 16, y:92, vx:(Math.random() - 0.5) * 0.8, vy:0.3 + Math.random() * 0.5, life:150, max:150, rot:Math.random() * TAU, vr:(Math.random() - 0.5) * 0.06, white:Math.random() < 0.3, ph:Math.random() * TAU});
+  const pie = rvPie(t), px = pie.x;
+  if(t === RV_LAND){ tone(988, 0.1, 'triangle', 0.04, 1320); rvBurst(pie.x, pie.y + 12, '#ff9ad8', 10); }   // elle se pose sur le titre
+  if(!pie.perch && px > -40 && px < W + 40 && t % 3 === 0)
+    rvPart({type:'feather', x:px + (Math.random() - 0.5) * 16, y:pie.y + 6, vx:(Math.random() - 0.5) * 0.8, vy:0.3 + Math.random() * 0.5, life:150, max:150, rot:Math.random() * TAU, vr:(Math.random() - 0.5) * 0.06, white:Math.random() < 0.3, ph:Math.random() * TAU});
   for(const p of R.parts){
     if(p.type === 'feather'){ p.ph += 0.06; p.x += p.vx + Math.sin(p.ph) * 0.7; p.y += p.vy; p.rot = Math.sin(p.ph) * 0.7 + p.vr * p.life; }
     else { p.vy += p.g; p.x += p.vx; p.y += p.vy; p.vx *= 0.98; p.rot += p.vr; }
@@ -164,10 +175,10 @@ function drawReveal(){
     ctx.restore();
   });
   // la pie qui traverse (elle tient encore la ficelle)
-  const px = rvPieX(t);
+  const pie = rvPie(t), px = pie.x;
   if(px > -60 && px < W + 60){
-    ctx.save(); ctx.translate(px, 86 + Math.sin(t * 0.25) * 5); ctx.scale(0.8, 0.8);
-    drawMagpie({x:-24, y:-20, w:48, h:40, state:'hover', phase:1, hitT:0, inv:0, face:1, lost:false});
+    ctx.save(); ctx.translate(px, pie.y); ctx.scale(0.8, 0.8);
+    drawMagpie({x:-24, y:-20, w:48, h:40, state:'hover', phase:1, hitT:0, inv:0, face:pie.face, lost:false, perch:pie.perch});
     ctx.restore();
   }
   for(const p of R.parts){

@@ -391,7 +391,7 @@ function lockText(i){
 }
 function playChapter(i){
   if(fadeDir !== 0) return;
-  if(isUnlocked(i)){ initAudio(); newRun(i); if(i === 0) startOpening(); return; }   // chapitre 1 : la cinématique d'ouverture
+  if(isUnlocked(i)){ initAudio(); if(resumeChapter(i)) return; newRun(i); if(i === 0) startOpening(); return; }   // chapitre 1 : la cinématique d'ouverture
   showToast(lockText(i), 110); SFX.hurt(); menu.shakeT = 18;
 }
 

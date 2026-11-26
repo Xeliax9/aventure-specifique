@@ -262,6 +262,7 @@ function loadRoom(ci, ri){
   hud.bossShown = hud.bossTrail = 1;
   makeAmbient();
 
+  player.invuln = 0;   // v61 : l'invincibilité de la fin de la saison 1 (9999 images) ne suit plus XELIAX dans le chapitre suivant
   resetPlayer();
   snapCamera();
   bannerT = ri === 0 ? 240 : 150;
@@ -340,7 +341,39 @@ function toMenu(){
   fade = 1; fadeDir = -1;
 }
 
+// v61 : quitter un chapitre en cours (pause → menu) retient la salle (save.resume[chapitre]) : rejouer ce chapitre
+// y ramène, au début de la salle (salle de boss : début du combat, phase 1). Pas dans les bonus (speedrun).
+// Quitter après un game over hors boss : le chapitre repart du début, comme si on avait appuyé sur « recommencer ».
+function keepResume(){
+  const c = CHAPTERS[chIndex], e = roomEntry;
+  if(!c || c.bonus || !e || e.ci !== chIndex || e.ri !== rIndex) return;
+  if(!save.resume || typeof save.resume !== 'object') save.resume = {};
+  if(rIndex === 0 || (state === 'over' && !room.boss)){ delete save.resume[chIndex]; persist(); return; }
+  // comme « recommencer la salle » : les pièces ramassées restent, un pouvoir pris dans cette salle est à reprendre
+  const got = new Set(collected);
+  (room.powerUps || []).forEach((p, i) => { const id = `p${chIndex}-${rIndex}-${i}`; if(p.type !== 'life' && !e.got.has(id)) got.delete(id); });
+  save.resume[chIndex] = {ri:rIndex, score:e.score + 10 * Math.max(0, chCoins - e.coins), coins:chCoins, gem:e.gem, dj:e.dj, shoot:e.shoot, wall:e.wall, dash:e.dash,
+    got:[...got], elapsed, chStart:chStartTime, cont:continues, run:runFromStart};
+  persist();
+}
+function resumeChapter(ci){
+  const d = save.resume && save.resume[ci];
+  if(!d || !Number.isInteger(d.ri) || d.ri <= 0 || !CHAPTERS[ci].rooms[d.ri]) return false;
+  let ri = d.ri;
+  const rooms = CHAPTERS[ci].rooms;
+  if(rooms[ri].boss && rooms[ri].boss.mode === 'ascent'){ const a = rooms.findIndex(r => r.boss && r.boss.mode === 'arena'); if(a >= 0) ri = a; }   // le Seigneur Pourpre : sa phase 1
+  newRun(ci);
+  const g = CHAPTERS[ci].grants || {};
+  hasDJ = !!d.dj || !!g.dj; canShoot = !!d.shoot || !!g.shoot; hasWall = !!d.wall || !!g.wall; hasDash = !!d.dash || !!g.dash;
+  score = d.score | 0; elapsed = +d.elapsed || 0; chStartTime = +d.chStart || 0; continues = d.cont | 0; runFromStart = !!d.run;
+  chCoins = d.coins | 0; chGem = !!d.gem; collected = new Set(Array.isArray(d.got) ? d.got : []);
+  loadRoom(ci, ri);
+  showToast(rooms[ri].boss ? 'Tu reprends au début du combat' : 'Tu reprends là où tu t\'étais arrêté', 150);
+  return true;
+}
+
 function chapterClear(){
+  if(save.resume) delete save.resume[chIndex];
   const t = elapsed - chStartTime;
   const prev = save.bestCh[chIndex];
   clearInfo = {time:t, coins:chCoins, total:chCoinsTotal, gem:chGem, newBest: prev == null || t < prev, bonus:!!chapter.bonus};

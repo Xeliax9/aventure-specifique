@@ -15,6 +15,8 @@ const YETI_SHIELD = 3;
 // the magpie: dash into her when she is stuck to slam her against the side, then 10 shots take one life
 // (the count is kept if she comes round before the end)
 const MAGPIE_SHOTS = 10, MAGPIE_DAZE = 190;   // dazed about 3 s (30 % shorter than before)
+// v61 : à partir de la phase 2, elle reste sonnée bien moins longtemps (phase 2 : 2 s, phase 3 : 1,6 s) ; piqué de voleuse à 12 px/image
+const MAGPIE_DAZE_P = [0, MAGPIE_DAZE, 120, 95], MAGPIE_SWOOP = 12;
 const GECKO_RUN_EVERY = 900, GECKO_ACID = 300, GECKO_STUCK_Y = 40;   // 15 s between runs, acid stays 5 s, stuck near the top of the wall
 function updateS2Boss(b){
   const p2 = b.phase === 2;
@@ -152,6 +154,7 @@ function updateS2Boss(b){
   }
   if(b.mode === 'magpie'){
     const top = 34, bottom = FLOOR - b.h, p3 = b.phase === 3;
+    if(b.stolen && !b.carry && (b.stolen === 'dash' ? hasDash : hasDJ)) b.stolen = null;
     // after each hit she shakes the nest: in phase 1 everyone falls back onto the hay, in phase 2 the world turns over
     if(b.nestT > 0){
       if(b.nestT === 50) popup(b.x + b.w / 2, b.y - 10, 'Le nid tremble !', '#ffe58a');
@@ -159,7 +162,17 @@ function updateS2Boss(b){
         const want = b.phase >= 2 ? -gdir : 1;
         addShake(9); SFX.thud();
         if(want !== gdir){ setGravity(want); showToast(p2 ? 'Elle retourne le nid !' : 'Elle secoue le nid : tout le monde retombe !', 110); }
+        magpieRain(b);
       }
+    }
+    // v61 : la pluie de trésor : chaque objet scintille un instant là d'où il va tomber, puis tombe dans le sens de la gravité
+    if(b.rain && b.rain.length){
+      const srcY = gdir > 0 ? 40 : FLOOR - 16;
+      for(const r of b.rain){
+        if(r.t % 4 === 0) particles.push({x:r.x + 6 + (Math.random() - 0.5) * 10, y:srcY + (gdir > 0 ? 2 : 10), vx:(Math.random() - 0.5) * 0.6, vy:gdir * (0.4 + Math.random() * 0.6), life:18, max:18, color:r.kind === 'goldfall' ? '#ffe066' : '#dfe6f2', grav:0, size:2.4, type:'dot'});
+        if(--r.t <= 0) bullets.push({x:r.x, y:srcY, w:12, h:12, vx:0, vy:gdir * 1.2, grav:gdir * 0.085, kind:r.kind, fallDie:true});
+      }
+      b.rain = b.rain.filter(r => r.t > 0);
     }
     if(b.state === 'hover'){
       const tx = clamp(player.x + player.w / 2 - b.w / 2 + Math.sin(b.t * 0.03) * 120, 40, W - 40 - b.w);
@@ -179,7 +192,13 @@ function updateS2Boss(b){
         for(const s of (p3 || b.volley % 3 === 0 ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3])) bullets.push({x:cx - 6, y:cy - 6, w:12, h:12, vx:Math.cos(a + s) * 3.2, vy:Math.sin(a + s) * 3.2, kind:'trinket', rot:0});
         SFX.bossShot();
       }
-      if(--b.stT <= 0){
+      if(--b.stT <= 0 && magpieWantsSteal(b)){
+        // v61 : le piqué de voleuse : elle vise XELIAX lui-même ; touché = un pouvoir volé (pas de cœur perdu)
+        b.state = 'swoopAim'; b.stT = 32; SFX.warn();   // v61 : annonce plus courte (46 → 32 images)
+        b.want = p3 ? (hasDash ? 'dash' : 'doubleJump') : (hasDJ ? 'doubleJump' : 'dash');
+        popup(b.x + b.w / 2, b.y - 14, b.want === 'dash' ? 'Elle veut ton dash !' : 'Elle veut ton double saut !', '#7df9ff');
+        if(!b.toldSteal){ b.toldSteal = true; showToast('Voleuse ! Esquive son piqué, sinon elle te prend un pouvoir', 170); }
+      } else if(b.stT <= 0){
         b.state = 'aim'; b.stT = p3 ? 30 : p2 ? 34 : 42; SFX.warn();
         b.tx = clamp(player.x + player.w / 2 - b.w / 2, 30, W - 30 - b.w);
         // phase 3: two dives straight at XELIAX, wherever he is, then a last one at the other side, where she gets stuck
@@ -215,7 +234,7 @@ function updateS2Boss(b){
           if(!b.toldHay){ b.toldHay = true; showToast('Le foin est trop mou : fais-la plonger vers le plafond !', 160); }
           return;
         }
-        b.state = 'stuck'; b.ceil = b.ty < 150; b.stT = p3 ? 150 : p2 ? 170 : 135;
+        b.state = 'stuck'; b.ceil = b.ty < 150; b.stT = p3 ? 95 : p2 ? 110 : 135;   // v61 : coincée moins longtemps en phases 2 et 3 (avant 170 / 150)
         if(b.phase === 2 && !b.toldFlip){ b.toldFlip = true; showToast('Elle se cache de l\'autre côté : retourne-toi et dash !', 170); }
         addShake(10); SFX.thud();
         const sy = b.ceil ? top - 4 : FLOOR;
@@ -226,6 +245,29 @@ function updateS2Boss(b){
           bullets.push({x:b.x - 12, y:FLOOR - 14, w:16, h:14, vx:-3.4, vy:0, kind:'wave'});
           bullets.push({x:b.x + b.w - 4, y:FLOOR - 14, w:16, h:14, vx:3.4, vy:0, kind:'wave'});
         }
+      }
+    } else if(b.state === 'swoopAim'){
+      // elle suit XELIAX du regard, puis verrouille sa cible un court instant avant de partir (le temps d'esquiver)
+      // v61 : elle vise jusqu'au tout dernier moment (5 images avant de partir)
+      if(b.stT > 5){ b.tx = clamp(player.x + player.w / 2 - b.w / 2, 30, W - 30 - b.w); b.ty = clamp(player.y + player.h / 2 - b.h / 2, top, bottom); }
+      b.face = b.tx > b.x ? 1 : -1;
+      if(--b.stT <= 0){ b.state = 'swoop'; const d = Math.hypot(b.tx - b.x, b.ty - b.y) || 1; b.vx = (b.tx - b.x) / d * MAGPIE_SWOOP; b.vy = (b.ty - b.y) / d * MAGPIE_SWOOP; b.swT = Math.ceil(d / MAGPIE_SWOOP) + 34; SFX.bossFlee(); }
+    } else if(b.state === 'swoop'){
+      // v61 : piqué très rapide, qui tourne vers XELIAX en plein vol (virage limité : un dash ou un saut au dernier moment passe encore)
+      const px = player.x + player.w / 2 - b.w / 2 - b.x, py = player.y + player.h / 2 - b.h / 2 - b.y, pd = Math.hypot(px, py) || 1;
+      b.vx += (px / pd * MAGPIE_SWOOP - b.vx) * 0.07; b.vy += (py / pd * MAGPIE_SWOOP - b.vy) * 0.07;
+      b.face = b.vx > 0 ? 1 : -1;
+      b.x = clamp(b.x + b.vx, 30, W - 30 - b.w); b.y = clamp(b.y + b.vy, top, bottom);
+      if(frame % 2 === 0) burst(b.x + b.w / 2, b.y + b.h / 2, 1, '#7df9ff', 1.2, 14, 0, 3, 'puff');
+      if(--b.swT <= 0){ b.state = 'rise'; popup(b.x + b.w / 2, b.y - 10, 'Raté !', '#ffe58a'); }
+    } else if(b.state === 'carry'){
+      // elle emporte le pouvoir de l'autre côté du nid et l'y lâche
+      b.x += (b.dx - b.x) * 0.09; b.y += (b.dy - b.y) * 0.09; b.face = b.dx > b.x ? 1 : -1;
+      if(--b.stT <= 0){
+        powerUps.push({x:b.px2, y:b.py2, type:b.carry, id:'pie-vol-' + b.t, w:20, h:20, got:false, back:true});
+        sparkle(b.px2 + 10, b.py2 + 10, 16, POWER_COLORS[b.carry]); ring(b.px2 + 10, b.py2 + 10, POWER_COLORS[b.carry], 5, 40, 22);
+        tone(700, 0.3, 'sine', 0.04, 160);
+        b.carry = null; b.state = 'rise';
       }
     } else if(b.state === 'bounce'){
       b.x = clamp(b.x + b.vx, 30, W - 30 - b.w); b.y += b.vy; b.vy += 0.3;
@@ -239,7 +281,7 @@ function updateS2Boss(b){
       if(frame % 2 === 0) burst(b.x + b.w / 2, b.y + b.h / 2, 1, '#ffffff', 1.5, 14, 0, 3, 'puff');
       if(b.x <= 30 || b.x + b.w >= W - 30){
         b.x = clamp(b.x, 30, W - 30 - b.w); b.face = b.vx > 0 ? 1 : -1;
-        b.state = 'dazed'; b.stT = MAGPIE_DAZE; b.spin = 0;
+        b.state = 'dazed'; b.stT = b.dazeMax = MAGPIE_DAZE_P[b.phase] || MAGPIE_DAZE; b.spin = 0;
         addShake(12); SFX.thud(); SFX.crumble();
         burst(b.vx > 0 ? W - 30 : 30, b.y + b.h / 2, 16, '#e8d8ff', 3, 30, 0.05, 3, 'puff');
         for(let i = 0; i < 8; i++) particles.push({x:b.x + b.w / 2, y:b.y + b.h / 2, vx:(Math.random() - 0.5) * 4, vy:(Math.random() - 0.5) * 4, life:50, max:50, color:i % 2 ? '#1a1430' : '#ffffff', grav:0.05, size:3, type:'confetti', rot:Math.random() * TAU, vr:0.3, drag:0.95});
@@ -333,9 +375,43 @@ function bossContact2(prevBottom, prevTop){
     anim.wobV -= 0.4; setFace(anim, 'open', 30);
     return false;
   }
+  if(b.mode === 'magpie' && b.state === 'swoop' && (hasDJ || hasDash)){ if(player.invuln <= 0 && !player.dead) magpieSteal(b); return false; }
+  if(b.mode === 'magpie' && b.state === 'carry') return false;
   if(bossHarmless(b)) return false;
   hurt(b.x + b.w / 2);
   return state !== 'play';
+}
+
+// v61 : après chaque coup, le nid secoué fait pleuvoir le trésor de la pie : des fourchettes (elles piquent) et
+// 2 pièces d'or (à attraper : +1 pièce chacune). 9 colonnes possibles, il reste toujours des couloirs libres.
+function magpieRain(b){
+  const cols = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort(() => Math.random() - 0.5), forks = b.phase === 1 ? 3 : b.phase === 2 ? 4 : 5;
+  b.rain = cols.slice(0, forks + 2).map((c, i) => ({x:54 + c * 65, kind:i < forks ? 'fork' : 'goldfall', t:34 + i * 7}));
+  if(!b.toldRain){ b.toldRain = true; showToast('Son trésor dégringole ! Évite les fourchettes, attrape les pièces', 170); }
+}
+// v61 : la pie vole un pouvoir en plein combat (phases 2 et 3, un plongeon sur trois, jamais deux pouvoirs à la fois).
+// Phase 2 : le double saut ; phase 3 : le dash (sans lui, impossible de l'écraser contre le bord). Le pouvoir est lâché
+// de l'autre côté du nid (au plafond si XELIAX est au sol, et l'inverse) : il faut retourner la gravité pour le reprendre.
+function magpieWantsSteal(b){
+  b.cyc = (b.cyc || 0) + 1;
+  return b.phase >= 2 && !b.stolen && b.cyc % 3 === 2 && (hasDJ || hasDash);
+}
+function magpieSteal(b){
+  const t = b.want === 'dash' && hasDash ? 'dash' : hasDJ ? 'doubleJump' : 'dash';
+  if(t === 'dash'){ hasDash = false; player.dashT = 0; } else hasDJ = false;
+  b.stolen = t; b.carry = t; b.state = 'carry'; b.stT = 50;
+  b.px2 = player.x + player.w / 2 < W / 2 ? 500 : 120; b.py2 = gdir > 0 ? 42 : FLOOR - 28;
+  b.dx = b.px2 - 14; b.dy = gdir > 0 ? 70 : 250;
+  player.invuln = 70; player.vy = -5 * gdir; player.vx = (player.x + player.w / 2 < b.x + b.w / 2 ? -1 : 1) * 4; player.noCut = true;
+  setFace(anim, 'hurt', 60); SFX.crack(); addShake(7);
+  burst(player.x + player.w / 2, player.y + player.h / 2, 14, '#7df9ff', 2.4, 30, 0.04, 3, 'star');
+  showToast(t === 'dash' ? 'La pie t\'a volé ton dash ! Il brille de l\'autre côté du nid : retourne la gravité' : 'La pie t\'a volé ton double saut ! Il brille de l\'autre côté du nid : retourne la gravité', 200);
+}
+// le combat recommence ou se termine : elle rend ce qu'elle a pris
+function magpieGiveBack(b){
+  if(!b || b.mode !== 'magpie' || !b.stolen) return;
+  if(b.stolen === 'dash') hasDash = true; else hasDJ = true;
+  b.stolen = null; b.carry = null;
 }
 
 // the magpie lets go of the ficelle: it tumbles down, XELIAX has to catch it
@@ -501,14 +577,15 @@ function drawMagpie(b){
   const p2 = b.phase === 2, hit = b.hitT > 0 || (b.inv > 0 && Math.floor(b.inv / 4) % 2 === 0);
   const p3 = b.phase === 3, black = hit ? '#ffffff' : '#1a1430', blue = hit ? '#ffffff' : p3 ? '#e0242a' : p2 ? '#b8306a' : '#2f5ad8';
   if(p3){ softGlow(cx, cy, 44, 34, '255,60,60', 0.25 + 0.1 * Math.sin(frame * 0.2)); if(frame % 5 === 0) particles.push({x:cx + (Math.random() - 0.5) * 36, y:cy + (Math.random() - 0.5) * 24, vx:(Math.random() - 0.5) * 1.2, vy:-0.8, life:26, max:26, color:Math.random() < 0.5 ? '#ff3d3d' : '#ffb03d', grav:-0.02, size:2.6, type:'dot'}); }
-  const stuck = b.state === 'stuck' || b.state === 'dazed', dive = b.state === 'dive', aim = b.state === 'aim', pushed = b.state === 'pushed';
+  const stuck = b.state === 'stuck' || b.state === 'dazed', dive = b.state === 'dive' || b.state === 'swoop', grab = b.state === 'swoopAim', aim = b.state === 'aim' || grab, pushed = b.state === 'pushed';
   if(aim){
-    // a dotted line to where she's about to dive
-    ctx.strokeStyle = `rgba(255,80,80,${0.5 + 0.4 * Math.sin(frame * 0.5)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+    // a dotted line to where she's about to dive (cyan : le piqué de voleuse, qui vise XELIAX lui-même)
+    ctx.strokeStyle = `rgba(${grab ? '125,249,255' : '255,80,80'},${0.5 + 0.4 * Math.sin(frame * 0.5)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(b.tx + b.w / 2, b.ty + b.h / 2); ctx.stroke(); ctx.setLineDash([]);
     const my = b.ty > 150 ? FLOOR : 34;
-    softGlow(b.tx + b.w / 2, my, 30, 10, '255,60,60', 0.5);
-    outlined('!', cx, y - 12, 20, '#ff3d3d', '#ffffff', 4, FD, 400, 'center');
+    if(grab) softGlow(b.tx + b.w / 2, b.ty + b.h / 2, 26, 26, '125,249,255', 0.45);
+    else softGlow(b.tx + b.w / 2, my, 30, 10, '255,60,60', 0.5);
+    outlined('!', cx, y - 12, 20, grab ? '#19b8d8' : '#ff3d3d', '#ffffff', 4, FD, 400, 'center');
   }
   ctx.save(); ctx.translate(cx, cy);
   let ang = 0;
@@ -518,7 +595,11 @@ function drawMagpie(b){
   if(b.state === 'dazed'){ ang = b.ceil ? -0.5 : 0.5; ctx.scale(0.85, 1.12); }   // squashed against the side
   ctx.scale(b.face || 1, 1);
   ctx.rotate(ang);
-  const flap = stuck ? Math.sin(frame * 0.8) * 0.9 : dive ? -0.9 : Math.sin(frame * 0.3) * 0.8;
+  const flap = b.perch ? -0.12 + Math.sin(frame * 0.07) * 0.05 : stuck ? Math.sin(frame * 0.8) * 0.9 : dive ? -0.9 : Math.sin(frame * 0.3) * 0.8;
+  if(b.perch){   // posée (révélation de la saison 2) : ailes repliées, deux petites pattes
+    ctx.strokeStyle = '#ffb03d'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    for(const lx of [-3, 5]){ ctx.beginPath(); ctx.moveTo(lx, 10); ctx.lineTo(lx, 17); ctx.moveTo(lx - 2.5, 17); ctx.lineTo(lx + 3, 17); ctx.stroke(); }
+  }
   // tail
   ctx.fillStyle = black; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.2;
   ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-42, -6 + Math.sin(frame * 0.1) * 2); ctx.lineTo(-44, 0); ctx.lineTo(-42, 6); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -558,6 +639,12 @@ function drawMagpie(b){
   if(!b.lost) drawFicelle(30, -3, 26, 0.15, false, 5);
   ctx.fillStyle = '#4a4a5a'; ctx.beginPath(); ctx.moveTo(23, -8); ctx.lineTo(34, -5); ctx.lineTo(23, -3); ctx.closePath(); ctx.fill();
   ctx.restore();
+  if(b.carry){   // le pouvoir volé, dans une bulle au bout de son bec
+    const bx = cx + (b.face || 1) * 30, by = cy + 2, col = POWER_COLORS[b.carry] || '#7df9ff';
+    softGlow(bx, by, 20, 20, '125,249,255', 0.45);
+    ctx.beginPath(); ctx.arc(bx, by, 9, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.arc(bx - 3, by - 3, 2.4, 0, TAU); ctx.fill();
+  }
   if(stuck) for(let i = 0; i < 3; i++){ const a = frame * 0.12 + i * TAU / 3; ctx.fillStyle = '#ffe066'; star(cx + Math.cos(a) * 22, (b.ceil ? y + b.h + 10 : y - 8) + Math.sin(a) * 5, 3.4, frame * 0.1); }
   // how many shots are still needed for the next life (kept from one daze to the next)
   if((b.state === 'dazed' || b.state === 'stuck' || pushed) && !b.dying){
@@ -567,7 +654,7 @@ function drawMagpie(b){
       ctx.beginPath(); ctx.arc(cx - (n - 1) * 3.5 + i * 7, py, 2.6, 0, TAU); ctx.fill();
       ctx.strokeStyle = '#3a2a10'; ctx.lineWidth = 0.8; ctx.stroke();
     }
-    if(b.state === 'dazed'){ const k = b.stT / MAGPIE_DAZE; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(cx - 18, py + (b.ceil ? 6 : -9), 36 * k, 3); }
+    if(b.state === 'dazed'){ const k = b.stT / (b.dazeMax || MAGPIE_DAZE); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(cx - 18, py + (b.ceil ? 6 : -9), 36 * k, 3); }
   }
 }
 

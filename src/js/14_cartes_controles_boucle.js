@@ -269,7 +269,7 @@ function pressJump(){
   input.jumpPressed = true;
 }
 
-function backToMenu(){ if(state === 'pause' || state === 'over') toMenu(); else if(state === 'pet') closePet(); }
+function backToMenu(){ if(state === 'pause' || state === 'over'){ keepResume(); toMenu(); } else if(state === 'pet') closePet(); }
 
 // pause : dans une salle de boss on recommence tout le combat (phase 1, cœurs pleins, comme après une mort ;
 // v55 : avant, on reprenait la phase en cours sans rendre de cœurs) ; ça ne compte pas comme un « continue »
