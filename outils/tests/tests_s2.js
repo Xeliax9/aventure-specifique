@@ -211,6 +211,64 @@ const { chromium } = require('playwright');
     // second time the ending can be skipped
     startEnding(); run(40); input.jumpPressed = true; run(1); ok(END.t >= END_SHOTS.E, 'the ending can be skipped the second time');
     run(200);
+
+    // ---- v62 : Gecko, la plateforme du milieu devient fragile en phase 2 seulement (p2crumble, retour après 10 s)
+    newRun(6); clean(); loadRoom(6, CHAPTERS[6].rooms.length - 1); setState('play'); lives = 99; run(330 + READY_DUR + 10);
+    { const mid = platforms.find(q => q.p2crumble);
+      ok(mid && mid.x === 270 && !mid.crumble, 'gecko : plateforme du milieu solide en phase 1');
+      boss.hp = 1; bossDamage(); if(cine) finishCine(); run(5);
+      ok(boss.phase === 2 && mid.crumble && mid.back === 600, 'gecko phase 2 : la plateforme du milieu devient fragile (retour 600 images)');
+      const side = platforms.filter(q => !q.solid && q !== mid && q.y < FLOOR - 2);
+      ok(side.length === 2 && side.every(q => !q.crumble), 'gecko phase 2 : les plateformes des côtés restent solides');
+      let broke = -1;
+      for(let i = 0; i < 90 && broke < 0; i++){ player.invuln = 999; if(!mid.gone){ player.x = mid.x + 30; player.y = mid.y - player.h; player.vy = 0; } step(); if(mid.gone) broke = i; }
+      ok(broke > 30 && broke < 60, 'gecko phase 2 : debout dessus, elle se fissure puis casse (' + broke + ' images)');
+      let back = -1;
+      for(let i = 0; i < 700 && back < 0; i++){ player.invuln = 999; player.x = 100; player.y = FLOOR - player.h; player.vy = 0; step(); if(!mid.gone) back = i; }
+      ok(back > 590 && back < 610, 'gecko : elle revient après 10 s (' + back + ' images)'); }
+
+    // ---- v62 : pie, un tir éclate une babiole (un tir = une babiole, +1 pièce)
+    newRun(8); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); lives = 99; run(330 + READY_DUR + 10);
+    { if(cine) finishCine();
+      const bank0 = save.bank || 0, hp0 = boss.hp;
+      bullets = [{x:300, y:200, w:12, h:12, vx:0, vy:0, kind:'trinket', rot:0}, {x:300, y:200, w:12, h:12, vx:0, vy:0, kind:'trinket', rot:0}];
+      shots = [{x:296, y:202, w:10, h:5, vx:0, vy:0}];
+      player.invuln = 999; player.x = 80; player.y = FLOOR - player.h;
+      step();
+      ok(bullets.filter(q => q.kind === 'trinket' && !q.dead).length === 1 && !shots.length, 'pie : un tir éclate une seule babiole et disparaît');
+      ok((save.bank || 0) === bank0 + 1 && boss.hp === hp0, 'pie : +1 pièce, la pie ne perd rien (' + bank0 + ' → ' + save.bank + ')');
+      shots = [{x:296, y:202, w:10, h:5, vx:0, vy:0}]; bullets = []; step();
+      ok((save.bank || 0) === bank0 + 1, 'sans babiole, un tir ne rapporte rien'); }
+
+    // ---- v62 : contre-la-montre d'un monde de la saison 2 déjà fini
+    delete save.bestCh[5]; delete save.bestCh[6]; delete save.bestCh[7]; save.speed = {};
+    ok(!ttOpen(5) && !ttOpen(6) && !ttOpen(0) && !ttOpen(9), 'contre-la-montre : fermé tant que le monde n\'est pas fini (et jamais en saison 1 ni en bonus)');
+    save.bestCh[5] = 300000; save.bestCh[6] = 300000; save.unlocked2 = 4;
+    ok(ttOpen(5) && ttOpen(6) && !ttOpen(7), 'contre-la-montre : ouvert pour les mondes finis');
+    toMenu(); clean(); goPage('chapters'); menu.t = 1; menu.from = null; selectApp(5); menu.scroll = appPos(appIndex(5)); fade = 0; render(1);
+    ok(deck.tt && deck.tt.classList.contains('on') && /contre-la-montre/.test(deck.hint.textContent), 'carte d\'un monde fini : bouton « Contre-la-montre » et rappel de la touche C');
+    selectApp(7); render(1); ok(!deck.tt.classList.contains('on'), 'monde pas encore fini : pas de bouton');
+    selectApp(5); render(1);
+    menuKey('c');
+    ok(state === 'play' && timeTrial && chIndex === 5 && rIndex === 0 && isSpeedrun() && !srOneHit(), 'C sur la carte : le monde 1 repart en contre-la-montre (' + state + ', ' + chIndex + ')');
+    clean(); ok(lives === startLives() && CHAPTERS[5].parTime > 0, 'on garde ses cœurs, un temps à battre existe');
+    { player.invuln = 0; player.dead = false; const l0 = lives; hurt(player.x + 40); ok(lives === l0 - 1 && !player.dead, 'contre-la-montre : un coup enlève un cœur (pas de « un coup = mort »)');
+      render(1); }
+    timerRunning = true; run(30); clean(); ok(elapsed - chStartTime > 0, 'le chrono tourne');
+    loadRoom(5, 1); ok(srun.splits.length === 1, 'un temps intermédiaire à chaque nouvelle salle');
+    keepResume(); ok(!save.resume || save.resume[5] == null, 'contre-la-montre : pas de reprise retenue en quittant');
+    run(20); clean(); chapterClear();
+    ok(state === 'chapter' && clearInfo.tt && save.speed[5] && save.speed[5].t > 0 && save.speed[5].ghost.length > 0, 'fin du monde : record, temps intermédiaires et fantôme gardés');
+    ok(!clearInfo.teaser && srMedal(5, CHAPTERS[5].parTime) === 'or', 'pas d\'indice de la suite ; médailles du monde');
+    render(1); stateT = 60; confirmAction(); clean();
+    ok(state === 'title' && menu.page === 'chapters' && !timeTrial, 'Espace : retour aux chapitres, contre-la-montre fini');
+    ok(startTimeTrial(6) && !cine && !hasDJ && timeTrial, 'contre-la-montre des Gorges : pas de cinématique du vol du double saut');
+    clean(); toMenu(); clean();
+    save.bestCh[8] = 600000; newRun(8, true); clean(); loadRoom(8, CHAPTERS[8].rooms.length - 1); setState('play'); for(let k = 0; k < 4 && cine; k++) finishCine();
+    boss.alive = false; key = {x:300, y:FLOOR - 30, w:34, h:16, got:true, kind:'ficelle'}; finaleT = 999; pressJump(); step();
+    ok(state === 'chapter' && clearInfo.tt, 'contre-la-montre du Nid : pas de cinématique de fin, l\'écran des résultats (' + state + ')');
+    clean(); toMenu(); clean(); render(1);
+    ok(!timeTrial && !isSpeedrun(), 'retour au menu : mode normal');
     }catch(e){ o.push('ERROR ' + e.message + ' ' + e.stack.split('\n').slice(0, 3).join(' | ')); }
     return o;
   });

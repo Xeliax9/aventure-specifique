@@ -3,6 +3,7 @@
 // =====================================================================
 let state = 'title', stateT = 0;   // title (every menu page) | play | talk | pet | pause | over | chapter | win | ending | opening
 let menuSel = 0;
+let timeTrial = false;   // v62 : contre-la-montre d'un monde de la saison 2 (13c_speedrun.js)
 let chIndex = 0, rIndex = 0, chapter = null, room = null;
 let platforms = [], solids = [], enemies = [], bats = [], turrets = [], springs = [], spikes = [];
 let fires = [], fireTold = false;     // the owl's bombs set the floor alight for a few seconds
@@ -207,7 +208,7 @@ function stepHero(){
 // =====================================================================
 function loadRoom(ci, ri){
   chIndex = ci; rIndex = ri;
-  if(ri > 0 && CHAPTERS[ci].bonus && state === 'play' && timerRunning) srSplit();   // speedrun: a split at each new room
+  if(ri > 0 && (CHAPTERS[ci].bonus || timeTrial) && state === 'play' && timerRunning) srSplit();   // speedrun: a split at each new room
   chapter = CHAPTERS[ci];
   room = chapter.rooms[ri];
   roomEntry = {ci, ri, score, bank:save.bank || 0, coins:chCoins, dj:hasDJ, shoot:canShoot, wall:hasWall, dash:hasDash, gem:chGem, got:new Set(collected)};
@@ -216,7 +217,7 @@ function loadRoom(ci, ri){
   // season 2: in the first rooms of the gorges Gaston keeps the double jump (he gives it back in La Faille)
   let djScene = false;
   djTake = 0;   // v54 : un message « la pie t'a pris ton double saut » en attente ne suit pas XELIAX dans une autre salle
-  if(room.noDJ){ if(hasDJ){ if(room.djSteal) djScene = true; else djTake = 100; } if(!djScene) hasDJ = false; }
+  if(room.noDJ){ if(hasDJ){ if(room.djSteal && !timeTrial) djScene = true; else if(!timeTrial) djTake = 100; } if(!djScene) hasDJ = false; }   // contre-la-montre : pas de cinématique
 
   platforms = room.platforms.map((p, i) => ({
     ...p, h: p.h || (p.fall ? 16 : 14), dx:0, dy:0, cT:0, gone:false, rT:0, appear:1, ox:p.x, oy:p.y, fT:0, fvy:0, loose:!!p.free,
@@ -268,7 +269,7 @@ function loadRoom(ci, ri){
   bannerT = ri === 0 ? 240 : 150;
   if(room.shootUp && !room.boss) showToast('Tes tirs partent vers le haut !', 170);
   if(boss) startCine('intro');   // every boss makes an entrance before the fight starts
-  if(boss && !isSpeedrun()) heartFill = 0;   // v55 : cœurs vides pendant la présentation, ils se remplissent juste après (startReady)
+  if(boss && !srOneHit()) heartFill = 0;   // v55 : cœurs vides pendant la présentation, ils se remplissent juste après (startReady)
   if(boss && state === 'play') maybeBossDemo(false);   // the first time: how to beat it
   if(djScene){ bannerT = 0; startCine('dj'); }    // the magpie snatches the double jump and drops it into the gorge
 }
@@ -307,15 +308,17 @@ function startChapter(ci, advancing){
   lives = advancing ? Math.max(lives, startLives()) : startLives();
   chStartTime = elapsed; chCoins = 0; chGem = false;
   if(CHAPTERS[ci].bonus){ srReset(); lives = 99; }
+  else if(timeTrial) srReset();
   collected = new Set();
   chCoinsTotal = CHAPTERS[ci].rooms.reduce((a, r) => a + (r.coins || []).length, 0);
   loadRoom(ci, 0);
 }
 
-function newRun(ci){
+function newRun(ci, tt){
   save.seen[ci] = true;
+  timeTrial = !!tt && seasonOf(ci) === 2;   // v62 : contre-la-montre (startTimeTrial)
   score = 0; elapsed = 0; timerRunning = false; continues = 0;
-  runFromStart = ci === 0 || ci === S2_FIRST;
+  runFromStart = !timeTrial && (ci === 0 || ci === S2_FIRST);
   save.lastSeason = seasonOf(ci);
   if(seasonOf(ci) === 2 && !save.s2Seen) save.s2Seen = true;
   persist();
@@ -330,7 +333,7 @@ function transition(fn){ if(fadeDir > 0) return; pendingAction = fn; fadeDir = 1
 
 function toMenu(){
   setState('title');
-  timerRunning = false;
+  timerRunning = false; timeTrial = false;
   const c = CHAPTERS[chIndex];
   if(c && c.bonus){ menu.page = 'bonus'; menu.sel.bonus = Math.max(0, BONUS_CH.indexOf(chIndex)); menuSel = defaultChapter(); }
   else { refreshMainCh(); menu.page = 'chapters'; menuSel = c && isUnlocked(chIndex) && MAIN_CH.includes(chIndex) ? chIndex : defaultChapter(); }
@@ -346,7 +349,7 @@ function toMenu(){
 // Quitter après un game over hors boss : le chapitre repart du début, comme si on avait appuyé sur « recommencer ».
 function keepResume(){
   const c = CHAPTERS[chIndex], e = roomEntry;
-  if(!c || c.bonus || !e || e.ci !== chIndex || e.ri !== rIndex) return;
+  if(!c || c.bonus || timeTrial || !e || e.ci !== chIndex || e.ri !== rIndex) return;
   if(!save.resume || typeof save.resume !== 'object') save.resume = {};
   if(rIndex === 0 || (state === 'over' && !room.boss)){ delete save.resume[chIndex]; persist(); return; }
   // comme « recommencer la salle » : les pièces ramassées restent, un pouvoir pris dans cette salle est à reprendre
@@ -389,6 +392,17 @@ function chapterClear(){
     if(clearInfo.fast){ if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true; }
     clearInfo.bonus2 = !!chapter.bonus2;
     score += 500;
+    setState('chapter');
+    SFX.win();
+    persist();
+    return;
+  }
+  // v62 : contre-la-montre d'un monde de la saison 2 : record, médaille, fantôme ; pas de fin de saison ni d'indice
+  if(timeTrial){
+    timerRunning = false;
+    srFinish(t);
+    clearInfo.tt = true; clearInfo.newBest = !!clearInfo.srNew;
+    score += 250;
     setState('chapter');
     SFX.win();
     persist();

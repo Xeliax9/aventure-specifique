@@ -99,7 +99,7 @@ function dropBossReward(b){
 // =====================================================================
 function hurt(fromX){
   if(player.invuln > 0 || player.dead || cine) return;
-  if(isSpeedrun()){ srDeath(); return; }          // speedrun: one hit and you're out
+  if(srOneHit()){ srDeath(); return; }          // speedrun (bonus): one hit and you're out
   if(idle.phase) idleReset();
   lives--;
   SFX.hurt();
@@ -117,7 +117,7 @@ function hurt(fromX){
 // spikes, pits, lava pools: lose a life and respawn at the last checkpoint
 function killPlayer(){
   if(player.dead) return;
-  if(isSpeedrun()){ idleReset(); srDeath(); return; }
+  if(srOneHit()){ idleReset(); srDeath(); return; }
   idleReset();
   lives--;
   addShake(7);
@@ -313,9 +313,9 @@ function enterPhase2(announce){
   if(b.mode === 'swoop'){
     b.state = 'rise';
     for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true});
-    // phase 2 : les plateformes des côtés deviennent fragiles et reviennent 10 s après s'être cassées
-    for(const p of platforms) if(p.p2crumble){ p.crumble = true; p.back = 600; p.cT = 0; }
   }
+  // phase 2 : les plateformes p2crumble (Gardien, Gecko) deviennent fragiles et reviennent 10 s après s'être cassées
+  for(const p of platforms) if(p.p2crumble){ p.crumble = true; p.back = 600; p.cT = 0; }
   if(S2_BOSS.has(b.mode)){
     for(const s of (room.phase2Spikes || [])) spikes.push({...s, appear:0, pending:true});
     if(b.mode === 'gecko'){ b.state = b.state === 'stun' ? 'climb' : 'crawl'; b.stT = 120; b.leaps = 0; b.runT = 480; b.shots = 0; }
@@ -739,7 +739,7 @@ function finishCine(){
   for(const s of spikes) if(s.pending) s.pending = false;
   if(k === 'dj'){ steal = null; djOrb = null; hasDJ = false; bannerT = 240; showToast('Sans double saut… Gaston saura peut-être quoi faire !', 170); return; }
   // v55 : après la présentation, « Prêt ? » et les cœurs qui se remplissent, puis seulement « Combat ! »
-  if(k === 'intro' && b && b.alive && !b.dying && !isSpeedrun()){ startReady(); return; }
+  if(k === 'intro' && b && b.alive && !b.dying && !srOneHit()){ startReady(); return; }
   fightPop = 60;
   SFX.power();
   if((k === 'intro' || k === 'ready') && room.shootUp) showToast('Tes tirs partent vers le haut !', 170);

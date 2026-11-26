@@ -192,7 +192,7 @@ if(!(save.bank >= 0)) save.bank = 0;
 if(!save.owned || typeof save.owned !== 'object') save.owned = {};
 const gemCount = () => (save.gems || []).filter(Boolean).length;
 function addBank(n){ save.bank = (save.bank || 0) + n; persist(); }
-save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, timer:true, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
+save.settings = Object.assign({vol:8, sound:true, shake:true, reduced:false, slowPlanks:false, timer:true, skin:'indigo', creator:false, creatorFound:false}, save.settings || {});
 delete save.settings.lives;   // v54 : plus de choix du nombre de vies (les anciennes sauvegardes à 3, 7 ou 9 repartent à 5)
 const SET = save.settings;
 // v54 : la Nuit (gratuite avant) prend la place et le prix de Corail ; qui l'avait déjà sur lui la garde

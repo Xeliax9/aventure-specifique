@@ -1,6 +1,6 @@
   // ==== SEASON 2 ====
   {
-    name:'Le Ciel Renversé', season:2, num:1, deco:'sky', grants:{dj:true, shoot:true},
+    name:'Le Ciel Renversé', season:2, num:1, parTime:150000, deco:'sky', grants:{dj:true, shoot:true},
     rooms:[
       {
         name:'Tête en bas',
@@ -260,7 +260,7 @@
     ],
   },
   {
-    name:'Les Gorges', season:2, num:2, deco:'canyon', grants:{dj:true, shoot:true},
+    name:'Les Gorges', season:2, num:2, parTime:180000, deco:'canyon', grants:{dj:true, shoot:true},
     rooms:[
       {
         name:'Les Ventouses',
@@ -392,7 +392,7 @@
           {x:0, y:340, w:640, h:20},
           {x:140, y:236, w:90},
           {x:410, y:236, w:90},
-          {x:270, y:150, w:100},
+          {x:270, y:150, w:100, p2crumble:true},
         ],
         walls:[
           {x:0, y:-300, w:40, h:300, slick:true},
@@ -411,7 +411,7 @@
     ],
   },
   {
-    name:'Le Glacier', season:2, num:3, deco:'ice', grants:{dj:true, shoot:true, wall:true, dash:true},
+    name:'Le Glacier', season:2, num:3, parTime:210000, deco:'ice', grants:{dj:true, shoot:true, wall:true, dash:true},
     rooms:[
       {
         name:'Le Dash',
@@ -580,7 +580,7 @@
     ],
   },
   {
-    name:'Le Nid de la Pie', season:2, num:4, deco:'nest', grants:{dj:true, shoot:true, wall:true, dash:true},
+    name:'Le Nid de la Pie', season:2, num:4, parTime:210000, deco:'nest', grants:{dj:true, shoot:true, wall:true, dash:true},
     rooms:[
       {
         name:'L\'Orage',
