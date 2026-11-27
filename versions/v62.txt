@@ -1,0 +1,6 @@
+VERSION 62 (v0.9.62)
+
+Netteté
+- Texte et menus nets sur tous les écrans (mise à l'échelle Windows 125 %, 150 %, écrans 1440p et 4K, téléphones) :
+  l'image du jeu a maintenant exactement autant de pixels que l'écran, et les menus restent toujours en pleine résolution,
+  même si le jeu a dû baisser sa qualité pour rester fluide pendant une partie.
