@@ -716,7 +716,7 @@ function makeAmbient(){
   ambient = [];
   const deco = decoOf();
   const n = deco === 'cave' ? 26 : deco === 'hills' ? 12 : deco === 'night' ? 22 : (deco === 'fortress' || deco === 'ascent') ? 34
-          : deco === 'sky' ? 18 : deco === 'canyon' ? 16 : deco === 'ice' ? 46 : deco === 'nest' ? 40 : deco === 'cosmos' ? 28 : 0;
+          : deco === 'sky' ? 18 : deco === 'canyon' ? 16 : deco === 'ice' ? 46 : deco === 'nest' ? 40 : 0;
   for(let i = 0; i < n; i++) ambient.push({x:Math.random()*W, y:Math.random()*H, ph:Math.random()*6, s:0.5 + Math.random(), z:0.3 + Math.random()*0.7});
 }
 function updateAmbient(){
@@ -731,7 +731,6 @@ function updateAmbient(){
     else if(deco === 'canyon'){ p.x += 0.5 + 0.6 * p.z; p.y += Math.sin(p.ph) * 0.2; }
     else if(deco === 'ice'){ p.x += Math.sin(p.ph) * 0.35 - 0.1; p.y += 0.45 + 0.5 * p.z; }
     else if(deco === 'nest'){ p.x -= 1.2 + p.z; p.y += 4 + 3 * p.z; }
-    else if(deco === 'cosmos'){ p.x += Math.sin(p.ph) * 0.18 - 0.06; p.y -= 0.1 * p.z; }
     else { p.x += Math.sin(p.ph * 1.3) * 0.4; p.y -= (0.6 + p.z) * 0.8; }
     if(p.y < -10){ p.y = H + 10; p.x = Math.random() * W; }
     if(p.y > H + 10){ p.y = -10; p.x = Math.random() * W; }

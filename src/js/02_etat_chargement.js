@@ -390,8 +390,8 @@ function chapterClear(){
     timerRunning = false;
     srFinish(t);
     clearInfo.fast = !chapter.parTime || t <= chapter.parTime;
-    if(clearInfo.fast){ if(chapter.bonus2) save.crystalFicelle = true; else save.goldFicelle = true; }
-    clearInfo.bonus2 = !!chapter.bonus2;
+    // v62 : la ficelle dorée débloque deux couleurs d'un coup, l'Or et le Cristal (voir bonusSkinsWon)
+    if(clearInfo.fast){ clearInfo.newSkins = !bonusSkinsWon(); save.goldFicelle = true; }
     score += 500;
     setState('chapter');
     SFX.win();
@@ -410,7 +410,6 @@ function chapterClear(){
     return;
   }
   const s2 = chapter.season === 2;
-  if(chIndex === STORY_END) clearInfo.bonusNew = prev == null;
   if(s2) save.unlocked2 = Math.max(save.unlocked2, Math.min(4, chapter.num + 1));
   else save.unlocked = Math.max(save.unlocked, Math.min(STORY_END + 2, chIndex + 2));
   if(chIndex === STORY_END || chIndex === S2_END){

@@ -46,7 +46,7 @@ Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
 ## État (v62 = v0.9.62, 26 novembre 2026, faite, testée, commitée et poussée sur main, pas publiée : pas de tag ; la v60 est la dernière publiée, tag v0.9.60 ; v61 = commit 0949963)
-- v62 : boutique : couleur non obtenue = grisée + cadenas (`skinGrey`, `skinShadow`), Émeraude/Galaxie débloquées au clic avec assez de gemmes (`save.gemSkinsV62`) ; Paramètres > Jeu sans « Mode créateur » (il ne s ouvre que par « Connexion admin ») ; babioles de la pie détruites d un tir (`kind:'trinket'`, +1 pièce) ; `p2crumble` sorti dans `enterPhase2`, plateforme du milieu de 2-4 fragile en phase 2 ;
+- v62 : bonus : Le Cosmos supprimé (`save.cosmosGone` nettoie les sauvegardes), Les Étoiles visibles après la saison 2 (`save.s2Done`, ou admin), `bonusSkinsWon` → ficelle dorée = Or + Cristal ; boutique : couleur non obtenue = grisée + cadenas (`skinGrey`, `skinShadow`), Émeraude/Galaxie débloquées au clic avec assez de gemmes (`save.gemSkinsV62`) ; Paramètres > Jeu sans « Mode créateur » (il ne s ouvre que par « Connexion admin ») ; babioles de la pie détruites d un tir (`kind:'trinket'`, +1 pièce) ; `p2crumble` sorti dans `enterPhase2`, plateforme du milieu de 2-4 fragile en phase 2 ;
   contre-la-montre saison 2 (`timeTrial`, `srOneHit`, bouton à côté de JOUER / touche C, `parTime` dans `entetes.js`) ;
   graphismes : `drawAirShadow` (ombre de contact), `dust()` avec gravité/poussée, `stompStop` (3 images), `shotFx`, iris aux couleurs du chapitre centré sur la porte, `drawLavaHeat`, `drawClearStamp`, plans lointains Glacier et Nid.
 - v61 (suite) : salles 4-1 (vitre au dash, fosse à piques sous un rocher franchie par des planches `fall`) et 4-2 (cheminées de 80 px, plafond sans piques) retouchées et vérifiées (route2 + robot `parcours/4-1-planches.json`).
@@ -78,7 +78,7 @@ Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'
   Gemme du chapitre 3 : dans 3-4, au-dessus de l'écran (y −68), la pièce à y 30 est le seul indice. Les autres gemmes n'ont pas été retouchées.
 - Pause (v52) : lignes cliquables (`pauseBtns`), `pauseRestart` (boss : reprend la phase sans rendre de cœurs), `openPauseKeys` (page Commandes, retour à la pause via `menu.pauseKeys`).
 - Fuite finale : lave à 1,35 px/image ; le robot sans erreur bloque vers 1,8.
-- Bonus Le Cosmos (v52) : salle 1 refaite d'après `capture pour correction/level design.png` (1210 × 680) ; `parTime` 90000 (1 min 30, choisi par l'utilisateur en v53). Tête en bas, le saut ne fait que 64 à 73 px.
+- Bonus Le Cosmos (v52, SUPPRIMÉ en v62, ne plus s en servir) : salle 1 refaite d'après `capture pour correction/level design.png` (1210 × 680) ; `parTime` 90000 (1 min 30, choisi par l'utilisateur en v53). Tête en bas, le saut ne fait que 64 à 73 px.
   `route2` ignore les portes (`hp`) : les tester dans le vrai moteur. Après une téléportation dans un test, recaler la caméra, sinon les tirs disparaissent.
 - Menu : la saison 2 n'apparaît qu'après la fin de la saison 1 (`s2Visible`, `refreshMainCh`) ; plus de barre de téléphone.
 - v48 (retours GitHub de hugomslv) : touches dessinées cliquables dans les menus (`PROMPT_KEY`) ; touches au choix

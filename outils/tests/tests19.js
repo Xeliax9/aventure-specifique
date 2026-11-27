@@ -1,4 +1,5 @@
-// v19: home page, chapter apps, settings, credits + creator secret, hidden bonus folder, bonus 2 « Le Cosmos »
+// v19: home page, chapter apps, settings, credits + creator secret, hidden bonus folder
+// v62 : plus de bonus « Le Cosmos » ; « Les Étoiles » n'apparaît qu'après la saison 2 et débloque l'Or et le Cristal
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch();
@@ -116,7 +117,7 @@ const { chromium } = require('playwright');
   await T(() => render(1));
   const lockX = await T(() => 330 + (7 % 5) * 54), lockY = await T(() => 104 + 64);
   await click(lockX, lockY);
-  ok(await T(() => toast.t > 0 && /cristal/.test(toast.text)), 'clicking the crystal colour explains how to get it');
+  ok(await T(() => toast.t > 0 && /saison 2/.test(toast.text) && !/Étoiles|Cosmos|bonus/.test(toast.text)), 'clicking the crystal colour explains how to get it, without spoiling the bonus');
   await T(() => { lookClick(0); });
   ok(await T(() => SET.skin === 'indigo' && HERO.body === '#3b0cad'), 'back to indigo');
   // v62 : une couleur pas encore obtenue est toujours dessinée verrouillée (grisée + cadenas), même achetable ;
@@ -170,36 +171,37 @@ const { chromium } = require('playwright');
   await T(() => { menu.sel.settings = settingsRows().findIndex(r => r.id === 'admin'); }); await key('Enter');
   ok(await T(() => !SET.creator && !bonusVisible() && /^Connexion admin$/.test(settingsRows().find(r => r.id === 'admin').label)), 'creator mode off (admin logged out): the bonus hides again');
 
-  // ---------------------------------------------------------------- finishing season 1 reveals the hidden bonus
+  // ---------------------------------------------------------------- v62 : Le Cosmos is gone, one bonus left
+  ok(await T(() => CHAPTERS.length === 9 && BONUS_CH.length === 1 && BONUS_CH[0] === 4 && CHAPTERS[4].name === 'Les Étoiles' && !CHAPTERS.some(c => /Cosmos/.test(c.name) || c.deco === 'cosmos' || c.bonus2)), 'Le Cosmos is gone: one bonus left, « Les Étoiles »');
+  ok(await T(() => typeof bgCosmos === 'undefined' && typeof ringedPlanet === 'undefined' && !THEMES.cosmos && STORY.length === CHAPTERS.length && TAGLINE.length === CHAPTERS.length && CH_ACCENT.length === CHAPTERS.length), 'its sky, planet, theme and texts are gone too');
+  // ---------------------------------------------------------------- season 1 finished: the bonus stays hidden (no spoiler)
   await T(() => { save.bestCh[3] = 400000; save.unlocked = 5; persist(); });
-  ok(await T(() => bonusVisible() && isUnlocked(4) && !isUnlocked(9)), 'season 1 finished: « Les Étoiles » opens, « Le Cosmos » still locked');
+  ok(await T(() => !bonusVisible() && !isUnlocked(4)), 'season 1 finished: the bonus is still locked and hidden');
   await T(() => { goPage('settings', -1); for(let i = 0; i < 20; i++) step(); render(1); });
-  ok(await T(() => settingsRows().some(r => r.id === 'bonus' && r.badge)), 'a « Bonus secret » row with a Nouveau badge');
+  ok(await T(() => !settingsRows().some(r => r.id === 'bonus')), '…no « Bonus secret » row in Paramètres before the end of season 2');
+  ok(await T(() => { menu.saidHi = true; for(let i = 0; i < 60; i++) if(/secret/.test(homeLine())) return false; return true; }), '…and XELIAX does not hint at it on the home page');
+  // ---------------------------------------------------------------- season 2 finished: the bonus shows up
+  await T(() => { save.s2Done = true; save.unlocked2 = 4; persist(); });
+  ok(await T(() => bonusVisible() && isUnlocked(4)), 'season 2 finished: « Les Étoiles » opens');
+  ok(await T(() => settingsRows().some(r => r.id === 'bonus' && r.badge && r.value === '2 défis')), 'a « Bonus secret » row with a Nouveau badge');
   await T(() => { goPage('home', -1); for(let i = 0; i < 20; i++) step(); render(1); });
   await T(() => { menu.sel.home = 1; }); await key('Enter'); await steps(20);
   await T(() => { menu.sel.settings = settingsRows().findIndex(r => r.id === 'bonus'); }); await key('Enter'); await steps(20);
   ok(await T(() => menu.page === 'bonus' && save.bonusFolderSeen), 'Enter opens the secret folder');
-  await key('ArrowRight'); await key('Enter'); await steps(5);
-  ok(await T(() => state === 'title' && /saison 2/.test(toast.text)), '« Le Cosmos » refuses until season 2 is finished');
-  await key('ArrowLeft'); await key('Enter'); await steps(5);
-  ok(await T(() => state === 'play' && chIndex === 4 && room.deco !== 'cosmos'), '« Les Étoiles » starts');
+  await key('ArrowRight'); ok(await T(() => menu.sel.bonus === 0), 'only one bonus in the folder');
+  await key('Enter'); await steps(5);
+  ok(await T(() => state === 'play' && chIndex === 4 && decoOf() === 'night'), '« Les Étoiles » starts');
   await T(() => { fade = 0; fadeDir = 0; setState('pause'); }); await key('q'); await steps(30);
   ok(await T(() => state === 'title' && menu.page === 'bonus'), 'quitting a bonus returns to the secret folder');
 
-  // ---------------------------------------------------------------- bonus 2: Le Cosmos
-  await T(() => { save.s2Done = true; save.unlocked2 = 4; persist(); });
-  ok(await T(() => isUnlocked(9)), 'season 2 finished: « Le Cosmos » opens');
-  await T(() => { menu.sel.bonus = 1; }); await key('Enter'); await steps(5);
-  ok(await T(() => state === 'play' && chIndex === 9 && decoOf() === 'cosmos' && hasWall && hasDash && hasDJ), '« Le Cosmos » starts with all the powers, in space');
-  // every room loads and survives a bit of random play
+  // ---------------------------------------------------------------- the bonus rooms, speedrun mode
   const rnd = await T(() => {
     const res = [];
-    for(let ri = 0; ri < 2; ri++){
-      newRun(9); fade = 0; fadeDir = 0; pendingAction = null; loadRoom(9, ri); setState('play'); lives = 99;
+    for(let ri = 0; ri < CHAPTERS[4].rooms.length; ri++){
+      newRun(4); fade = 0; fadeDir = 0; pendingAction = null; loadRoom(4, ri); setState('play'); lives = 99;
       for(let f = 0; f < 1500; f++){
         input.left = Math.random() < 0.3; input.right = !input.left && Math.random() < 0.6;
         if(Math.random() < 0.08){ input.jumpPressed = true; input.jumpHeld = true; } if(Math.random() < 0.05) input.jumpHeld = false;
-        if(Math.random() < 0.03) input.dashPressed = true;
         if(Math.random() < 0.03) input.shootPressed = true;
         step(); if(f % 5 === 0) render(Math.random());
         if(state === 'over'){ confirmAction(); fade = 0; fadeDir = 0; pendingAction && pendingAction(); pendingAction = null; }
@@ -211,9 +213,9 @@ const { chromium } = require('playwright');
     input.left = input.right = input.jumpHeld = false;
     return res;
   });
-  ok(rnd.length === 2, 'random play in the 2 cosmic rooms: ' + rnd.join(', '));
+  ok(rnd.length === 2, 'random play in the 2 star rooms: ' + rnd.join(', '));
   // speedrun mode: one hit and you're out (no hearts), back at once; R restarts; splits, record and ghost
-  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); player.invuln = 0; hurt(0); });
+  await T(() => { newRun(4); fade = 0; fadeDir = 0; loadRoom(4, 0); setState('play'); player.invuln = 0; hurt(0); });
   ok(await T(() => state === 'play' && player.dead && lives === 99), 'speedrun: one hit = back to the flag, no game over, no hearts');
   ok(await T(() => { for(let i = 0; i < 40; i++) step(); render(1); return !player.dead && state === 'play'; }), 'speedrun: XELIAX is back at once');
   ok(await T(() => { elapsed = 5000; srRestart(); return rIndex === 0 && elapsed === 0 && state === 'play'; }), 'R starts the whole challenge again');
@@ -221,41 +223,48 @@ const { chromium } = require('playwright');
     save.speed = {}; srRestart(); timerRunning = true;
     for(let i = 0; i < 120; i++){ input.right = true; step(); } input.right = false;
     srSplit(); for(let i = 0; i < 60; i++) step();
-    chapterClear(); return !!(save.speed[9] && save.speed[9].ghost.length > 100 && save.speed[9].splits.length === 1 && clearInfo.srNew);
+    chapterClear(); return !!(save.speed[4] && save.speed[4].ghost.length > 100 && save.speed[4].splits.length === 1 && clearInfo.srNew);
   }), 'finishing saves the record, its splits and its ghost');
   ok(await T(() => {
     srRestart(); timerRunning = true; for(let i = 0; i < 100; i++){ step(); if(i % 10 === 0) render(1); }
     srSplit(); render(1); return srun.pop && typeof srun.pop.d === 'number' && srun.pop.d < 0;
   }), 'second run: the ghost runs alongside, the split shows the gap to the record (green when faster)');
-  ok(await T(() => srMedal(9, CHAPTERS[9].parTime) === 'or' && srMedal(9, CHAPTERS[9].parTime * 1.2) === 'argent' && srMedal(9, CHAPTERS[9].parTime * 1.4) === 'bronze' && srMedal(9, CHAPTERS[9].parTime * 2) === null), 'medals: gold, silver, bronze');
+  ok(await T(() => srMedal(4, CHAPTERS[4].parTime) === 'or' && srMedal(4, CHAPTERS[4].parTime * 1.2) === 'argent' && srMedal(4, CHAPTERS[4].parTime * 1.4) === 'bronze' && srMedal(4, CHAPTERS[4].parTime * 2) === null), 'medals: gold, silver, bronze');
   await T(() => { setState('play'); timerRunning = false; });
-  // the crystal ficelle
-  await T(() => { newRun(9); fade = 0; fadeDir = 0; loadRoom(9, 1); setState('play'); bannerT = 0; for(let i = 0; i < 10; i++) step(); });
-  ok(await T(() => key && key.kind === 'ficelle' && key.gold === 'crystal'), 'the crystal ficelle waits at the top of « Le Cœur du Cosmos »');
-  await T(() => { player.x = 40; player.y = 150 - player.h - 2; player.vy = 0; player.invuln = 999; for(let i = 0; i < 30; i++) step(); });
-  ok(await T(() => player.onGround && gdir === 1 && Math.abs(player.y + player.h - 150) < 1), 'XELIAX stands on the top platform');
-  await T(() => { input.right = true; for(let i = 0; i < 40 && finaleT === 0; i++) step(); input.right = false; });
-  ok(await T(() => finaleT > 0), 'walking to it grabs the crystal ficelle');
-  await T(() => { for(let i = 0; i < 200; i++){ step(); if(i % 10 === 0) render(1); } });
-  ok(await T(() => state === 'play' && finaleT >= finaleEnd()), 'after the celebration the game waits for Space');
-  await T(() => { pressJump(); for(let i = 0; i < 50; i++) step(); });
-  ok(await T(() => state === 'chapter' && clearInfo.bonus2 && save.crystalFicelle), 'bonus cleared, crystal ficelle saved');
-  await T(() => render(1));
-  ok(await T(() => skinOpen(SKINS.find(s => s.id === 'cristal'))), 'the crystal colour is now unlocked');
+
+  // ---------------------------------------------------------------- v62 : the golden ficelle unlocks two colours, Or and Cristal
+  await T(() => { save.goldFicelle = false; save.crystalFicelle = false; SET.creator = false; });
+  ok(await T(() => !skinOpen(SKINS.find(s => s.id === 'or')) && !skinOpen(SKINS.find(s => s.id === 'cristal'))), 'before the bonus: Or and Cristal are locked');
+  ok(await T(() => /Étoiles/.test(skinHint(SKINS.find(s => s.id === 'cristal'))) && /Or et Cristal/.test(skinHint(SKINS.find(s => s.id === 'or')))), 'the shop now says how: the golden ficelle of « Les Étoiles » (Or and Cristal)');
+  await T(() => { newRun(4); fade = 0; fadeDir = 0; loadRoom(4, CHAPTERS[4].rooms.length - 1); setState('play'); bannerT = 0; for(let i = 0; i < 10; i++) step(); });
+  ok(await T(() => key && key.kind === 'ficelle' && key.gold === 'gold'), 'the golden ficelle waits at the top of the last room');
+  await T(() => { elapsed = chStartTime + CHAPTERS[4].parTime + 5000; chapterClear(); });
+  ok(await T(() => state === 'chapter' && clearInfo.bonus && !clearInfo.fast && !save.goldFicelle && !skinOpen(SKINS.find(s => s.id === 'or'))), 'too slow: no ficelle, no colour');
+  await T(() => { setState('play'); elapsed = chStartTime + 50000; chapterClear(); stateT = 100; render(1); });
+  ok(await T(() => state === 'chapter' && clearInfo.fast && clearInfo.newSkins && save.goldFicelle), 'in time: the golden ficelle is won, with two new colours');
+  ok(await T(() => skinOpen(SKINS.find(s => s.id === 'or')) && skinOpen(SKINS.find(s => s.id === 'cristal'))), '…Or AND Cristal are unlocked');
   await T(() => { confirmAction(); for(let i = 0; i < 60; i++) step(); render(1); });
   ok(await T(() => state === 'title' && menu.page === 'bonus'), 'back to the secret folder after the bonus');
 
-  // ---------------------------------------------------------------- the season 1 ending announces the secret
+  // ---------------------------------------------------------------- the endings: only season 2 announces the secret
   await T(() => {
     for(const k of Object.keys(save)) if(k !== 'settings') delete save[k];
     Object.assign(save, freshSave()); persist();
     newRun(3); fade = 0; fadeDir = 0; loadRoom(3, CHAPTERS[3].rooms.length - 1); setState('play');
     chIndex = 3; chapter = CHAPTERS[3]; runFromStart = true; chapterClear();
   });
-  ok(await T(() => state === 'win' && clearInfo.bonusNew), 'finishing season 1: the win panel mentions the secret');
+  ok(await T(() => state === 'win' && !clearInfo.bonusNew && !bonusVisible()), 'finishing season 1: no word about a bonus any more');
+  await T(() => { for(let i = 0; i < 90; i++) step(); render(1); });
+  await T(() => { toast.t = 0; confirmAction(); for(let i = 0; i < 10; i++) step(); render(1); });
+  ok(await T(() => state === 'title' && menu.page === 'chapters' && !(toast.t > 0 && /secret/.test(toast.text))), 'back on the apps, no notification about the settings');
+  await T(() => {
+    newRun(S2_END); fade = 0; fadeDir = 0; loadRoom(S2_END, CHAPTERS[S2_END].rooms.length - 1); setState('play');
+    chIndex = S2_END; chapter = CHAPTERS[S2_END]; runFromStart = true; chapterClear();
+  });
+  ok(await T(() => state === 'win' && clearInfo.season === 2 && clearInfo.bonusNew && save.s2Done && bonusVisible()), 'finishing season 2: the win panel mentions the secret, the bonus opens');
   await T(() => { for(let i = 0; i < 90; i++) step(); render(1); });
   await T(() => { confirmAction(); for(let i = 0; i < 10; i++) step(); render(1); });
-  ok(await T(() => state === 'title' && menu.page === 'chapters' && /Paramètres/.test(toast.text)), 'back on the apps, a notification points to the settings');
+  ok(await T(() => state === 'title' && /Paramètres/.test(toast.text)), 'back in the menu, a notification points to the settings');
 
   // ---------------------------------------------------------------- reset the progress (two presses)
   await T(() => { goPage('home', -1); for(let i = 0; i < 20; i++) step(); goPage('settings'); for(let i = 0; i < 20; i++) step(); goPage('jeu'); for(let i = 0; i < 20; i++) step(); });
@@ -285,6 +294,26 @@ const { chromium } = require('playwright');
     for(const pg of ['chapters', 'settings', 'son', 'jeu', 'look', 'controls', 'credits', 'bonus', 'home']){ goPage(pg); for(let i = 0; i < 6; i++){ step(); render(1); } for(let i = 0; i < 20; i++) step(); render(1); }
   });
   ok(true, 'all pages and transitions render');
+
+  // ---------------------------------------------------------------- v62 : old saves from the Cosmos days
+  const oldSave = (extra) => T(`(() => { const s = JSON.parse(localStorage.getItem('platformer_save_v2'));
+    for(const k of ['cosmosGone', 'goldFicelle', 'crystalFicelle']) delete s[k];
+    s.bestCh = [1000, 2000, 3000, 4000, 41380, 5000, 6000, 7000, 8000, 77000]; s.gems = [true, false, false, false, false, true, false, false, false, false];
+    s.speed = {4:{t:41380, splits:[], ghost:[], medal:'or'}, 9:{t:77000, splits:[], ghost:[], medal:'or'}}; s.seen = {4:true, 9:true}; s.resume = {9:{ri:1}}; s.allCoins = {0:true, 9:true};
+    s.s2Done = true; s.settings.creator = false; Object.assign(s, ${JSON.stringify(extra)});
+    localStorage.setItem('platformer_save_v2', JSON.stringify(s)); })()`);
+  await oldSave({crystalFicelle:true});
+  await p.reload(); await p.waitForTimeout(400); await T(() => { window.requestAnimationFrame = () => 0; });
+  ok(await T(() => save.cosmosGone && save.bestCh.length === 9 && save.bestCh[4] === 41380 && save.bestCh[8] === 8000 && save.gems.length === 9 && save.gems[5] === true), 'old save: the Cosmos record is dropped, every other chapter keeps its own record and gem');
+  ok(await T(() => !save.speed[9] && save.speed[4].t === 41380 && !save.seen[9] && !save.resume[9] && !save.allCoins[9] && save.allCoins[0]), 'old save: Cosmos medal, ghost and resume are gone, « Les Étoiles » keeps its own');
+  ok(await T(() => skinOpen(SKINS.find(s => s.id === 'cristal')) && skinOpen(SKINS.find(s => s.id === 'or'))), 'old save with the crystal ficelle: Cristal kept (and Or with it)');
+  ok(await T(() => JSON.parse(localStorage.getItem('platformer_save_v2')).bestCh.length === 9 || (persist(), JSON.parse(localStorage.getItem('platformer_save_v2')).bestCh.length === 9)), 'the cleaned save is written back');
+  await oldSave({goldFicelle:true});
+  await p.reload(); await p.waitForTimeout(400); await T(() => { window.requestAnimationFrame = () => 0; });
+  ok(await T(() => skinOpen(SKINS.find(s => s.id === 'or')) && skinOpen(SKINS.find(s => s.id === 'cristal'))), 'old save with the golden ficelle: Or, and now Cristal too');
+  await oldSave({});
+  await p.reload(); await p.waitForTimeout(400); await T(() => { window.requestAnimationFrame = () => 0; });
+  ok(await T(() => !skinOpen(SKINS.find(s => s.id === 'or')) && !skinOpen(SKINS.find(s => s.id === 'cristal')) && bonusVisible()), 'no ficelle yet: both colours still to win, the bonus is open (season 2 finished)');
   console.log(out.join('\n'));
   console.log('fails', out.filter(l => l.startsWith('FAIL')).length, 'errors', errs);
   await b.close();

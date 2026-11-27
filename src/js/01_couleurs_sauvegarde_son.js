@@ -56,13 +56,6 @@ THEMES.ice = {
   mover:['#ffffff', '#a8dcff'], jet:'#e6f8ff', doorFrame:'#94b2d2', turret:['#bfd2e6', '#7c94b6'], slick:'#d0e6f8',
   bat:['#3a6aa8', '#5a8ad0', '#d0ecff'],
 };
-THEMES.cosmos = {
-  sky:['#04021a', '#170a44', '#3a1470'], dark:true, darkness:'rgba(4,2,22,0.3)',
-  far:'#2a1660', mid:'#1a0e40', near:'#120a2e', crystal:['#7ff6ff', '#ff9ae0', '#b6a2ff'],
-  top:'#8ff4ff', topDark:'#3aa8c8', body:['#3b3184', '#1c1650'], line:'#07051a', crack:'#ff7ae0',
-  mover:['#eafcff', '#7fd8ff'], jet:'#9ff0ff', doorFrame:'#6a62b8', turret:['#9a8fe0', '#5a52a0'], slick:'#6a64b4',
-  bat:['#2c2066', '#5a3ec0', '#c8b8ff'],
-};
 THEMES.nest = {
   sky:['#1c1240', '#5e2c6c', '#e8845a'], dark:true, darkness:'rgba(10,4,26,0.3)',
   far:'#3e2456', mid:'#2c163e', near:'#1c0e2a',
@@ -70,8 +63,8 @@ THEMES.nest = {
   mover:['#ffeccc', '#dca44a'], jet:'#ffdc98', doorFrame:'#94724e', turret:['#a494b4', '#706080'], slick:'#9a8cb4',
   bat:['#221a30', '#3a2e4c', '#8a7aa8'],
 };
-const CH_ACCENT = ['#3fbf5a', '#a879ff', '#ff9a52', '#ff5c5c', '#ffd54a', '#ff7ae0', '#ff9a3c', '#6fd0ff', '#c79bff', '#7ff6ff'];
-const CRITTER = ['#ff8a3d', '#ff5fa2', '#2ec4b6', '#ff4d4d', '#7fd6ff', '#ff9ad8', '#e0763a', '#5fb8ff', '#9b7bd6', '#ff7ae0'];
+const CH_ACCENT = ['#3fbf5a', '#a879ff', '#ff9a52', '#ff5c5c', '#ffd54a', '#ff7ae0', '#ff9a3c', '#6fd0ff', '#c79bff'];
+const CRITTER = ['#ff8a3d', '#ff5fa2', '#2ec4b6', '#ff4d4d', '#7fd6ff', '#ff9ad8', '#e0763a', '#5fb8ff', '#9b7bd6'];
 const STORY_END = 3;     // the adventure ends with chapter 4; the bonus comes after
 const HERO = { body:'#3b0cad', deep:'#1c0552', light:'#7b56ff', eye:'#ffffff', line:'#0c0222', mouth:'#14033f', tongue:'#ff6b9a' };
 const POWER_COLORS = { doubleJump:'#2ee6ff', life:'#ff4d6d', shoot:'#ff8a3d', gem:'#9fe8ff', wall:'#7dff9a', dash:'#ffd23f', gravity:'#ff7ae0' };
@@ -85,20 +78,28 @@ const freshSave = () => ({ unlocked:1, gems:CHAPTERS.map(() => false), bestRun:n
 let save = freshSave();
 try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) save = Object.assign(save, s); }catch(e){}
 if(!Array.isArray(save.recipe) || save.recipe.length !== 4) save.recipe = [false,false,false,false];
+// v62 : le Cosmos (ancien chapitre 9, le dernier de la liste) n'existe plus. Ses restes sont effacés une fois pour toutes,
+// pour qu'un chapitre ajouté plus tard à la place 9 ne récupère jamais son record, sa médaille ni sa reprise.
+// Les autres chapitres ne bougent pas (le Cosmos était à la fin). La ficelle de cristal déjà gagnée est gardée (voir skinOpen).
+if(!save.cosmosGone){
+  if(Array.isArray(save.bestCh)) save.bestCh.length = Math.min(save.bestCh.length, COSMOS_OLD);
+  if(Array.isArray(save.gems)) save.gems.length = Math.min(save.gems.length, COSMOS_OLD);
+  for(const k of ['seen', 'speed', 'resume', 'allCoins']) if(save[k] && typeof save[k] === 'object') delete save[k][COSMOS_OLD];
+  save.cosmosGone = true;
+}
 while(save.bestCh.length < CHAPTERS.length) save.bestCh.push(null);
 while(save.gems.length < CHAPTERS.length) save.gems.push(false);
 if(!save.seen || typeof save.seen !== 'object') save.seen = {};
 if(!save.allCoins || typeof save.allCoins !== 'object') save.allCoins = {};   // v54 : chapitres finis avec toutes leurs pièces (2e étoile)
 if(!(save.unlocked2 >= 1)) save.unlocked2 = 1;
 if(save.bestCh[3] != null) save.unlocked = Math.max(save.unlocked, 5);   // finished the adventure
-// the two secret bonuses: « Les Étoiles » once season 1 is finished, « Le Cosmos » once season 2 is.
+// v62 : un seul bonus secret, « Les Étoiles », et seulement une fois la saison 2 finie (avant : aucune trace).
 // The creator mode (a secret in the credits) opens everything without touching the real progress.
-const bonusOpen = () => save.bestCh[3] != null || SET.creator;
 const isUnlocked = i => {
   const c = CHAPTERS[i];
   if(demoOn() && (c.bonus || c.season === 2 || i > 1)) return false;   // démo : chapitres 1 et 2 seulement
   if(SET.creator) return true;
-  if(c.bonus) return c.bonus2 ? !!save.s2Done : save.bestCh[3] != null;
+  if(c.bonus) return !!save.s2Done;
   return c.season === 2 ? c.num <= save.unlocked2 : i < save.unlocked;
 };
 const bonusVisible = () => CHAPTERS.some((c, i) => c.bonus && isUnlocked(i));
@@ -213,7 +214,10 @@ function gameKey(k){
 // v62 : une couleur à gemmes ne s'ouvre plus toute seule : on clique dessus pour la débloquer (les gemmes ne sont pas dépensées) ;
 // qui la portait déjà la garde
 if(!save.gemSkinsV62){ for(const s of SKINS) if(s.gems && SET.skin === s.id && gemCount() >= s.gems) save.owned[s.id] = true; save.gemSkinsV62 = true; }
-const skinOpen = s => SET.creator || (s.price || s.gems ? !!(save.owned || {})[s.id] : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
+const skinOpen = s => SET.creator || (s.price || s.gems ? !!(save.owned || {})[s.id] : !s.lock || bonusSkinsWon());
+// v62 : réussir « Les Étoiles » à temps (la ficelle dorée) débloque l'Or ET le Cristal ; l'ancienne ficelle de cristal
+// (bonus « Le Cosmos », supprimé) compte aussi, pour que personne ne perde une couleur déjà gagnée
+function bonusSkinsWon(){ return !!(save.goldFicelle || save.crystalFicelle); }
 // démo : boutique fermée, donc toujours la couleur de départ (la sauvegarde du jeu complet est partagée et ne doit rien dévoiler)
 const skinOf = () => demoOn() ? SKINS[0] : SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
 const START_LIVES = 5;   // nombre de vies au départ, fixe (v54)

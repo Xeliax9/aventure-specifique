@@ -20,7 +20,9 @@ const { chromium } = require('playwright');
     ok(MAIN_CH.length === 8, 'after finishing season 1: the 4 season 2 apps appear');
     menuSel = 3; menuMove(1); ok(menuSel === 5, 'right from chapter 4 goes to season 2, chapter 1');
     menuSel = 0; run(5); render(1);
-    ok(isUnlocked(4) && bonusVisible() && !MAIN_CH.includes(4), 'after finishing chapter 4: the bonus opens, hidden in the settings (not among the apps)');
+    ok(!isUnlocked(4) && !bonusVisible() && !MAIN_CH.includes(4), 'v62 : after finishing chapter 4 the bonus stays hidden');
+    save.s2Done = true;
+    ok(isUnlocked(4) && bonusVisible() && !MAIN_CH.includes(4), 'after finishing season 2: the bonus opens, hidden in the settings (not among the apps)');
     // ---- every room fits its 1.5x size and loads
     const sizes = CHAPTERS.flatMap(c => c.rooms.filter(r => !r.boss).map(r => (r.width || 640) * (r.height || 360)));
     ok(sizes.every(a => a >= 640 * 360 * 1.5), 'every normal room is at least 1.5x a screen');

@@ -25,75 +25,7 @@ function drawBackground(cx, cy){
   else if(deco === 'canyon') bgCanyon(cx, cy, by, th);
   else if(deco === 'ice') bgIce(cx, cy, by, th);
   else if(deco === 'nest') bgNest(cx, cy, by, th);
-  else if(deco === 'cosmos') bgCosmos(cx, cy, by, th);
   else bgFortress(cx, cy, by, th, deco === 'ascent');
-}
-
-// ---- secret bonus 2: deep space, a ringed planet, nebulas and drifting asteroids
-function ringedPlanet(x, y, r){
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(255,214,170,0.45)'; ctx.lineWidth = r * 0.16;
-  ctx.beginPath(); ctx.ellipse(x, y, r * 1.9, r * 0.5, -0.3, Math.PI, TAU); ctx.stroke();
-  softGlow(x, y, r * 2.6, r * 2.6, '255,140,170', 0.2);
-  const g = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
-  g.addColorStop(0, '#ffc488'); g.addColorStop(0.55, '#e0607a'); g.addColorStop(1, '#4a1a66');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-  ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.clip();
-  ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = r * 0.12;
-  for(const dy of [-0.45, 0.02, 0.48]){ ctx.beginPath(); ctx.ellipse(x, y + dy * r, r * 1.25, r * 0.2, -0.3, 0, TAU); ctx.stroke(); }
-  ctx.restore();
-  ctx.strokeStyle = 'rgba(255,226,196,0.85)'; ctx.lineWidth = r * 0.16;
-  ctx.beginPath(); ctx.ellipse(x, y, r * 1.9, r * 0.5, -0.3, 0, Math.PI); ctx.stroke();
-  ctx.restore();
-}
-function asteroid(x, y, r, rot){
-  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
-  ctx.beginPath();
-  for(let k = 0; k < 8; k++){ const a = k / 8 * TAU, rr2 = r * (0.75 + hash(k * 7 + Math.round(r)) * 0.35); ctx.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); }
-  ctx.closePath(); ctx.fillStyle = '#2e2560'; ctx.fill();
-  ctx.strokeStyle = 'rgba(160,220,255,0.35)'; ctx.lineWidth = 1.2; ctx.stroke();
-  ctx.fillStyle = 'rgba(10,6,30,0.45)'; ctx.beginPath(); ctx.arc(r * 0.25, r * 0.1, r * 0.25, 0, TAU); ctx.fill();
-  ctx.restore();
-}
-function bgCosmos(cx, cy, by, th){
-  for(const [x0, y0, rx, ry, rgb, a] of [[150, 90, 230, 120, '255,80,200', 0.15], [470, 220, 270, 140, '80,200,255', 0.13], [340, 50, 210, 90, '170,120,255', 0.14]]){
-    const x = ((x0 - cx * 0.03) % (W + 320) + W + 320) % (W + 320) - 160;
-    softGlow(x, y0 + by * 0.1 - cy * 0.02, rx, ry, rgb, a);
-  }
-  // v54 : couleur fixe + globalAlpha (au lieu d'une chaîne rgba() par étoile et par image)
-  const ga = ctx.globalAlpha;
-  for(let i = 0; i < 110; i++){
-    const z = 0.015 + hash(i * 7 + 1) * 0.05;
-    const x = ((hash(i * 13 + 5) * (W + 40) - cx * z) % (W + 40) + W + 40) % (W + 40) - 20;
-    const y = ((hash(i * 17 + 3) * (H + 40) - cy * z) % (H + 40) + H + 40) % (H + 40) - 20;
-    const tw = 0.55 + 0.45 * Math.sin(frame * (0.02 + hash(i * 5) * 0.05) + i * 1.7);
-    const r = 0.5 + hash(i * 3 + 9) * 1.2;
-    ctx.fillStyle = i % 5 === 0 ? 'rgb(255,190,240)' : i % 3 === 0 ? 'rgb(170,230,255)' : 'rgb(255,250,240)';
-    ctx.globalAlpha = ga * (0.3 + 0.7 * hash(i * 29)) * tw;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-    if(r > 1.45 && tw > 0.82){ ctx.globalAlpha = ga * (tw - 0.82) * 3; star(x, y, r * 3.4, 0); }
-  }
-  ctx.globalAlpha = ga;
-  const st = frame % 380;
-  if(st < 40 && !REDUCED){
-    const k = st / 40, sx = 580 - k * 380 + hash(Math.floor(frame / 380)) * 60, sy = 26 + k * 80;
-    const g = ctx.createLinearGradient(sx, sy, sx + 60, sy - 15);
-    g.addColorStop(0, `rgba(190,245,255,${0.9 * (1 - k)})`); g.addColorStop(1, 'rgba(190,245,255,0)');
-    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 60, sy - 15); ctx.stroke();
-  }
-  ringedPlanet(486 - cx * 0.012, 92 + by * 0.15, 32);
-  const mx = 120 - cx * 0.02, my = 70 + by * 0.12;
-  softGlow(mx, my, 30, 30, '170,230,255', 0.25);
-  ctx.fillStyle = '#bfe8ff'; ctx.beginPath(); ctx.arc(mx, my, 9, 0, TAU); ctx.fill();
-  ctx.fillStyle = 'rgba(80,120,170,0.4)'; ctx.beginPath(); ctx.arc(mx + 3, my - 2, 2.6, 0, TAU); ctx.arc(mx - 3, my + 3, 1.8, 0, TAU); ctx.fill();
-  for(let i = 0; i < 7; i++){
-    const z = 0.08 + hash(i * 11) * 0.08, dir = i % 2 ? 1 : -1;
-    const x = ((hash(i * 19 + 2) * (W + 120) - cx * z + frame * 0.05 * dir) % (W + 120) + W + 120) % (W + 120) - 60;
-    const y = 70 + hash(i * 23 + 7) * 230 - cy * z * 0.4 + by * 0.1;
-    asteroid(x, y, 5 + hash(i * 3) * 9, frame * 0.004 * dir + i);
-  }
 }
 
 // ---- season 2, chapter 1: a pastel sky where some islands float upside down
@@ -627,10 +559,6 @@ function drawAmbient(cx, cy){
       ctx.fillStyle = `rgba(255,220,170,${0.35 + 0.3 * Math.sin(p.ph * 2)})`; ctx.beginPath(); ctx.arc(x, y, 1.3 * p.s, 0, TAU); ctx.fill();
     } else if(deco === 'ice'){
       ctx.fillStyle = `rgba(255,255,255,${0.55 + 0.35 * p.z})`; ctx.beginPath(); ctx.arc(x, y, (0.9 + p.z * 1.2) * p.s, 0, TAU); ctx.fill();
-    } else if(deco === 'cosmos'){
-      const a = 0.45 + 0.45 * Math.sin(p.ph * 1.7), col = p.s > 1 ? '255,150,230' : '140,236,255';
-      ctx.fillStyle = `rgba(${col},${a * 0.22})`; ctx.beginPath(); ctx.arc(x, y, 3.8 * p.s, 0, TAU); ctx.fill();
-      ctx.fillStyle = `rgba(${col},${a})`; ctx.beginPath(); ctx.arc(x, y, 1 * p.s, 0, TAU); ctx.fill();
     } else if(deco === 'nest'){
       ctx.strokeStyle = `rgba(190,200,255,${0.18 + 0.2 * p.z})`; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9 * p.z + 4); ctx.stroke();
@@ -746,8 +674,8 @@ function ivy(p, x, y, w, h, th){
 // (PLAT_SPR), les passes animées (2 : motif scintillant sous le contour, 4 : herbe, cristaux, lierre) sont redessinées.
 // PL_PASS = 0 : tout, dans l'ordre d'origine.
 let PL_PASS = 0, PL_M = null, PL_BAKES = 0;
-const SOLID_MID = d => d === 'cosmos' || d === 'night' || !['hills', 'tower', 'cave', 'sky', 'canyon', 'ice', 'nest'].includes(d);
-const WALL_MID = d => d === 'cosmos' || d === 'night' || d === 'fortress' || d === 'ascent';
+const SOLID_MID = d => d === 'night' || !['hills', 'tower', 'cave', 'sky', 'canyon', 'ice', 'nest'].includes(d);
+const WALL_MID = d => d === 'night' || d === 'fortress' || d === 'ascent';
 function plPass(mid, stat){ return PL_PASS === 0 || (stat ? (mid ? PL_PASS === stat : PL_PASS === 1) : (mid && PL_PASS === 2)); }
 function drawSolid(p, x, y, w, h, th){
   const deco = decoOf();
@@ -770,7 +698,6 @@ function drawSolid(p, x, y, w, h, th){
     if(deco === 'hills') grassTufts(p, x, y, w, th);
     else if(deco === 'cave') crystalsOn(p, x, y, w, th);
     else if(deco === 'tower') ivy(p, x, y, w, h, th);
-    else if(deco === 'cosmos') crystalsOn(p, x, y, w, th);
   }
 }
 function drawSolidPattern(p, x, y, w, h, th, deco, r){
@@ -804,14 +731,6 @@ function drawSolidPattern(p, x, y, w, h, th, deco, r){
     for(let i = -2; i < w / 9; i++){ const xx = x + i * 9; ctx.beginPath(); ctx.moveTo(xx, y + h); ctx.lineTo(xx + h * 0.9, y); ctx.stroke(); }
     ctx.strokeStyle = 'rgba(255,220,160,0.18)';
     for(let i = 0; i < w / 13; i++){ const xx = x + i * 13; ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx + h * 0.7, y + h); ctx.stroke(); }
-  } else if(deco === 'cosmos'){
-    const ga = ctx.globalAlpha;
-    for(let i = 0; i < w / 15; i++){
-      const q = hash(p.seed + i * 7), tw = 0.35 + 0.65 * Math.abs(Math.sin(frame * 0.045 + q * 9));
-      ctx.fillStyle = q > 0.5 ? 'rgb(140,240,255)' : 'rgb(255,160,235)'; ctx.globalAlpha = ga * (q > 0.5 ? 0.6 : 0.55) * tw;
-      star(x + 6 + i * 15 + q * 6, y + 6 + q * Math.max(1, h - 10), 1.5 + q * 1.4, q * 3);
-    }
-    ctx.globalAlpha = ga;
   } else if(deco === 'night'){
     // little golden stars set in the stone
     const ga = ctx.globalAlpha; ctx.fillStyle = 'rgb(255,224,140)';
@@ -937,7 +856,7 @@ function drawWall(p, x, y, w, h, th){
   const bh = deco === 'tower' ? 12 : 16, bw = deco === 'tower' ? 22 : 30, off = hash(p.seed) * bw;
   ctx.strokeStyle = rgba(th.line, deco === 'night' ? 0.45 : 0.3); ctx.lineWidth = 1;
   if(stat1){
-  if(!['sky', 'canyon', 'ice', 'nest', 'cosmos'].includes(deco)) for(let r = 0, yy = y + 5; yy < y + h; r++, yy += bh){
+  if(!['sky', 'canyon', 'ice', 'nest'].includes(deco)) for(let r = 0, yy = y + 5; yy < y + h; r++, yy += bh){
     ctx.beginPath(); ctx.moveTo(x, yy + 0.5); ctx.lineTo(x + w, yy + 0.5); ctx.stroke();
     for(let xx = x - bw + ((off + (r % 2) * bw / 2) % bw); xx < x + w; xx += bw){ ctx.beginPath(); ctx.moveTo(xx + 0.5, yy); ctx.lineTo(xx + 0.5, yy + bh); ctx.stroke(); }
   }
@@ -950,10 +869,6 @@ function drawWall(p, x, y, w, h, th){
   } else if(deco === 'sky'){
     ctx.fillStyle = 'rgba(255,140,224,0.55)';
     for(let i = 0; i < h / 46; i++){ const q = hash(p.seed + i * 7); if(q > 0.55) continue; const cx = x + 5 + q * (w - 10), cy = y + 18 + i * 46; ctx.beginPath(); ctx.moveTo(cx - 3, cy + 4); ctx.lineTo(cx, cy - 6); ctx.lineTo(cx + 3, cy + 4); ctx.closePath(); ctx.fill(); }
-  } else if(deco === 'cosmos'){
-    for(let i = 0; i < h / 42; i++){ const q = hash(p.seed + i * 17); if(q > 0.65) continue;
-      const col = th.crystal[Math.floor(q * 7) % 3], cx = x + 5 + q * (w - 10), cy = y + 12 + i * 42;
-      ctx.fillStyle = rgba(col, 0.7); ctx.beginPath(); ctx.moveTo(cx - 3, cy + 4); ctx.lineTo(cx, cy - 6); ctx.lineTo(cx + 3, cy + 4); ctx.closePath(); ctx.fill(); }
   } else if(deco === 'nest'){
     ctx.strokeStyle = 'rgba(255,214,150,0.16)'; ctx.lineWidth = 2;
     for(let i = 0; i < w / 10; i++){ const xx = x + 5 + i * 10 + hash(p.seed + i) * 4; ctx.beginPath(); ctx.moveTo(xx, y); ctx.quadraticCurveTo(xx + 4, y + h / 2, xx - 2, y + h); ctx.stroke(); }
@@ -968,13 +883,6 @@ function drawWall(p, x, y, w, h, th){
   }
   }
   if(dyn2){
-  if(deco === 'cosmos'){
-    const ga = ctx.globalAlpha, cull = PL_PASS === 2 && !p.hang; ctx.fillStyle = 'rgb(200,240,255)';
-    for(let i = 0; i < (w * h) / 1100; i++){ const q = hash(p.seed + i * 7), q2 = hash(p.seed + i * 11 + 3), sx = x + 4 + q * (w - 8), sy = y + 8 + q2 * (h - 12);
-      if(cull && !onView(sx, sy, 0, 0, 16)) continue;
-      ctx.globalAlpha = ga * (0.2 + 0.3 * Math.abs(Math.sin(frame * 0.03 + q * 9))); ctx.beginPath(); ctx.arc(sx, sy, 0.9 + q, 0, TAU); ctx.fill(); }
-    ctx.globalAlpha = ga;
-  }
   if(deco === 'fortress' || deco === 'ascent'){
     const glow = 0.4 + 0.3 * Math.sin(frame * 0.05 + p.seed);
     ctx.strokeStyle = rgba(th.crack, glow); ctx.lineWidth = 1.3;
@@ -1004,7 +912,7 @@ function drawWall(p, x, y, w, h, th){
   }
   if(PL_PASS === 0 || PL_PASS === 4){
     if(deco === 'hills') grassTufts(p, x, y, w, th);
-    else if(deco === 'cave' || deco === 'cosmos') crystalsOn(p, x, y, w, th);
+    else if(deco === 'cave') crystalsOn(p, x, y, w, th);
   }
 }
 
