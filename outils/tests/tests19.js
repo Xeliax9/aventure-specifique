@@ -119,6 +119,32 @@ const { chromium } = require('playwright');
   ok(await T(() => toast.t > 0 && /cristal/.test(toast.text)), 'clicking the crystal colour explains how to get it');
   await T(() => { lookClick(0); });
   ok(await T(() => SET.skin === 'indigo' && HERO.body === '#3b0cad'), 'back to indigo');
+  // v62 : une couleur pas encore obtenue est toujours dessinée verrouillée (grisée + cadenas), même achetable ;
+  // après l'achat (ou le déblocage aux gemmes) elle est en clair
+  const lockedDraw = id => T(`(() => {
+    const j = SKINS.findIndex(s => s.id === '${id}'), sx = 330 + (j % 5) * 54, sy = 104 + Math.floor(j / 5) * 64, locks = [], heroes = [];
+    const pl = padlock, dh = drawHero;
+    padlock = (x, y, sc, c) => { locks.push([x, y]); return pl(x, y, sc, c); };
+    drawHero = (h, x, y, sc, o) => { heroes.push(o || {}); return dh(h, x, y, sc, o); };
+    menu.sel.look = j;
+    try { render(1); } finally { padlock = pl; drawHero = dh; }
+    const big = heroes.find(o => o.skin && o.skin.id === '${id}');   // (verrouillée : copie grise de la couleur, même id)
+    return {grid: locks.some(([x, y]) => x === sx && y === sy), big: locks.some(([x]) => x === 196), tint: !!(big && big.tint), grey: !!SKINS[j]._grey};
+  })()`);
+  await T(() => { save.bank = 500; save.gems = save.gems.map((g, i) => i < 3); });
+  let d = await lockedDraw('nuit');
+  ok(!(await T(() => skinOpen(SKINS.find(s => s.id === 'nuit')))) && d.grid && d.big && d.tint && d.grey, 'Nuit not bought, even with 500 coins: padlock on a greyed swatch, XELIAX in grey shadow with a padlock');
+  d = await lockedDraw('emeraude');
+  ok(!(await T(() => skinOpen(SKINS.find(s => s.id === 'emeraude')))) && d.grid && d.big && d.tint, 'Émeraude with 3 gems is not unlocked by itself: padlock until clicked');
+  await T(() => lookClick(SKINS.findIndex(s => s.id === 'nuit')));
+  d = await lockedDraw('nuit');
+  ok(await T(() => save.bank === 100 && save.owned.nuit && SET.skin === 'nuit') && !d.grid && !d.big && !d.tint, 'after buying Nuit it is drawn in full colour');
+  await T(() => lookClick(SKINS.findIndex(s => s.id === 'emeraude')));
+  d = await lockedDraw('emeraude');
+  ok(await T(() => save.owned.emeraude && SET.skin === 'emeraude' && gemCount() === 3) && !d.grid && !d.big, 'clicking Émeraude with 3 gems unlocks it (gems kept), now in full colour');
+  d = await lockedDraw('galaxie');
+  ok(d.grid && d.big, 'Galaxie (7 gems) stays locked');
+  await T(() => { delete save.owned.nuit; delete save.owned.emeraude; save.bank = 0; save.gems = save.gems.map(() => false); lookClick(0); menu.sel.look = 0; persist(); });
 
   // ---------------------------------------------------------------- credits and the creator secret
   await T(() => { goPage('settings', -1); for(let i = 0; i < 20; i++) step(); goPage('credits'); for(let i = 0; i < 20; i++) step(); });
