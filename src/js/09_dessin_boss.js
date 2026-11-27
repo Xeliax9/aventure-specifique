@@ -295,6 +295,20 @@ function drawRisingLava(){
   lavaBubbles(12, i => { const bx = 10 + hash(i * 11) * (W - 20); return [bx, wave(bx) + 1]; }, 77);
 }
 
+// v62 : la lave monte : une lueur de chaleur pulse au bas de l'écran, plus forte à mesure qu'elle approche
+// (même quand on ne la voit pas encore). Un seul drawImage du halo en cache (softGlow → glowSprite).
+function drawLavaHeat(cy){
+  if(!room.lava || lavaY > 1e8 || (boss && boss.alive && !boss.dying)) return;   // pendant le combat, la lave attend : pas de lueur
+  const d = lavaY - cy - H;                         // > 0 : la lave est encore sous l'écran
+  const k = clamp(1 - d / 260, 0, 1);
+  if(k <= 0) return;
+  const pulse = REDUCED ? 1 : 0.82 + 0.18 * Math.sin(frame * 0.09);
+  const y = Math.min(H + 6, lavaY - cy + 20);
+  ctx.globalCompositeOperation = 'lighter';         // une lumière qui s'ajoute (plus chaude que si elle recouvrait le décor)
+  softGlow(W / 2, y, W * 0.8, 110 + 60 * k, '255,110,40', 0.55 * k * pulse);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
 function drawBarrier(){
   const y = room.barrierY;
   const gl = ctx.createLinearGradient(0, y - 14, 0, y + 14);

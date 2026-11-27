@@ -795,6 +795,7 @@ function drawHandset(tip){
 function drawPlayer(){
   if(player.dead || state === 'title') return;
   const x = ix(player) + player.w/2, y = iy(player) + player.h;
+  drawAirShadow(x);
   drawHeroTrail(x, iy(player) + player.h / 2 + 2);
   // dash afterimages
   for(const gh of player.ghosts){
@@ -817,6 +818,40 @@ function drawPlayer(){
   lavaGlow.length = 0; lavaGlowRec = true;   // les flammes de Lave notent où elles sont (pour drawSkinGlowOver)
   drawPlayerBody(x, y);
   lavaGlowRec = false;
+  ctx.restore();
+}
+// v62 : ombre de contact en l'air — posée sur la surface sous XELIAX (au plafond tête en bas), elle rétrécit et
+// s'estompe avec la hauteur : on voit où il va retomber. Jamais sur des piques, de la lave ou le sol brûlant.
+const SHADOW_MAX = 200;
+function drawAirShadow(x){
+  if(player.onGround || exitT > 0 || player.held || finaleT > 0) return;   // au sol : l'ombre de drawPlayerBody
+  const G = gdir, top = iy(player), bot = top + player.h;
+  let best = null, sy = G > 0 ? 1e9 : -1e9;
+  for(const p of platforms){
+    if(p.gone) continue;
+    const px = ix(p);
+    if(x < px + 2 || x > px + p.w - 2) continue;
+    const py = iy(p);
+    if(G > 0){ if(py >= bot - 1 && py < sy){ sy = py; best = p; } }
+    else { const pb = py + p.h; if(pb <= top + 1 && pb > sy){ sy = pb; best = p; } }
+  }
+  if(!best) return;
+  const d = G > 0 ? sy - bot : top - sy;
+  if(d > SHADOW_MAX) return;
+  // la surface est couverte de piques ou de lave : pas d'ombre (on ne doit jamais croire qu'on peut s'y poser)
+  for(const s of spikes){
+    if(s.side || s.pending || x < s.x - 4 || x > s.x + s.w + 4) continue;
+    if(G > 0 ? s.y >= bot - 10 && s.y <= sy + 4 : s.y >= sy - 4 && s.y <= top + 10) return;
+  }
+  if(room.lava && G > 0 && lavaY <= sy + 2) return;
+  const hf = room.hotFloor;
+  if(hf && boss && boss.alive && sy >= hf.y - 1 && x > hf.x0 && x < hf.x1) return;
+  const k = 1 - d / SHADOW_MAX, bx = ix(best);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(bx, sy - 5, best.w, 10); ctx.clip();   // pas d'ombre qui déborde dans le vide
+  ctx.globalAlpha *= (0.4 + 0.6 * k) * Math.min(1, (SHADOW_MAX - d) / 40);
+  ctx.fillStyle = theme().dark ? 'rgba(0,0,0,0.38)' : 'rgba(30,20,60,0.26)';
+  ctx.beginPath(); ctx.ellipse(x, sy, 12 * (0.45 + 0.55 * k), 2.6 * (0.5 + 0.5 * k), 0, 0, TAU); ctx.fill();
   ctx.restore();
 }
 // v54 : Émeraude et Galaxie laissent une fine traînée derrière XELIAX quand il bouge

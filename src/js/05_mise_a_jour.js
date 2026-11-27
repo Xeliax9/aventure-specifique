@@ -45,12 +45,14 @@ function step(){
   if(state === 'opening'){ updateOpening(); clearPresses(); return; }
   if(state === 'talk'){ stepTalk(); stepHero(); clearPresses(); return; }
   if(state === 'chapter' && clearInfo && clearInfo.teaser) updateTeaser();
+  else if(state === 'chapter' && stateT === STAMP_T && clearInfo && !REDUCED) SFX.stomp();   // v62 : le tampon se pose
   if(state !== 'play'){ updateUiHero(); clearPresses(); return; }
   // a boss demo is on screen: everything waits until it is closed
   if(bossDemo){ updateBossDemo(); clearPresses(); return; }
 
   // the final blow freezes the action for a split second
   if(hitStop > 0){ hitStop--; updateCamera(); clearPresses(); return; }
+  if(stompStop > 0){ stompStop--; updateCamera(); return; }
   if(djTake > 0 && --djTake === 0){
     showToast('La pie t\'a pris ton double saut : ici, on grimpe !', 190);
     ring(player.x + player.w / 2, player.y + player.h / 2, POWER_COLORS.doubleJump, 6, 46, 26);
@@ -950,7 +952,7 @@ function updatePlayer(){
     const k = Math.min(impact / 12, 1);
     player.sx = 1 + 0.35*k; player.sy = 1 - 0.3*k;
     anim.wobV += Math.min(impact, 12) * 0.05;
-    if(impact > 4) dust(player.x + player.w/2, G > 0 ? player.y + player.h : player.y, 6);
+    if(impact > 4) dust(player.x + player.w/2, G > 0 ? player.y + player.h : player.y, 6, G);
     if(impact > 6) SFX.land();
   }
   player.coyote = player.onGround ? COYOTE : Math.max(0, player.coyote - 1);
@@ -973,7 +975,7 @@ function updatePlayer(){
 
   player.sx += (1 - player.sx) * 0.2;
   player.sy += (1 - player.sy) * 0.2;
-  if(player.onGround && Math.abs(player.vx) > 0.5 && frame % 9 === 0) dust(player.x + player.w/2, G > 0 ? player.y + player.h : player.y, 1);
+  if(player.onGround && Math.abs(player.vx) > 0.5 && frame % 9 === 0) dust(player.x + player.w/2 - Math.sign(player.vx) * 5, G > 0 ? player.y + player.h : player.y, Math.abs(player.vx) > 2.5 ? 2 : 1, G, -player.vx * 0.22);   // v62 : soulevée vers l'arrière
   if(player.invuln > 0) player.invuln--;
   if(player.hurtT > 0) player.hurtT--;
   if(player.shotCD > 0) player.shotCD--;
@@ -1109,6 +1111,7 @@ function updatePlayer(){
       if(onTop){
         player.vy = -8 * G; player.usedDJ = false;
         player.sx = 0.8; player.sy = 1.25;
+        stompStop = REDUCED ? 0 : 3;
       } else addShake(2);
       player.dashReady = true;
       anim.wobV -= 0.3; setFace(anim, 'open', 20);
@@ -1150,7 +1153,7 @@ function updatePlayer(){
         e.alive = false; score += 25; addBank(1);
         if(s.big) s.hits.add(e); else s.dead = true;
         popup(e.x + e.w / 2, e.y - 6, '+1 🪙', '#ffe066');
-        killFx(e); SFX.stomp();
+        killFx(e); shotFx(e); SFX.stomp();
       }
     }
     for(const t of turrets){
@@ -1333,7 +1336,7 @@ function wallJump(){
   player.usedDJ = false; player.dashReady = true; player.noCut = false; player.dashT = 0;
   player.facing = -s; player.buffer = 0; player.coyote = 0;
   player.sx = 0.8; player.sy = 1.2; anim.wobV -= 0.3; anim.spin = 0;
-  dust(player.x + (s > 0 ? player.w : 0), player.y + player.h / 2, 5);
+  dust(player.x + (s > 0 ? player.w : 0), player.y + player.h / 2, 5, gdir, -s * 0.7);   // v62 : la poussière part du mur
   SFX.walljump();
 }
 

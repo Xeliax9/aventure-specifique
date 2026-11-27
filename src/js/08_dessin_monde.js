@@ -185,6 +185,59 @@ function bgCanyon(cx, cy, by, th){
   }
 }
 
+// v62 : plans lointains précalculés — une bande qui se répète (largeur FAR_W), dessinée une seule fois dans un
+// canvas hors écran, puis posée avec drawImage et un décalage (cx * f) : la parallaxe ne coûte que 2 drawImage par plan.
+const FAR_STRIPS = new Map(), FAR_W = 960, FAR_K = 2;
+function farStrip(key, h, paint){
+  let c = FAR_STRIPS.get(key);
+  if(c) return c;
+  c = document.createElement('canvas'); c.width = FAR_W * FAR_K; c.height = h * FAR_K;
+  const g = c.getContext('2d'); g.scale(FAR_K, FAR_K);
+  paint(g, h);
+  FAR_STRIPS.set(key, c);
+  return c;
+}
+function drawFarStrip(c, off, y){
+  const h = c.height / FAR_K;
+  for(let x = -(((off % FAR_W) + FAR_W) % FAR_W); x < W; x += FAR_W) ctx.drawImage(c, x, y, FAR_W + 1, h);
+}
+// une ligne de crête qui se raccorde d'un bout à l'autre de la bande (sinus à nombre entier de périodes + pointes)
+function farRidge(x, seed, n, amp){
+  const t = x / FAR_W * TAU, i = Math.floor(x / FAR_W * n), f = x / FAR_W * n - i;
+  const j0 = hash(((i % n) + n) % n * 17 + seed), j1 = hash((((i + 1) % n) + n) % n * 17 + seed);
+  return Math.sin(t * 2 + seed) * amp * 0.45 + Math.sin(t * 5 + seed * 2) * amp * 0.2 + (j0 + (j1 - j0) * f) * amp * 0.6;
+}
+function farIceStrip(g, h){
+  // une crête de glacier très lointaine, bleu brumeux, qui se fond dans la brume de la vallée
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, 'rgba(98,142,200,0.75)'); gr.addColorStop(0.45, 'rgba(120,166,218,0.5)'); gr.addColorStop(1, 'rgba(170,214,250,0)');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(0, h);
+  for(let x = 0; x <= FAR_W; x += 6) g.lineTo(x, 34 + farRidge(x, 4, 40, 46));
+  g.lineTo(FAR_W, h); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(232,246,255,0.32)'; g.lineWidth = 1.4; g.beginPath();
+  for(let x = 0; x <= FAR_W; x += 6){ const y = 35 + farRidge(x, 4, 40, 46); if(x === 0) g.moveTo(x, y); else g.lineTo(x, y); }
+  g.stroke();
+  // quelques falaises de glace (traits verticaux pâles)
+  g.strokeStyle = 'rgba(220,240,255,0.14)'; g.lineWidth = 1;
+  for(let k = 0; k < 26; k++){ const x = hash(k * 29 + 3) * FAR_W, y = 40 + farRidge(x, 4, 40, 46); g.beginPath(); g.moveTo(x, y + 4); g.lineTo(x + (hash(k) - 0.5) * 6, y + 30 + hash(k * 5) * 40); g.stroke(); }
+}
+function farNestStrip(g, h){
+  // une forêt de troncs géants au loin, dans le soir orageux : silhouettes pâles, contraste faible
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, 'rgba(58,30,82,0.5)'); gr.addColorStop(0.6, 'rgba(70,34,88,0.38)'); gr.addColorStop(1, 'rgba(90,40,90,0.12)');
+  g.fillStyle = gr;
+  for(let k = 0; k < 9; k++){
+    const x0 = (k + hash(k * 13 + 7) * 0.6) * FAR_W / 9, w = 22 + hash(k * 3 + 1) * 26, top = 30 + hash(k * 7 + 2) * 70;
+    for(const x of [x0 - FAR_W, x0, x0 + FAR_W]){
+      if(x + w + 80 < 0 || x - 80 > FAR_W) continue;
+      g.beginPath(); g.moveTo(x - w * 0.5, h); g.lineTo(x - w * 0.36, top); g.lineTo(x + w * 0.36, top); g.lineTo(x + w * 0.5, h); g.closePath();
+      // la cime : un gros feuillage arrondi (même tracé que le tronc : pas de zone plus sombre où ils se touchent)
+      for(let i = 0; i < 5; i++){ const a = i / 4 * Math.PI, r = 22 + hash(k * 11 + i) * 18; g.moveTo(x + Math.cos(a) * 34 + r, top - Math.sin(a) * 16); g.arc(x + Math.cos(a) * 34, top - Math.sin(a) * 16, r, 0, TAU); }
+      g.fill();
+    }
+  }
+}
+
 // ---- season 2, chapter 3: a glacier under the northern lights
 function bgIce(cx, cy, by, th){
   for(let k = 0; k < 2; k++){
@@ -211,6 +264,7 @@ function bgIce(cx, cy, by, th){
       ctx.fillStyle = snow; ctx.beginPath(); ctx.moveTo(x, b - h); ctx.lineTo(x + w * 0.16, b - h * 0.7); ctx.lineTo(x + w * 0.05, b - h * 0.74); ctx.lineTo(x - w * 0.04, b - h * 0.66); ctx.lineTo(x - w * 0.16, b - h * 0.72); ctx.closePath(); ctx.fill();
     }
   };
+  drawFarStrip(farStrip('ice', 260, farIceStrip), cx * 0.035, 118 + by * 0.07);   // v62 : plan le plus lointain
   mount(0.08, H - 40, 160, '#8fb4dc', '#f4fbff', 2);
   mount(0.18, H + 10, 150, '#6f94c4', '#e6f4ff', 9);
   // ice spires in front
@@ -259,6 +313,7 @@ function bgNest(cx, cy, by, th){
       for(let i = 0; i < 5; i++){ const t = hash(k * 11 + i + seed), lx = x - dir * 200 + dir * 400 * t, ly = y - 30 + hash(i * 7 + k) * 40; ctx.beginPath(); ctx.ellipse(lx, ly, 9, 4, t * 3, 0, TAU); ctx.fill(); }
     }
   };
+  drawFarStrip(farStrip('nest', 300, farNestStrip), cx * 0.05, 70 + by * 0.08);   // v62 : forêt lointaine
   branch(0.12, 180, th.far, 3, 18);
   // the hoard: shiny things glinting in a far nest
   const nx = 470 - cx * 0.06, ny = 120 + by * 0.25;
@@ -1549,6 +1604,9 @@ function drawEnemyBody(e){
   const col = CRITTER[chIndex] || '#ff8a3d', dark = shade(col, -0.55);
   const step = Math.sin(e.t * 1.2), bounce = Math.abs(step) * 1.6;
   const cx = x + e.w / 2, base = y + e.h;
+  // v62 : ombre de contact (au plafond pour un marcheur tête en bas : drawEnemy le retourne)
+  ctx.fillStyle = theme().dark ? 'rgba(0,0,0,0.3)' : 'rgba(30,20,60,0.17)';
+  ctx.beginPath(); ctx.ellipse(cx, base, 13 - bounce, 2.6 - bounce * 0.3, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = dark;
   ctx.beginPath(); ctx.ellipse(cx - 6 + step * 2, base - 1.6, 3.6, 2.1, 0, 0, TAU); ctx.fill();
   ctx.beginPath(); ctx.ellipse(cx + 6 - step * 2, base - 1.6, 3.6, 2.1, 0, 0, TAU); ctx.fill();

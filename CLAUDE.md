@@ -45,7 +45,10 @@ XELIAX ; tête en bas, elle monte). `free:true` : libre dès le début, suit la 
 Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche qui tombe le bat.
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
-## État (v61 = v0.9.61, 11 novembre 2026, faite et testée mais pas encore commitée ni publiée ; la v60 est publiée, tag v0.9.60)
+## État (v62 = v0.9.62, 26 novembre 2026, faite, testée, commitée et poussée sur main, pas publiée : pas de tag ; la v60 est la dernière publiée, tag v0.9.60 ; v61 = commit 0949963)
+- v62 : option Planches lentes (`SET.slowPlanks`, `slowK`, `plankShake`, Paramètres > Jeu, `drawListPage` à 28 px si 9 lignes) ; babioles de la pie détruites d un tir (`kind:'trinket'`, +1 pièce) ; `p2crumble` sorti dans `enterPhase2`, plateforme du milieu de 2-4 fragile en phase 2 ;
+  contre-la-montre saison 2 (`timeTrial`, `srOneHit`, bouton à côté de JOUER / touche C, `parTime` dans `entetes.js`) ;
+  graphismes : `drawAirShadow` (ombre de contact), `dust()` avec gravité/poussée, `stompStop` (3 images), `shotFx`, iris aux couleurs du chapitre centré sur la porte, `drawLavaHeat`, `drawClearStamp`, plans lointains Glacier et Nid.
 - v61 (suite) : salles 4-1 (vitre au dash, fosse à piques sous un rocher franchie par des planches `fall`) et 4-2 (cheminées de 80 px, plafond sans piques) retouchées et vérifiées (route2 + robot `parcours/4-1-planches.json`).
 - v61 : fuite du Seigneur Pourpre : lave = tous les cœurs, reprise à son cri (`restartPhase`, `boss.dying = 1`) ; révélation S2 : la pie se pose sur « SAISON 2 » (`rvPie`, `perch`).
   Pie : pluie de trésor après chaque coup (`magpieRain`, `b.rain`, tirs `fork` / `goldfall`, `fallDie`) ; vol de pouvoir en combat (`magpieWantsSteal`, `magpieSteal`, états `swoopAim` / `swoop` / `carry`, `b.stolen`, `magpieGiveBack`) ; 3-1 : deux tireurs sur le pilier.

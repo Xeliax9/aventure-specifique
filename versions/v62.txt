@@ -1,4 +1,4 @@
-VERSION 62 (v0.9.62) — Planches lentes, contre-la-montre et boss plus vivants
+VERSION 62 (v0.9.62) — Planches lentes, contre-la-montre, boss plus vivants et décors plus profonds
 
 Gameplay
 
@@ -24,3 +24,24 @@ Contre-la-montre (saison 2)
   Le vol du double saut (2-1) et la grande fin de la saison 2 ne se rejouent pas.
 - Temps de l'or : monde 1 : 2 min 30 ; monde 2 : 3 min ; mondes 3 et 4 : 3 min 30 (argent +25 %, bronze +50 %).
   Ces temps sont des estimations, à régler en jouant.
+
+Graphismes
+- Ombre sous XELIAX : en l'air, une petite ombre reste posée sur la plateforme juste en dessous. Elle rétrécit et
+  s'efface quand il monte : on voit tout de suite où il va retomber. Tête en bas, l'ombre est au plafond.
+  Jamais d'ombre sur des piques, de la lave ou le sol brûlant du dernier boss (pour ne pas croire qu'on peut s'y poser).
+- Les ennemis qui marchent ont aussi leur ombre sous les pieds (au plafond pour ceux qui marchent tête en bas).
+- Poussière : un petit nuage en éventail au décollage d'un saut, une poussière qui part du mur au saut de mur, et une
+  poussière de course soulevée vers l'arrière. Tête en bas, elle part du plafond vers le bas.
+- Écraser un ennemi en lui sautant dessus fige l'action une fraction de seconde (3 images) : le coup se sent mieux.
+  Une touche appuyée pendant ce petit arrêt compte quand même. Rien de tout ça quand on prend un coup.
+  Avec « Animations réduites », pas d'arrêt.
+- Un ennemi abattu par un tir fait un éclat en étoile et un anneau blanc.
+- Le cercle de transition entre les salles prend la couleur du chapitre, et quand XELIAX entre dans la porte, il se
+  referme sur la porte.
+- Quand la lave monte (Les Étoiles, fuite du Seigneur Pourpre), une lueur de chaleur orange pulse au bas de l'écran,
+  de plus en plus forte à mesure que la lave approche, même avant de la voir.
+- Fin de chapitre : le titre « Chapitre N terminé » arrive comme un tampon (il se pose en rétrécissant), avec un petit
+  bruit, un anneau et des confettis.
+- Glacier : une crête de glace très lointaine, toute bleue et brumeuse, derrière les montagnes.
+  Nid de la Pie : une forêt de troncs géants au loin, dans le soir orageux. Ces plans bougent très lentement quand
+  XELIAX court : le décor a plus de profondeur. Ils sont pâles pour ne jamais gêner la lecture des pièges.

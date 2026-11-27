@@ -7,10 +7,11 @@ function burst(x, y, n, color, spd=3, life=30, grav=0.15, size=3, type='dot'){
     particles.push({x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s - spd*0.3, life, max:life, color, grav, size:size*(0.6 + Math.random()*0.8), type, rot:Math.random()*TAU, vr:(Math.random() - .5)*0.3});
   }
 }
-function dust(x, y, n=6){
+// v62 : g = sens de la gravité (-1 : la poussière part du plafond vers le bas), kx = petite poussée sur le côté
+function dust(x, y, n=6, g=1, kx=0){
   for(let i = 0; i < n; i++){
-    particles.push({x:x + (Math.random() - .5)*14, y:y - 1, vx:(Math.random() - .5)*1.6, vy:-Math.random()*0.9,
-      life:22 + Math.random()*8, max:30, color:'#ffffff', grav:-0.01, size:2.2 + Math.random()*2.4, type:'puff', drag:0.94});
+    particles.push({x:x + (Math.random() - .5)*14, y:y - g, vx:(Math.random() - .5)*1.6 + kx, vy:-g*Math.random()*0.9,
+      life:22 + Math.random()*8, max:30, color:'#ffffff', grav:-0.01*g, size:2.2 + Math.random()*2.4, type:'puff', drag:0.94});
   }
 }
 function sparkle(x, y, n, color){

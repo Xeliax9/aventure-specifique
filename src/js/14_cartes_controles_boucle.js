@@ -211,6 +211,7 @@ function render(alpha){
   drawAmbient(cx, cy);
   const [hx, hy] = camPoint(ix(player) + player.w / 2, iy(player) + player.h / 2, cx, cy);   // v55 : suit le gros plan (worldCam)
   drawLighting(hx, hy);
+  drawLavaHeat(cy);
   drawSkinGlowOver();
   ctx.restore();
 

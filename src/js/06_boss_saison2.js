@@ -683,6 +683,12 @@ function killFx(e){
   if(!bat) particles.push({type:'splat', x:e.x + e.w/2, y:e.y + e.h, vx:0, vy:0, life:40, max:40, color:col, grav:0, size:14});
   popup(e.x + e.w/2, e.y - 4, '+25', '#ffffff');
 }
+// v62 : abattu par un tir : un éclat en étoile et un anneau en plus de killFx (les étincelles sont déjà dans killFx)
+function shotFx(e){
+  const x = e.x + e.w / 2, y = e.y + e.h / 2;
+  particles.push({x, y, vx:0, vy:0, life:12, max:12, color:'#ffffff', grav:0, size:11, type:'star', rot:Math.random() * TAU, vr:0.12, drag:1});
+  ring(x, y, '#ffffff', 5, 24, 14);
+}
 
 function doJump(){
   player.vy = JUMP_V * gdir;
@@ -690,7 +696,8 @@ function doJump(){
   player.onGround = false; player.standingOn = null; player.noCut = false;
   player.sx = 0.75; player.sy = 1.25;
   anim.wobV -= 0.35;
-  dust(player.x + player.w/2, gdir > 0 ? player.y + player.h : player.y, 5);
+  const fy = gdir > 0 ? player.y + player.h : player.y;   // v62 : nuage au décollage, en éventail sur les deux côtés
+  dust(player.x + player.w/2, fy, 4, gdir); dust(player.x + player.w/2 - 7, fy, 2, gdir, -1.3); dust(player.x + player.w/2 + 7, fy, 2, gdir, 1.3);
   SFX.jump();
 }
 
