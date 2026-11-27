@@ -210,7 +210,10 @@ function gameKey(k){
   for(const a in KEY_DEF) if(KEY_DEF[a] === k) return '';
   return k;
 }
-const skinOpen = s => SET.creator || (s.price ? !!(save.owned || {})[s.id] : s.gems ? gemCount() >= s.gems : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
+// v62 : une couleur à gemmes ne s'ouvre plus toute seule : on clique dessus pour la débloquer (les gemmes ne sont pas dépensées) ;
+// qui la portait déjà la garde
+if(!save.gemSkinsV62){ for(const s of SKINS) if(s.gems && SET.skin === s.id && gemCount() >= s.gems) save.owned[s.id] = true; save.gemSkinsV62 = true; }
+const skinOpen = s => SET.creator || (s.price || s.gems ? !!(save.owned || {})[s.id] : !s.lock || (s.lock === 'gold' ? !!save.goldFicelle : !!save.crystalFicelle));
 // démo : boutique fermée, donc toujours la couleur de départ (la sauvegarde du jeu complet est partagée et ne doit rien dévoiler)
 const skinOf = () => demoOn() ? SKINS[0] : SKINS.find(s => s.id === SET.skin && skinOpen(s)) || SKINS[0];
 const START_LIVES = 5;   // nombre de vies au départ, fixe (v54)

@@ -1,0 +1,5 @@
+Boutique (Couleur de XELIAX)
+- Une couleur pas encore obtenue ne se montre plus jamais en clair : dans la grille, elle est grisée sous un cadenas
+  avec son prix (pièces ou gemmes) ; dans le grand aperçu, XELIAX apparaît en ombre grise avec un cadenas.
+  Les couleurs à gemmes (Émeraude, Galaxie) ne se débloquent plus toutes seules : quand on a assez de gemmes,
+  on clique dessus pour les débloquer (les gemmes ne sont pas dépensées).

@@ -477,8 +477,14 @@ function resetProgress(){
   showToast('Progression effacée : on repart de zéro !', 130);
   SFX.crumble(); addShake(6);
 }
-const skinHint = s => s.price ? `${s.price} pièces : clique pour l'acheter (tu en as ${save.bank})` : s.gems ? `Trouve ${s.gems} gemmes 💎 pour la débloquer (tu en as ${gemCount()})` : s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
+const skinHint = s => s.price ? `${s.price} pièces : clique pour l'acheter (tu en as ${save.bank})` : s.gems ? (gemCount() >= s.gems ? `${s.gems} gemmes 💎 : clique pour la débloquer (tu en as ${gemCount()})` : `Trouve ${s.gems} gemmes 💎 pour la débloquer (tu en as ${gemCount()})`) : s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
 function buySkin(s){
+  if(s.gems && !skinOpen(s) && gemCount() >= s.gems){   // v62 : assez de gemmes = on la débloque d'un clic (gemmes gardées)
+    save.owned = save.owned || {}; save.owned[s.id] = true; persist();
+    setSetting('skin', s.id); titleHero.hop = 1; titleHero.wobV += 0.6;
+    showToast(`${s.name} débloquée ! Merci les gemmes`, 130); SFX.key(); confetti(196, 200, 30);
+    return true;
+  }
   if(!s.price || skinOpen(s)) return false;
   if(save.bank < s.price){ showToast(`Il te faut ${s.price} pièces (tu en as ${save.bank}). Ramasse-en dans les niveaux !`, 130); SFX.hurt(); return true; }
   save.bank -= s.price; save.owned = save.owned || {}; save.owned[s.id] = true; persist();
@@ -1186,6 +1192,10 @@ function drawListPage(p, act){
   if(foot && rows.length <= 6) txt(foot, W / 2, y + h + 24, 11.5, '#c9c1f0', 500);
   if(!TOUCH) promptLine([{key:'▲'}, {key:'▼'}, {text:'choisir'}, {gap:8}, {key:'◀'}, {key:'▶'}, {text:'régler'}, {gap:8}, {key:'Espace'}, {text:'valider'}, {gap:8}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
 }
+// v62 : la couleur grisée d'une pastille pas encore obtenue (calculée une fois, gardée sur la couleur)
+const greyHex = (hex, k) => { const [r, g, b] = hexRGB(hex), l = 0.3 * r + 0.59 * g + 0.11 * b, m = v => Math.round((v + (l - v) * 0.8) * k); return `rgb(${m(r)},${m(g)},${m(b)})`; };
+const skinShadow = s => s._shadow || (s._shadow = Object.assign({}, s, {body:'#3a3552', deep:'#16121f', light:'#5a5470', _shadowOf:s.id}));
+const skinGrey = s => s._grey || (s._grey = {light:greyHex(s.light, 0.75), body:greyHex(s.body, 0.75), deep:greyHex(s.deep, 0.75)});
 function drawLook(act){
   navHeader(PAGE_NAME.look, 'Paramètres', act);
   const cur = skinOf(), foc = SKINS[menu.sel.look] || cur, focOpen = skinOpen(foc);
@@ -1195,21 +1205,21 @@ function drawLook(act){
   ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1.4; ctx.stroke();
   if(foc.legend) legendShowcase(px, py);   // v54 : couleur légendaire = rayons dorés, halo, étiquette (07_dessin_heros.js)
   const hop = Math.sin(titleHero.hop * Math.PI) * 18;
-  // une couleur à acheter se montre telle quelle (pour donner envie) ; les couleurs secrètes restent en ombre
-  const tryOn = !focOpen && !!foc.price;
-  drawHero(titleHero, px, py - hop, 3.7, focOpen ? {skin:foc} : tryOn ? {skin:foc, alpha:0.9} : {tint:'#171032', skin:foc});
-  if(!focOpen && !tryOn) heading('?', px + 2, py - 150, 30, '#ffd54a');
-  if(tryOn) txt('Aperçu', px, py - 150, 13, '#ffd54a', 700);
+  // v62 : une couleur pas encore obtenue ne se montre jamais en clair : XELIAX en ombre grise, avec un cadenas
+  // (le contour aussi est gris : skinShadow garde la forme de l'accessoire, pas ses couleurs)
+  drawHero(titleHero, px, py - hop, 3.7, focOpen ? {skin:foc} : {tint:'#3a3552', skin:skinShadow(foc)});
+  if(!focOpen){ padlock(px, py - 44 - hop, 1.9, '#d8d2ee'); heading('?', px + 2, py - 150, 30, '#ffd54a'); }
   SKINS.forEach((s, j) => {
     const sx = 330 + (j % 5) * 54, sy = 104 + Math.floor(j / 5) * 64, open = skinOpen(s), on = s.id === cur.id, f = j === menu.sel.look;
     if(f){ ctx.strokeStyle = '#ffd54a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx, sy, 24, 0, TAU); ctx.stroke(); }
     if(on){ ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, 20.5, 0, TAU); ctx.stroke(); }
+    const c = open ? s : skinGrey(s);   // v62 : pas obtenue = la couleur grisée sous le cadenas
     const g = ctx.createRadialGradient(sx - 5, sy - 6, 2, sx, sy, 18);
-    g.addColorStop(0, s.light); g.addColorStop(1, s.body);
+    g.addColorStop(0, c.light); g.addColorStop(1, c.body);
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, 17, 0, TAU); ctx.fill();
-    ctx.strokeStyle = s.deep; ctx.lineWidth = 1.4; ctx.stroke();
-    for(const [ex, ey, r] of [[-5, -4, 4.4], [5, -1, 3.6]]){ ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(sx + ex, sy + ey, r, 0, TAU); ctx.fill(); ctx.fillStyle = '#14033f'; ctx.beginPath(); ctx.arc(sx + ex + 1.2, sy + ey + 0.8, r * 0.45, 0, TAU); ctx.fill(); }
-    if(!open){ ctx.fillStyle = 'rgba(14,9,34,0.62)'; ctx.beginPath(); ctx.arc(sx, sy, 17.5, 0, TAU); ctx.fill(); padlock(sx, sy, 0.75); }
+    ctx.strokeStyle = c.deep; ctx.lineWidth = 1.4; ctx.stroke();
+    for(const [ex, ey, r] of [[-5, -4, 4.4], [5, -1, 3.6]]){ ctx.fillStyle = open ? '#ffffff' : '#9a96aa'; ctx.beginPath(); ctx.arc(sx + ex, sy + ey, r, 0, TAU); ctx.fill(); ctx.fillStyle = '#14033f'; ctx.beginPath(); ctx.arc(sx + ex + 1.2, sy + ey + 0.8, r * 0.45, 0, TAU); ctx.fill(); }
+    if(!open){ ctx.fillStyle = 'rgba(14,9,34,0.4)'; ctx.beginPath(); ctx.arc(sx, sy, 17.5, 0, TAU); ctx.fill(); padlock(sx, sy, 0.75); }
     if(s.legend) legendSwatch(sx, sy, j);
     txt(open || !(s.price || s.gems) ? s.name : s.price ? s.price + ' 🪙' : s.gems + ' 💎', sx, sy + 32, 10.5, open ? '#efe8ff' : s.price ? '#ffd54a' : s.gems ? '#9df0ff' : '#9d95c8', 600);
     if(act) hit(sx - 26, sy - 24, 52, 60, {id:'skin' + j, click:() => lookClick(j), hover:() => { menu.sel.look = j; }});
