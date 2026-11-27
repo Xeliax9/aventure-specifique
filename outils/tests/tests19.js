@@ -104,21 +104,6 @@ const { chromium } = require('playwright');
   ok(await T(() => SET.reduced === true && REDUCED === true), 'reduced animations on');
   await T(() => { menu.sel.jeu = 2; }); await key(' ');
   ok(await T(() => REDUCED === MEDIA_REDUCED), 'and off again');
-  // v62 : « Planches lentes » : désactivé par défaut, sauvegardé ; planches et parachutes tremblent 1,5× plus longtemps, tombent 0,7× moins vite
-  ok(await T(() => SET.slowPlanks === false && jeuRows()[3].id === 'slowPlanks' && /^Planches lentes/.test(jeuRows()[3].label)), 'Planches lentes : juste après Animations réduites, désactivé par défaut');
-  const plankRun = async (slow, lift) => T(`(() => {
-    SET.slowPlanks = ${slow}; gdir = 1;
-    const p = {x:2000, y:-400, w:60, h:16, fall:true, lift:${lift}, ox:2000, oy:-400, fT:1, fvy:0, loose:false, landT:0, gone:false, appear:1};
-    let shake = 0; while(!p.loose && shake < 200){ updatePlank(p); shake++; }
-    const y0 = p.y; for(let i = 0; i < 20; i++) updatePlank(p);
-    return [shake, p.y - y0, Math.abs(p.fvy)];
-  })()`);
-  const pN = await plankRun(false, false), pS = await plankRun(true, false), lN = await plankRun(false, true), lS = await plankRun(true, true);
-  ok(Math.abs(pS[0] / pN[0] - 1.5) < 0.1 && Math.abs(lS[0] / lN[0] - 1.5) < 0.2, `planches lentes : tremblent 1,5× plus longtemps (planche ${pN[0]} → ${pS[0]}, parachute ${lN[0]} → ${lS[0]} images)`);
-  ok(Math.abs(pS[1] / pN[1] - 0.7) < 0.03 && Math.abs(lS[1] / lN[1] - 0.7) < 0.03, `planches lentes : tombent 0,7× moins vite (${pN[1].toFixed(1)} → ${pS[1].toFixed(1)} px, parachute ${lN[1].toFixed(1)} → ${lS[1].toFixed(1)} px)`);
-  await T(() => { SET.slowPlanks = false; menu.sel.jeu = jeuRows().findIndex(r => r.id === 'slowPlanks'); }); await key('Enter');
-  ok(await T(() => SET.slowPlanks === true && JSON.parse(localStorage.getItem('platformer_save_v2')).settings.slowPlanks === true), 'Entrée active Planches lentes, et c\'est sauvegardé');
-  await key('Enter'); ok(await T(() => SET.slowPlanks === false), 'et la désactive');
   // a new run always starts with 5 lives, the hidden timer does not break the HUD
   await T(() => { newRun(0); fade = 0; fadeDir = 0; for(let i = 0; i < 5; i++) step(); render(1); });
   ok(await T(() => lives === 5 && startLives() === 5), 'a new run starts with 5 lives');
@@ -144,17 +129,20 @@ const { chromium } = require('playwright');
   const nameY = await T(() => { let y = H + 12 - menu.credY; for(const c of CREDITS){ const cy = y + c.h / 2; y += c.h; if(c.k === 'name') return cy; } });
   await T(() => { menu.credFast = false; menu.credY = 345; render(1); });
   for(let i = 0; i < 5; i++){ const ny = await T(() => { let y = H + 12 - menu.credY; for(const c of CREDITS){ const cy = y + c.h / 2; y += c.h; if(c.k === 'name') return cy; } }); await p.mouse.click(...at(320, ny)); await T(() => render(1)); }
-  ok(await T(() => SET.creatorFound === true), `five taps on « xeliax9 » reveal the creator mode (name at y ${Math.round(nameY)})`);
+  ok(await T(() => SET.creatorFound === true), `five taps on « xeliax9 » find the credits secret (name at y ${Math.round(nameY)})`);
   await T(() => { SET.creatorFound = false; });
   for(const ch of 'xeliax9') await key(ch);
   ok(await T(() => SET.creatorFound === true), 'typing « xeliax9 » in the credits works too');
   await T(() => { goPage('settings', -1); for(let i = 0; i < 20; i++) step(); goPage('jeu'); for(let i = 0; i < 20; i++) step(); render(1); });
-  ok(await T(() => jeuRows().some(r => r.id === 'creator')), 'the creator switch appears in Jeu');
-  await T(() => { menu.sel.jeu = jeuRows().findIndex(r => r.id === 'creator'); }); await key('Enter');
-  ok(await T(() => SET.creator && CHAPTERS.every((c, i) => isUnlocked(i)) && bonusVisible()), 'creator mode: everything open, the bonus category shows up');
+  ok(await T(() => !jeuRows().some(r => r.id === 'creator' || r.id === 'slowPlanks') && !/créateur|Planches lentes/.test(jeuRows().map(r => r.label).join(' '))), 'Jeu : ni « mode créateur » ni « Planches lentes », même secret trouvé');
+  ok(await T(() => SET.slowPlanks === undefined), 'plus de réglage slowPlanks dans la sauvegarde');
+  // the creator mode now only comes from « Connexion admin » (Paramètres) : simulate a good password, then log out with the row
+  await T(() => { SET.creatorFound = true; setSetting('creator', true); goPage('settings', -1); for(let i = 0; i < 20; i++) step(); render(1); });
+  ok(await T(() => SET.creator && CHAPTERS.every((c, i) => isUnlocked(i)) && bonusVisible()), 'creator mode (admin): everything open, the bonus category shows up');
   ok(await T(() => save.unlocked === 1 && save.unlocked2 === 1 && save.bestCh.every(v => v == null)), '…without touching the real progress');
-  await T(() => { menu.sel.jeu = jeuRows().findIndex(r => r.id === 'creator'); }); await key('Enter');
-  ok(await T(() => !SET.creator && !bonusVisible()), 'creator mode off: the bonus hides again');
+  ok(await T(() => /se déconnecter/.test(settingsRows().find(r => r.id === 'admin').label)), 'Paramètres : la ligne admin propose de se déconnecter');
+  await T(() => { menu.sel.settings = settingsRows().findIndex(r => r.id === 'admin'); }); await key('Enter');
+  ok(await T(() => !SET.creator && !bonusVisible() && /^Connexion admin$/.test(settingsRows().find(r => r.id === 'admin').label)), 'creator mode off (admin logged out): the bonus hides again');
 
   // ---------------------------------------------------------------- finishing season 1 reveals the hidden bonus
   await T(() => { save.bestCh[3] = 400000; save.unlocked = 5; persist(); });
