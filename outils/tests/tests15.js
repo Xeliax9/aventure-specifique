@@ -56,7 +56,7 @@ const { chromium } = require('playwright');
     go(1, 2); ok(solids.length >= 5, 'La Descente: solid floors force the zigzag');
 
     // ---- bonus chapter
-    save.unlocked = 5; save.bestCh[3] = 60000;
+    save.unlocked = 5; save.bestCh[3] = 60000; save.s2Done = true;   // v62 : le bonus s'ouvre à la fin de la saison 2
     for(let ri = 0; ri < 4; ri++){ go(4, ri); run(30); render(1); }
     ok(true, 'bonus rooms load and draw');
     go(4, 3);
@@ -74,7 +74,7 @@ const { chromium } = require('playwright');
     confirmAction(); for(let i = 0; i < 80; i++) step();
     ok(chIndex === 4 && rIndex === 2 && state === 'play' && lives === startLives(), 'retry restarts B-3 with full lives');
     // old saves that finished chapter 4 have the bonus unlocked
-    ok(CHAPTERS.length === 10 && CHAPTERS[4].bonus && CHAPTERS[8].season === 2 && CHAPTERS[9].bonus2, 'season 1 + bonus + season 2 + bonus 2');
+    ok(CHAPTERS.length === 9 && CHAPTERS[4].bonus && CHAPTERS[8].season === 2, 'season 1 + bonus + season 2 (v62 : no bonus 2)');
 
     // ---- XELIAX's corner (easter egg)
     toMenu(); fade = 0; fadeDir = 0; for(let i = 0; i < 30; i++) step();

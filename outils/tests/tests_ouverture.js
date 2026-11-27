@@ -50,7 +50,7 @@ const path = require('path'), url = require('url');
   // les autres chapitres n'ont pas de cinématique
   await T(() => { setState('title'); fade = 0; fadeDir = 0; save.unlocked = 2; playChapter(1); });
   ok(await T(() => state === 'play'), 'chapitre 2 : pas de cinématique');
-  ok(await T(() => CHAPTERS[BONUS_CH[1]].parTime === 90000), 'Cosmos : temps à battre de 1 min 30');
+  ok(await T(() => BONUS_CH.length === 1 && !CHAPTERS.some(c => /Cosmos/.test(c.name))), 'v62 : plus de bonus « Le Cosmos », un seul bonus');
   ok(!p.errs.length, 'aucune erreur JavaScript (jeu complet) ' + p.errs.join(' | '));
 
   // démo, avec une sauvegarde qui a fini la saison 1

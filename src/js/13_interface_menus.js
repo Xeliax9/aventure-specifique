@@ -11,10 +11,9 @@ const STORY = [
   'La pie s\'est cachée au fond des gorges. Il va falloir grimper !',
   'Des plumes noires sur la glace… elle n\'est plus très loin.',
   'Le nid de la pie est là-haut, au cœur de l\'orage.',
-  'Gravité, murs et dash : une ficelle de cristal flotte au bout du cosmos.',
 ];
 const chName = i => CHAPTERS[i].bonus ? 'Bonus secret' : CHAPTERS[i].season === 2 ? `Saison 2 · Chapitre ${CHAPTERS[i].num}` : `Chapitre ${i + 1}`;
-const roomTag = () => CHAPTERS[chIndex].bonus ? `${CHAPTERS[chIndex].bonus2 ? 'B2' : 'B'}-${rIndex + 1}` : CHAPTERS[chIndex].season === 2 ? `S2 ${CHAPTERS[chIndex].num}-${rIndex + 1}` : `${chIndex + 1}-${rIndex + 1}`;
+const roomTag = () => CHAPTERS[chIndex].bonus ? `B-${rIndex + 1}` : CHAPTERS[chIndex].season === 2 ? `S2 ${CHAPTERS[chIndex].num}-${rIndex + 1}` : `${chIndex + 1}-${rIndex + 1}`;
 // how much of the ficelle recipe the people of the world have taught XELIAX
 function recipeCount(){ return save.recipe.filter(Boolean).length; }
 function gemsOf(season){ return (season === 2 ? save.gems.slice(S2_FIRST, S2_END + 1) : save.gems.slice(0, 4)).filter(Boolean).length; }
@@ -278,7 +277,7 @@ const PAGE_PARENT = {chapters:'home', settings:'home', son:'settings', jeu:'sett
 const PAGE_DIM = {home:0, settings:0.5, son:0.56, jeu:0.56, look:0.44, controls:0.58, credits:0.62, bonus:0.4, test:0.56};
 const PAGE_NAME = {home:'Accueil', chapters:'Chapitres', settings:'Paramètres', son:'Son', jeu:'Jeu', look:'Couleur de XELIAX', controls:'Commandes', credits:'Crédits', bonus:'Bonus secret', test:'Tester (admin)'};
 const TAGLINE = ['Là où tout commence', 'Le Roi Gluant t\'attend sous terre', 'Grimpe jusqu\'au Gardien', 'La ficelle est tout en haut',
-  'Le défi des étoiles', 'La gravité s\'inverse !', 'Glisse et saute sur les murs', 'Le dash, enfin !', 'Rattrape la pie voleuse', 'Le défi des pouvoirs'];
+  'Le défi des étoiles', 'La gravité s\'inverse !', 'Glisse et saute sur les murs', 'Le dash, enfin !', 'Rattrape la pie voleuse'];
 const menu = {
   page:'home', from:null, t:1, dir:1,
   sel:{home:0, settings:0, son:0, jeu:0, look:0, controls:0, bonus:0, test:0}, bindWait:null,
@@ -387,7 +386,7 @@ function switchSeason(s){
 function lockText(i){
   const c = CHAPTERS[i];
   if(demoOn() && (c.bonus || c.season === 2 || i > 1)) return 'Pas disponible dans la démo';
-  if(c.bonus) return c.bonus2 ? 'Finis la saison 2 pour débloquer ce bonus' : 'Finis la saison 1 pour débloquer ce bonus';
+  if(c.bonus) return 'Finis la saison 2 pour débloquer ce bonus';
   return 'Termine le chapitre précédent pour le débloquer';
 }
 function playChapter(i){
@@ -476,7 +475,7 @@ function resetProgress(){
   showToast('Progression effacée : on repart de zéro !', 130);
   SFX.crumble(); addShake(6);
 }
-const skinHint = s => s.price ? `${s.price} pièces : clique pour l'acheter (tu en as ${save.bank})` : s.gems ? `Trouve ${s.gems} gemmes 💎 pour la débloquer (tu en as ${gemCount()})` : s.lock === 'gold' ? 'Gagne la ficelle dorée (bonus « Les Étoiles »)' : 'Gagne la ficelle de cristal (bonus « Le Cosmos »)';
+const skinHint = s => s.price ? `${s.price} pièces : clique pour l'acheter (tu en as ${save.bank})` : s.gems ? `Trouve ${s.gems} gemmes 💎 pour la débloquer (tu en as ${gemCount()})` : bonusVisible() ? 'Ficelle dorée (bonus « Les Étoiles ») : Or et Cristal' : 'Finis la saison 2 : un défi secret la débloque…';
 function buySkin(s){
   if(!s.price || skinOpen(s)) return false;
   if(save.bank < s.price){ showToast(`Il te faut ${s.price} pièces (tu en as ${save.bank}). Ramasse-en dans les niveaux !`, 130); SFX.hurt(); return true; }
@@ -883,12 +882,6 @@ function appArt(i){
     ctx.fillStyle = '#ffd54a'; star(50, 44, 25, -Math.PI / 2 + t * 0.01);
     ctx.fillStyle = '#fff6c0'; star(50, 44, 9, -Math.PI / 2 + t * 0.01);
     drawFicelle(50, 82, 54, -0.15, false, 7.5, 'gold');
-  } else if(deco === 'cosmos'){
-    sky('#05031a', '#1d0c4e', '#4a1a7a');
-    softGlow(24, 30, 38, 26, '255,90,200', 0.35); softGlow(80, 72, 40, 30, '90,220,255', 0.3);
-    dots(18, '220,240,255', 100);
-    ringedPlanet(50, 44, 18);
-    drawFicelle(50, 84, 52, -0.1, false, 7.5, 'crystal');
   }
 }
 function drawAppIcon(i, cx, cy, size, o = {}){
@@ -1354,17 +1347,21 @@ function drawBonus(act){
     txt(c.name, cx, cy + 68, 14.5, open ? '#ffffff' : '#a49cd0', 600);
     txt(open ? `2 défis géants · à battre : ${fmt(c.parTime)}` : lockText(i), cx, cy + 86, 11.5, open ? '#d6ceff' : '#ff9aa8', 500);
     if(open){
-      const got = c.bonus2 ? save.crystalFicelle : save.goldFicelle, label = `${c.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée'} : ${got ? 'gagnée !' : 'à gagner'}`;
+      const got = !!save.goldFicelle, label = `Ficelle dorée : ${got ? 'gagnée !' : 'à gagner'}`;
       ctx.font = `600 11.5px ${FU}`; const lw = ctx.measureText(label).width;
-      ctx.save(); ctx.globalAlpha *= got ? 1 : 0.45; drawFicelle(cx - lw / 2 - 14, cy + 100, 20, -0.3, false, 4.5, c.bonus2 ? 'crystal' : 'gold'); ctx.restore();
+      ctx.save(); ctx.globalAlpha *= got ? 1 : 0.45; drawFicelle(cx - lw / 2 - 14, cy + 100, 20, -0.3, false, 4.5, 'gold'); ctx.restore();
       txt(label, cx + 4, cy + 104, 11.5, got ? '#ffe58a' : '#c9c1f0', 600);
+      // v62 : la ficelle dorée débloque deux couleurs, l'Or et le Cristal
+      txt(bonusSkinsWon() ? 'Couleurs Or et Cristal : débloquées !' : 'Récompense : les couleurs Or et Cristal', cx, cy + 121, 11, bonusSkinsWon() ? '#bff0ff' : '#c9c1f0', 500);
       const best = save.bestCh[i];
-      if(best != null) txt(`Record ${fmt(best)}`, cx, cy + 121, 11, '#9fe8b0', 500);
+      if(best != null) txt(`Record ${fmt(best)}`, cx, cy + 138, 11, '#9fe8b0', 500);
     }
     if(act) hit(cx - 82, cy - 54, 164, 186, {id:'bonus' + j, click:() => { if(menu.sel.bonus === j) playChapter(i); else { menu.sel.bonus = j; SFX.menu(); } }});
   });
-  if(TOUCH) txt('Touche un bonus pour le choisir, puis encore pour jouer', W / 2, 338, 11.5, '#d6ceff', 500);
-  else promptLine([{key:'◀'}, {key:'▶'}, {text:'choisir'}, {gap:8}, {key:'Espace'}, {text:'jouer'}, {gap:8}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
+  // v62 : un seul bonus, plus besoin de choisir
+  const one = BONUS_CH.length === 1;
+  if(TOUCH) txt(one ? 'Touche le bonus pour jouer' : 'Touche un bonus pour le choisir, puis encore pour jouer', W / 2, 338, 11.5, '#d6ceff', 500);
+  else promptLine([...(one ? [] : [{key:'◀'}, {key:'▶'}, {text:'choisir'}, {gap:8}]), {key:'Espace'}, {text:'jouer'}, {gap:8}, {key:'Échap'}, {text:'retour'}], 338, '#e0d4ff');
 }
 
 // ---------------------------------------------------------------- one menu frame
@@ -1522,13 +1519,13 @@ function drawChapterClear(){
   panelContent(b);
   drawHero(uiHero, W / 2, b.y + 2 - Math.abs(Math.sin(frame * 0.16)) * 10, 1.8, {});
   drawClearStamp(clearInfo.bonus ? 'Défi bonus réussi !' : clearInfo.tt ? 'Contre-la-montre fini !' : `Chapitre ${chNum(chIndex)} terminé`, W / 2, b.y + 64, CH_ACCENT[chIndex]);
-  txt(clearInfo.bonus ? (!clearInfo.fast ? 'Trop lent pour la ficelle : R pour retenter !' : clearInfo.bonus2 ? 'La ficelle de cristal est à toi.' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
+  txt(clearInfo.bonus ? (!clearInfo.fast ? 'Trop lent pour la ficelle : R pour retenter !' : clearInfo.newSkins ? 'La ficelle dorée est à toi : Or et Cristal débloqués !' : 'La ficelle dorée est à toi.') : chapter.name, W / 2, b.y + 85, 12.5, '#bfb6f0', 500);
   const rows = [
     ['Temps', fmt(counted(clearInfo.time, 10)), clearInfo.newBest && stateT > 50 ? 'Record !' : ''],
     clearInfo.bonus || clearInfo.tt ? ['Médaille', stateT > 40 ? (clearInfo.medal ? clearInfo.medal[0].toUpperCase() + clearInfo.medal.slice(1) : 'aucune') : '', clearInfo.medal === 'or' && stateT > 55 ? 'Or !' : '']
       : ['Pièces', `${Math.round(counted(clearInfo.coins, 20))} sur ${clearInfo.total}`, clearInfo.coins === clearInfo.total && stateT > 60 ? 'Toutes !' : ''],
-    [clearInfo.bonus ? (clearInfo.bonus2 ? 'Ficelle de cristal' : 'Ficelle dorée') : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus ? (clearInfo.fast ? 'gagnée' : 'trop lent') : clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
-    chapter.season === 2 || chapter.bonus2 ? ['Pouvoirs', stateT > 45 ? ['gravité', hasWall && 'murs', hasDash && 'dash'].filter(Boolean).join(', ') : '', ''] : ['Recette', stateT > 45 ? recipeShort() : '', ''],
+    [clearInfo.bonus ? 'Ficelle dorée' : 'Gemme secrète', stateT > 40 ? (clearInfo.bonus ? (clearInfo.fast ? 'gagnée' : 'trop lent') : clearInfo.gem ? 'trouvée' : 'manquée') : '', ''],
+    chapter.season === 2 ? ['Pouvoirs', stateT > 45 ? ['gravité', hasWall && 'murs', hasDash && 'dash'].filter(Boolean).join(', ') : '', ''] : ['Recette', stateT > 45 ? recipeShort() : '', ''],
     ['Score', String(Math.round(counted(score, 30))), ''],
   ];
   rows.forEach(([k, v, tag], i) => {
@@ -1628,7 +1625,7 @@ function drawWin(){
   if(clearInfo.bonusNew && stateT > 60){
     ctx.save(); ctx.globalAlpha = clamp((stateT - 60) / 20, 0, 1);
     ctx.fillStyle = '#ffd54a'; star(b.x + 40, b.y + 222, 6, frame * 0.03);
-    txt(s2 ? 'Psst… un nouveau bonus secret t\'attend dans les Paramètres !' : 'Psst… un bonus secret se cache dans les Paramètres !', b.x + 52, b.y + 226, 12, '#ffe58a', 600, 'left');
+    txt('Psst… un bonus secret t\'attend dans les Paramètres !', b.x + 52, b.y + 226, 12, '#ffe58a', 600, 'left');
     ctx.restore();
   }
   if(stateT >= 45) promptLine(TOUCH ? [{key:'▲'}, {text:'retour au menu'}] : [{key:'Espace'}, {text:'retour au menu'}], b.y + b.h - 14);

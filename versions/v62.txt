@@ -14,6 +14,18 @@ Gecko Géant (saison 2, salle 2-4)
 - En phase 2, la plateforme du milieu devient fragile (on la voit se fissurer) : elle casse si on reste dessus,
   puis revient au bout de 10 secondes. En phase 1, elle reste solide. Les plateformes des côtés ne changent pas.
 
+Bonus secret
+- Le bonus « Le Cosmos » n'existe plus. Il ne reste qu'un bonus : « Les Étoiles ».
+- « Les Étoiles » n'apparaît plus après la saison 1, mais seulement une fois la saison 2 finie : avant, aucune trace
+  (pas de ligne « Bonus secret » dans les Paramètres, pas d'indice au menu ni sur l'écran de fin de la saison 1).
+  À la fin de la saison 2, l'écran de victoire puis une notification disent qu'un bonus secret attend dans les Paramètres.
+- Réussir « Les Étoiles » à temps (la ficelle dorée) débloque d'un coup deux couleurs : l'Or et le Cristal.
+  La boutique et la page du bonus le disent. Avant la fin de la saison 2, la boutique dit seulement :
+  « Finis la saison 2 : un défi secret la débloque… ».
+- Sauvegardes : qui avait déjà la ficelle dorée obtient aussi le Cristal ; qui avait la ficelle de cristal garde le
+  Cristal (et reçoit l'Or). Le record, la médaille et le fantôme du Cosmos sont effacés ; ceux des autres chapitres
+  (et des Étoiles) ne bougent pas. Dans la démo, rien ne change : le bonus reste fermé.
+
 Contre-la-montre (saison 2)
 - Un monde de la saison 2 déjà fini peut se rejouer en contre-la-montre : sur sa carte, bouton « ⏱ Contre-la-montre »
   (ou touche C).
