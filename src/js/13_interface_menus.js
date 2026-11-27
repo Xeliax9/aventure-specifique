@@ -299,7 +299,7 @@ const PAGE_FOOT = {
   settings:() => 'L\'aventure spécifique, un jeu de xeliax9',
   son:() => 'Le son démarre dès que tu appuies sur une touche.',
   test:() => 'Gauche / droite pour choisir, Entrée pour lancer.',
-  jeu:() => SET.creatorFound && !DEMO ? 'Le mode créateur ouvre tout, sans toucher à ta vraie progression.' : `Chaque partie commence avec ${START_LIVES} vies.`,
+  jeu:() => `Chaque partie commence avec ${START_LIVES} vies.`,
 };
 
 function defaultChapter(){
@@ -427,14 +427,11 @@ function jeuRows(){
     {kind:'toggle', id:'timer', label:'Chronomètre à l\'écran', get:() => SET.timer, set:v => setSetting('timer', v)},
     {kind:'toggle', id:'shake', label:'L\'écran tremble', get:() => SET.shake, set:v => { setSetting('shake', v); if(v) addShake(5); }},
     {kind:'toggle', id:'reduced', label:'Animations réduites', get:() => SET.reduced, set:v => setSetting('reduced', v)},
-    {kind:'toggle', id:'slowPlanks', label:'Planches lentes : tombent moins vite', get:() => !!SET.slowPlanks, set:v => setSetting('slowPlanks', v)},
     {kind:'toggle', id:'fps', label:'Afficher les images par seconde', get:() => !!SET.fps, set:v => setSetting('fps', v)},
     {kind:'toggle', id:'cap60', label:'Limiter à 60 images/s (si ça rame)', get:() => !!SET.cap60, set:v => setSetting('cap60', v)},
     {kind:'toggle', id:'autoJump', label:'Garder le saut appuyé : saute en boucle', get:() => !!SET.autoJump, set:v => setSetting('autoJump', v)},
   ];
-  // démo : pas d'interrupteur (le secret trouvé dans le jeu complet ouvrait la démo sans mot de passe) ; on passe par « Connexion admin »
-  if(SET.creatorFound && !DEMO) rows.push({kind:'toggle', id:'creator', label:'Mode créateur : tout ouvrir', accent:'#ffd54a', get:() => SET.creator,
-    set:v => { setSetting('creator', v); showToast(v ? 'Mode créateur : tout est ouvert !' : 'Mode créateur coupé', 100); if(v) SFX.power(); }});
+  // v62 : plus d'interrupteur « mode créateur » ici : il ne s'ouvre que par « Connexion admin » (Paramètres)
   rows.push({kind:'action', id:'reset', danger:true, label:menu.resetT > 0 ? 'Sûr ? Appuie encore pour tout effacer' : 'Effacer la progression', act:resetProgress});
   return rows;
 }
@@ -514,9 +511,9 @@ const CRED_TOTAL = CREDITS.reduce((a, c) => a + c.h, 0);
 const credMax = () => CRED_TOTAL - CREDITS[CREDITS.length - 1].h / 2 + 18 + H / 2;
 function creatorSecret(){
   menu.taps = 0; menu.secret = '';
-  if(SET.creatorFound){ showToast('Le mode créateur t\'attend dans Paramètres, Jeu', 120); SFX.menu(); return; }
+  if(SET.creatorFound){ showToast('Secret déjà trouvé : merci d\'avoir lu les crédits !', 120); SFX.menu(); return; }
   SET.creatorFound = true; persist();
-  showToast('Secret trouvé ! Mode créateur dans Paramètres, Jeu', 170);
+  showToast('Secret trouvé ! Merci d\'avoir lu les crédits !', 170);
   SFX.power(); menuFx(W / 2, H / 2, 46);
 }
 function creditsTap(x, y){
@@ -1169,7 +1166,7 @@ function drawRow(r, x, y, w, h){
 function drawListPage(p, act){
   const rows = pageRows(p);
   navHeader(PAGE_NAME[p], PAGE_NAME[PAGE_PARENT[p]], act);
-  const {x, y, w} = LIST, rh = rows.length > 8 ? 28 : rows.length > 6 ? 31 : LIST.rh, h = rows.length * rh;   // v62 : 9 lignes (Planches lentes + mode créateur) tiennent au-dessus des touches
+  const {x, y, w} = LIST, rh = rows.length > 6 ? 31 : LIST.rh, h = rows.length * rh;
   ctx.fillStyle = 'rgba(0,0,0,0.25)'; rr(x, y + 4, w, h, 14); ctx.fill();
   rr(x, y, w, h, 14); ctx.fillStyle = 'rgba(20,13,46,0.94)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
   const fs = clamp(menu.sel[p] || 0, 0, rows.length - 1);
