@@ -26,7 +26,7 @@ Saison 1 (4 chapitres + bonus) et saison 2 (4 mondes : 1 gravité, 2 gorges/murs
 
 ## Commandes
 - Construire : `node outils/build.js`
-- Tests (Playwright, `npm install` une fois) : `node outils/tests/tests19.js`, `tests_s2.js`, `tests14.js`, `tests_lave.js`, `tests_ouverture.js` (a besoin de `dist/demo.html` : `node outils/build.js --demo --out dist/demo.html`)
+- Tests (Playwright, `npm install` une fois) : `node outils/tests/tests19.js`, `tests_s2.js`, `tests14.js`, `tests_lave.js`, `tests_nettete.js`, `tests_ouverture.js` (a besoin de `dist/demo.html` : `node outils/build.js --demo --out dist/demo.html`)
 - Vérifier qu'une salle saison 2 est faisable (copie exacte de la physique) :
   `node outils/verif/route2.js outils/cache/chapters2.js 2-3 --gates` (avec la variable `NOLONE=1` pour interdire
   l'escalade d'un seul mur). `--gates` dit quels éléments sont obligatoires / évitables, `--verbose` liste les étapes.
@@ -46,7 +46,7 @@ Hérisson (`spiky:true`) : ni saut dessus, ni dash, ni tir — seule une planche
 Sortir par le haut de l'écran la tête en bas = mort ; passer sous le bas de l'écran la tête en bas = mort.
 
 ## État (v62 = v0.9.62, 26 novembre 2026, faite, testée, commitée et poussée sur main, pas publiée : pas de tag ; la v60 est la dernière publiée, tag v0.9.60 ; v61 = commit 0949963)
-- v62 : bonus : Le Cosmos supprimé (`save.cosmosGone` nettoie les sauvegardes), Les Étoiles visibles après la saison 2 (`save.s2Done`, ou admin), `bonusSkinsWon` → ficelle dorée = Or + Cristal ; boutique : couleur non obtenue = grisée + cadenas (`skinGrey`, `skinShadow`), Émeraude/Galaxie débloquées au clic avec assez de gemmes (`save.gemSkinsV62`) ; Paramètres > Jeu sans « Mode créateur » (il ne s ouvre que par « Connexion admin ») ; babioles de la pie détruites d un tir (`kind:'trinket'`, +1 pièce) ; `p2crumble` sorti dans `enterPhase2`, plateforme du milieu de 2-4 fragile en phase 2 ;
+- v62 : netteté : `fitCanvas` (device-pixel-content-box), `snapCanvasBox`, `canvasModeSync` / `UI_STATES` : menus toujours en pleine résolution, `RES_K` seulement en jeu (jusqu à 2560 px) ; bonus : Le Cosmos supprimé (`save.cosmosGone` nettoie les sauvegardes), Les Étoiles visibles après la saison 2 (`save.s2Done`, ou admin), `bonusSkinsWon` → ficelle dorée = Or + Cristal ; boutique : couleur non obtenue = grisée + cadenas (`skinGrey`, `skinShadow`), Émeraude/Galaxie débloquées au clic avec assez de gemmes (`save.gemSkinsV62`) ; Paramètres > Jeu sans « Mode créateur » (il ne s ouvre que par « Connexion admin ») ; babioles de la pie détruites d un tir (`kind:'trinket'`, +1 pièce) ; `p2crumble` sorti dans `enterPhase2`, plateforme du milieu de 2-4 fragile en phase 2 ;
   contre-la-montre saison 2 (`timeTrial`, `srOneHit`, bouton à côté de JOUER / touche C, `parTime` dans `entetes.js`) ;
   graphismes : `drawAirShadow` (ombre de contact), `dust()` avec gravité/poussée, `stompStop` (3 images), `shotFx`, iris aux couleurs du chapitre centré sur la porte, `drawLavaHeat`, `drawClearStamp`, plans lointains Glacier et Nid.
 - v61 (suite) : salles 4-1 (vitre au dash, fosse à piques sous un rocher franchie par des planches `fall`) et 4-2 (cheminées de 80 px, plafond sans piques) retouchées et vérifiées (route2 + robot `parcours/4-1-planches.json`).

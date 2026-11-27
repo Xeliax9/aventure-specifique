@@ -37,21 +37,56 @@ const canvas = document.getElementById('game');
 let ctx = canvas.getContext('2d');      // swapped briefly to paint the chapter cards
 const W = 640, H = 360;
 let SCALE = 1;
-let RES_K = 1;   // v54 : qualité automatique — baisse un peu la résolution si le PC n'arrive pas à suivre
+let RES_K = 1;   // v54 : qualité automatique — baisse un peu la résolution si le PC n'arrive pas à suivre (en jeu seulement, v62)
 const MEDIA_REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 let REDUCED = MEDIA_REDUCED;      // also on when « Animations réduites » is ticked in the settings
 const TOUCH = !!(window.matchMedia && matchMedia('(hover: none), (pointer: coarse)').matches);
+// v62 : texte net. Le canvas a exactement autant de pixels que l'écran lui en donne (un pixel du canvas = un pixel de l'écran,
+// sinon le navigateur l'agrandit et tout devient flou). Menus, pause, résultats (CANVAS_UI) : toujours en pleine résolution,
+// jusqu'à la 4K. En jeu : au plus 2560 px de large (2 pixels d'écran par pixel CSS au plus), fois RES_K (qualité automatique).
+let CANVAS_UI = true;     // vrai dans les menus et écrans d'interface (mis à jour par la boucle, voir canvasModeSync)
+let DEV_PX = null;        // taille exacte en pixels d'écran donnée par le navigateur (Chrome, Edge, Firefox récents)
 function fitCanvas(){
   const r = canvas.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const bw = Math.round(clamp((r.width || W) * dpr * RES_K, 320, 2240));
-  const bh = Math.round(bw * H / W);
+  const dpr = window.devicePixelRatio || 1;
+  const cw = r.width || W;
+  // (la taille exacte n'est crue que si elle colle à taille CSS × devicePixelRatio : certains navigateurs/émulateurs la donnent fausse)
+  const dev = DEV_PX && Math.abs(DEV_PX[0] - cw * dpr) <= 2 ? DEV_PX : null;
+  const devW = dev ? dev[0] : Math.round(cw * dpr), devH = dev ? dev[1] : Math.round(devW * H / W);
+  let bw, bh;
+  if(CANVAS_UI ? devW <= 3840 : (devW <= 2560 && dpr <= 2 && RES_K >= 1)){ bw = devW; bh = devH; }   // pixel pour pixel
+  else {
+    const cap = CANVAS_UI ? 3840 : Math.min(2560, Math.round(cw * Math.min(dpr, 2)));
+    bw = Math.round(clamp(Math.min(devW, cap) * (CANVAS_UI ? 1 : RES_K), 320, 3840)); bh = Math.round(bw * H / W);
+  }
   if(canvas.width !== bw || canvas.height !== bh){ canvas.width = bw; canvas.height = bh; }
   SCALE = bw / W;
 }
-if(window.ResizeObserver) new ResizeObserver(fitCanvas).observe(canvas);
-else window.addEventListener('resize', fitCanvas);
-fitCanvas();
+// appelé à chaque image par la boucle : passe le canvas en pleine résolution dans les menus, en résolution « jeu » sinon
+function canvasModeSync(ui){ if(ui !== CANVAS_UI){ CANVAS_UI = ui; fitCanvas(); } }
+// le canvas doit commencer sur un pixel entier de l'écran (sinon l'image est rééchantillonnée, donc floue) : on arrondit sa taille
+function snapCanvasBox(){
+  const dpr = window.devicePixelRatio || 1;
+  const vw = document.documentElement.clientWidth || window.innerWidth, vh = window.innerHeight;
+  // taille en pixels d'écran, de même parité que la fenêtre pour que le centrage tombe sur un pixel entier
+  const VW = Math.round(vw * dpr), VH = Math.round(vh * dpr);
+  let dw = Math.floor(Math.min(VW, VH * W / H)); if((VW - dw) % 2) dw--;
+  let dh = Math.min(VH, Math.round(dw * H / W)); if((VH - dh) % 2) dh--;
+  if(dw < 2 || dh < 2) return;
+  canvas.style.width = (dw / dpr) + 'px'; canvas.style.height = (dh / dpr) + 'px';
+}
+function onCanvasBox(){ snapCanvasBox(); fitCanvas(); }
+if(window.ResizeObserver){
+  const ro = new ResizeObserver(es => {
+    const e = es[es.length - 1], d = e && e.devicePixelContentBoxSize && e.devicePixelContentBoxSize[0];
+    DEV_PX = d ? [Math.round(d.inlineSize), Math.round(d.blockSize)] : null;
+    fitCanvas();
+  });
+  try{ ro.observe(canvas, {box:'device-pixel-content-box'}); }catch(e){ ro.observe(canvas); }
+}
+window.addEventListener('resize', onCanvasBox);
+if(window.visualViewport) visualViewport.addEventListener('resize', onCanvasBox);
+onCanvasBox();
 
 const FD = "'Young Serif', Georgia, 'Times New Roman', serif";
 const FU = "'Barlow Semi Condensed', 'Arial Narrow', 'Helvetica Neue', sans-serif";

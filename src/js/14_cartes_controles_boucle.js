@@ -109,7 +109,7 @@ function placeDeck(){
     deck.k = k;
     // zoom (et non transform: scale) : le navigateur redessine le texte des cartes à la bonne taille, sans flou
     deck.root.querySelector('.stage').style.zoom = k;
-    const px = Math.round(136 * k * Math.min(window.devicePixelRatio || 1, 2) * 1.15);
+    const px = Math.round(136 * k * Math.min(window.devicePixelRatio || 1, 3) * 1.15);   // v62 : jusqu’à 3 (téléphones)
     for(const c of deck.cards){ c.cv.width = px; c.cv.height = Math.round(px * 108 / 136); c.painted = -99; }
   }
   deck.placed = true;
@@ -453,8 +453,9 @@ let fpsShown = 0, fpsAcc = 0, fpsN = 0;
 // v54 : qualité automatique. perfQ.ref = durée d'un rafraîchissement de l'écran (≈4,2 ms à 240 Hz, 16,7 ms à 60 Hz),
 // mesurée en continu ; si les images prennent nettement plus longtemps pendant ~1 s, on dessine en plus petit.
 const perfQ = {avg:16.7, slow:0, ref:16.7};
+const UI_STATES = new Set(['title', 'pause', 'chapter', 'win', 'over', 'pet']);   // v62 : écrans d'interface, toujours nets
 function autoQuality(dt){
-  if(dt > 100 || document.hidden) return;
+  if(dt > 100 || document.hidden || CANVAS_UI) return;   // v62 : les menus restent toujours nets
   if(dt > 2.5) perfQ.ref = Math.min(perfQ.ref + 0.002, dt);   // le plus court intervalle vu = la fréquence de l'écran
   perfQ.avg = perfQ.avg * 0.95 + dt * 0.05;
   if(perfQ.avg > perfQ.ref * 1.45 && RES_K > 0.5){
@@ -472,6 +473,7 @@ function loop(ts){
   nextDraw += 1000 / 60; if(nextDraw < ts) nextDraw = ts + 1000 / 60;
   if(lastDraw !== null){ const dt = ts - lastDraw; autoQuality(dt); fpsAcc += dt; fpsN++; if(fpsAcc >= 500){ fpsShown = Math.round(fpsN * 1000 / fpsAcc); fpsAcc = 0; fpsN = 0; } }
   lastDraw = ts;
+  canvasModeSync(UI_STATES.has(state));   // v62 : menus en pleine résolution, jeu avec la qualité automatique
   render(acc / STEP);
   if(SET.fps){ ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); rr(W - 74, H - 24, 66, 18, 9); ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fill(); txt(`${fpsShown} img/s`, W - 41, H - 11, 11, fpsShown >= 58 ? "#9fe8b0" : "#ffd27a", 700); }
   requestAnimationFrame(loop);
